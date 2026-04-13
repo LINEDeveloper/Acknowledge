@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -10,65 +9,52 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { font-family: 'Sarabun', sans-serif; background-color: #f8f9fa; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-    .main-card { background: white; width: 100%; max-width: 420px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); overflow: hidden; border: 1px solid #eee; }
-    .btn-true { background: linear-gradient(45deg, #ff0000, #ff4d4d); color: white; border: none; border-radius: 50px; padding: 14px; font-weight: 700; width: 100%; box-shadow: 0 4px 15px rgba(255,0,0,0.2); transition: 0.2s; }
-    .consent-box { background-color: #fff3cd; border: 1px solid #ffecb5; border-radius: 22px; padding: 22px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+    body { font-family: 'Sarabun', sans-serif; background-color: #f8f9fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+    .main-card { background: white; width: 100%; max-width: 420px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid #f1f1f1; margin: 15px; }
+    .btn-true { background: linear-gradient(45deg, #ff0000, #ff4d4d); color: white; border: none; border-radius: 50px; padding: 12px 24px; font-weight: 700; width: 100%; box-shadow: 0 4px 15px rgba(255,0,0,0.25); transition: 0.3s; cursor: pointer; }
+    .btn-true:active { transform: scale(0.96); box-shadow: 0 2px 8px rgba(255,0,0,0.2); }
+    .consent-box { background-color: #fff3cd; border: 1px solid #ffecb5; border-radius: 22px; padding: 18px 22px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; }
+    .consent-box:active { transform: scale(0.98); }
+    .profile-card { padding: 15px; background: #fff5f5; border-radius: 20px; display: flex; align-items: center; gap: 15px; margin-bottom: 20px; border: 1px solid #ffe6e6; }
     .hidden { display: none !important; }
-    
-    /* ส่วนที่ได้รับการแก้ไข: ปรับการจัดวางใน profile-card เป็นแนวตั้งและจัดกึ่งกลาง */
-    .profile-card {
-      padding: 15px;
-      background: #fff5f5;
-      border-radius: 20px;
-      display: flex;
-      flex-direction: column; /* จัดวางเป็นแนวตั้ง */
-      align-items: center; /* จัดให้อยู่กึ่งกลางในแนวนอน */
-      gap: 10px; /* ระยะห่างระหว่างรูปโปรไฟล์และชื่อ */
-      margin-bottom: 20px;
-      text-align: center; /* จัดข้อความให้อยู่กึ่งกลาง */
-    }
-    
-    .true-logo { width: 90px; margin-bottom: 10px; }
+    .swal-true-popup { border-radius: 24px !important; padding: 20px !important; }
   </style>
 </head>
 <body>
 
   <div class="main-card">
     <div id="view-loading" class="p-5 text-center">
-      <div class="spinner-border text-danger" role="status"></div>
-      <p class="mt-3 text-muted">กำลังโหลดข้อมูล...</p>
+      <div class="spinner-border text-danger" role="status" style="width: 3rem; height: 3rem;"></div>
+      <p class="mt-3 text-muted fw-bold">กำลังเชื่อมต่อระบบ...</p>
     </div>
 
-    <div id="view-register" class="p-4 hidden">
-      <div class="text-center mb-4">
-        <img src="https://img5.pic.in.th/file/secure-sv1/True--Cffa270ffe548a2c7.png" class="true-logo">
-        <h5 class="fw-bold">ผูกบัญชีพนักงาน</h5>
-        <p class="text-muted small">ระบุรหัสพนักงานเพื่อเชื่อมต่อ LINE</p>
-      </div>
-      <input type="text" id="reg-id" class="form-control form-control-lg text-center rounded-4 mb-3" placeholder="ระบุรหัส 8 หลัก" oninput="searchEmp(this.value)">
-      <div id="reg-info" class="hidden">
-        <div class="p-3 mb-3 rounded-4" style="background:#fcfcfc; border-left: 5px solid #ff0000; box-shadow: inset 0 0 5px rgba(0,0,0,0.02);">
-          <div id="reg-name" class="fw-bold text-dark"></div>
+    <div id="view-register" class="p-4 hidden text-center">
+      <img src="https://img1.pic.in.th/images/True--C.png" style="width:80px; margin-bottom: 15px;">
+      <h5 class="fw-bold">ผูกบัญชีใช้งาน</h5>
+      <p class="text-muted small mb-4">กรุณาระบุรหัสพนักงานเพื่อเชื่อมต่อ LINE</p>
+      
+      <input type="text" id="reg-id" class="form-control form-control-lg text-center rounded-4 mb-3" placeholder="รหัสพนักงาน 8 หลัก" oninput="searchEmp(this.value)">
+      
+      <div id="reg-info" class="hidden text-start">
+        <div class="p-3 mb-4 rounded-4" style="background:#fcfcfc; border-left: 5px solid #ff0000; box-shadow: inset 0 0 5px rgba(0,0,0,0.02);">
+          <div id="reg-name" class="fw-bold text-dark fs-5"></div>
           <div id="reg-channel" class="text-danger small fw-bold"></div>
         </div>
-        <button class="btn-true" onclick="confirmReg()">ยืนยันข้อมูลและเริ่มใช้งาน</button>
+        <button class="btn-true" onclick="confirmReg()">ยืนยันข้อมูลและเข้าใช้งาน</button>
       </div>
     </div>
 
     <div id="view-acknowledge" class="p-4 hidden">
-      <div class="text-center mb-4">
-        <img src="https://img5.pic.in.th/file/secure-sv1/True--Cffa270ffe548a2c7.png" class="true-logo">
-      </div>
+      <div class="text-center mb-4"><img src="https://img1.pic.in.th/images/True--C.png" style="width:70px"></div>
       <div class="profile-card">
-        <img id="user-pfp" style="width:55px; height:55px; border-radius:50%; border: 2px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.1);" src="">
+        <img id="user-pfp" style="width:60px; height:60px; border-radius:50%; box-shadow: 0 3px 10px rgba(0,0,0,0.1);" src="">
         <div>
-          <div id="user-name" class="fw-bold text-dark"></div>
-          <div id="user-meta" class="text-muted" style="font-size: 11px;"></div>
+          <div id="user-name" class="fw-bold text-dark fs-6"></div>
+          <div id="user-meta" class="text-danger small fw-bold"></div>
         </div>
       </div>
-      <label class="small fw-bold mb-2 ps-1">เลือกหัวข้อข่าวสาร</label>
-      <select id="topicSelect" class="form-select form-select-lg rounded-4 mb-4" onchange="resetCheck()"></select>
+      <label class="small fw-bold mb-2 ps-1 text-muted">เลือกหัวข้อข่าวสารที่ต้องการรับทราบ</label>
+      <select id="topicSelect" class="form-select form-select-lg rounded-4 mb-4"></select>
       <div class="consent-box" onclick="handleSubmit()">
         <input type="checkbox" id="consentCheck" style="width:24px; height:24px; accent-color:#ff0000;" onclick="event.stopPropagation(); handleSubmit();">
         <label class="m-0 fw-bold small text-warning-emphasis ms-2">รับทราบ และ ปฏิบัติตามอย่างเคร่งครัด</label>
@@ -76,32 +62,42 @@
     </div>
 
     <div id="view-success" class="p-5 text-center hidden">
-      <i class="fas fa-check-circle text-success mb-3" style="font-size: 70px;"></i>
+      <i class="fas fa-check-circle text-success" style="font-size: 80px; margin-bottom: 20px;"></i>
       <h4 class="fw-bold">บันทึกสำเร็จ</h4>
-      <p class="text-muted small">ระบบบันทึกการรับทราบเรียบร้อย</p>
-      <button class="btn btn-dark rounded-pill px-5 mt-4" onclick="liff.closeWindow()">ปิดหน้าต่าง</button>
+      <p class="text-muted small mb-4">ข้อมูลของท่านถูกบันทึกเข้าระบบเรียบร้อย</p>
+      <button class="btn-true" onclick="liff.closeWindow()">ปิดหน้าต่าง</button>
     </div>
   </div>
 
   <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycby-pLn-ACbareuCdomxdkX2Oe1H9gVNseUDb2k-CENm3DX3YrQvbtoFYErSZvHQppU/exec"; 
+    
     let lineId, userObj, topicList;
 
+    const TrueSwal = Swal.mixin({
+      customClass: { popup: 'swal-true-popup', confirmButton: 'btn-true' },
+      buttonsStyling: false
+    });
+
     async function init() {
-      // 1. เริ่มต้น LIFF (ใส่ ID ของคุณ)
-      await liff.init({ liffId: "ใส่_LIFF_ID_ตรงนี้" });
-      if (!liff.isLoggedIn()) { liff.login(); return; }
-      
-      const p = await liff.getProfile(); 
-      lineId = p.userId;
-      
-      // 2. ดึงสถานะจาก Server
-      google.script.run.withSuccessHandler(res => {
+      try {
+        await liff.init({ liffId: "1656846002-Wl9ZZgv7" });
+        if (!liff.isLoggedIn()) { liff.login(); return; }
+        
+        const p = await liff.getProfile(); 
+        lineId = p.userId;
+        
+        const response = await fetch(`${GAS_URL}?action=getInitialData&lineId=${lineId}`);
+        if(!response.ok) throw new Error("Network response was not ok");
+        
+        const res = await response.json();
         topicList = res.topics;
+
         if (res.isRegistered) {
           userObj = res.user;
           document.getElementById('user-pfp').src = p.pictureUrl;
-          document.getElementById('user-name').innerText = res.user.firstName + " " + res.user.lastName;
-          document.getElementById('user-meta').innerText = "ID: " + res.user.empId + " | " + res.user.channel;
+          document.getElementById('user-name').innerText = userObj.firstName + " " + userObj.lastName;
+          document.getElementById('user-meta').innerText = "ID: " + userObj.empId + " | " + userObj.channel;
           
           const sel = document.getElementById('topicSelect');
           sel.innerHTML = res.topics.length ? '<option value="" disabled selected>-- เลือกหัวข้อข่าว --</option>' : '<option disabled>-- ไม่มีข่าว --</option>';
@@ -110,7 +106,13 @@
         } else { 
           showView('register'); 
         }
-      }).getInitialData(lineId);
+      } catch (error) {
+        TrueSwal.fire({
+          icon: 'error',
+          title: 'เชื่อมต่อล้มเหลว',
+          text: 'ไม่สามารถติดต่อฐานข้อมูลได้ โปรดตรวจสอบการตั้งค่า Deploy (Anyone)'
+        });
+      }
     }
 
     function showView(v) { 
@@ -118,43 +120,45 @@
       document.getElementById('view-' + v).classList.remove('hidden'); 
     }
 
-    function searchEmp(id) {
-      if (id.length >= 5) google.script.run.withSuccessHandler(res => {
-        if (res) { 
-          document.getElementById('reg-name').innerText = res.firstName + " " + res.lastName; 
-          document.getElementById('reg-channel').innerText = res.channel; 
-          document.getElementById('reg-info').classList.remove('hidden'); 
-        } else { 
-          document.getElementById('reg-info').classList.add('hidden'); 
-        }
-      }).findEmployeeData(id);
+    async function searchEmp(id) {
+      if (id.length >= 5) {
+        try {
+          const res = await fetch(`${GAS_URL}?action=findEmployee&empId=${id}`).then(r => r.json());
+          if (res) {
+            document.getElementById('reg-name').innerText = res.firstName + " " + res.lastName;
+            document.getElementById('reg-channel').innerText = res.channel;
+            document.getElementById('reg-info').classList.remove('hidden');
+          } else { 
+            document.getElementById('reg-info').classList.add('hidden'); 
+          }
+        } catch (e) { console.error(e); }
+      } else {
+        document.getElementById('reg-info').classList.add('hidden');
+      }
     }
 
-    function confirmReg() {
-      const id = document.getElementById('reg-id').value;
-      const nameParts = document.getElementById('reg-name').innerText.split(' ');
-      const data = { 
-        lineId: lineId, 
-        empId: id, 
-        firstName: nameParts[0], 
-        lastName: nameParts[1], 
+    async function confirmReg() {
+      const payload = { 
+        lineId, 
+        empId: document.getElementById('reg-id').value, 
+        firstName: document.getElementById('reg-name').innerText.split(' ')[0], 
+        lastName: document.getElementById('reg-name').innerText.split(' ')[1], 
         channel: document.getElementById('reg-channel').innerText 
       };
       
-      Swal.fire({ title: 'กำลังผูกบัญชี...', didOpen: () => Swal.showLoading() });
-      google.script.run.withSuccessHandler(() => {
-        Swal.fire({ icon: 'success', title: 'สำเร็จ' }).then(() => window.location.reload());
-      }).registerUser(data);
+      const res = await callApi('register', payload);
+      if(res === "Success") {
+        window.location.reload();
+      } else if (res === "Already Registered") {
+        TrueSwal.fire({ icon: 'warning', title: 'รหัสซ้ำ', text: 'รหัสพนักงานนี้ถูกลงทะเบียนไปแล้ว' });
+      }
     }
 
-    function handleSubmit() {
+    async function handleSubmit() {
       const t = document.getElementById('topicSelect').value;
-      if (!t) { document.getElementById('consentCheck').checked = false; return Swal.fire('โปรดเลือกข่าว'); }
+      if (!t) return TrueSwal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'โปรดเลือกหัวข้อข่าวสารก่อนกดยอมรับ' });
       
       document.getElementById('consentCheck').checked = true;
-      document.getElementById('view-acknowledge').style.pointerEvents = 'none';
-      Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
-
       const payload = { 
         topic: t, 
         empId: userObj.empId, 
@@ -163,19 +167,28 @@
         category: (topicList.find(x => x.name === t) || {}).category, 
         device: "LINE (" + liff.getOS() + ")" 
       };
-
-      google.script.run.withSuccessHandler(res => {
-        Swal.close();
-        if (res === "Success") showView('success');
-        else { 
-          Swal.fire({ icon: 'info', title: 'คุณอ่านข่าวนี้ไปแล้ว' }); 
-          document.getElementById('consentCheck').checked = false; 
-          document.getElementById('view-acknowledge').style.pointerEvents = 'auto';
-        }
-      }).saveAcknowledge(payload);
+      
+      const res = await callApi('acknowledge', payload);
+      if (res === "Success") {
+        showView('success');
+      } else { 
+        TrueSwal.fire({ icon: 'info', title: 'ข้อมูลซ้ำ', text: 'ท่านได้รับทราบข่าวนี้ไปแล้ว' }); 
+        document.getElementById('consentCheck').checked = false; 
+      }
     }
 
-    function resetCheck() { document.getElementById('consentCheck').checked = false; }
+    async function callApi(action, payload) {
+      TrueSwal.fire({ title: 'กำลังประมวลผล...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+      try {
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action, payload }) }).then(r => r.json());
+        Swal.close();
+        return res;
+      } catch (e) {
+        Swal.close();
+        TrueSwal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: 'บันทึกข้อมูลไม่สำเร็จ โปรดลองอีกครั้ง' });
+      }
+    }
+
     window.onload = init;
   </script>
 </body>
