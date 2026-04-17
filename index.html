@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>True Corporation</title>
+   <title>True Corporation</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -68,22 +68,26 @@
 
     <div id="view-acknowledge" class="p-4 hidden text-center">
       <img src="https://img1.pic.in.th/images/True--C.png" style="width:75px; margin-bottom: 5px;">
-      <h6 class="fw-bold text-muted mb-3 small">ยินดีต้อนรับเข้าสู่ระบบ</h6>
       
-      <div class="profile-card mx-auto">
-        <img id="user-pfp" style="width: 75px; height: 75px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 15px rgba(255,0,0,0.15); object-fit: cover;" src="">
-        <div class="mt-1">
-          <div id="user-name" class="fw-bold text-dark fs-5 mb-2"></div>
-          <div id="user-meta" class="badge rounded-pill fw-normal shadow-sm" style="background: linear-gradient(45deg, #ff0000, #ff4d4d); font-size: 13px; padding: 6px 14px; letter-spacing: 0.5px;"></div>
+      <h6 class="fw-bold mb-3" style="color: #666; letter-spacing: 0.5px;">ยินดีต้อนรับ</h6>
+      
+      <div class="profile-card mx-auto" style="box-shadow: 0 10px 25px rgba(0,0,0,0.03); border: none; background: linear-gradient(145deg, #ffffff, #fff9f9);">
+        
+        <img id="user-pfp" style="width: 90px; height: 90px; border-radius: 50%; border: 4px solid white; box-shadow: 0 8px 20px rgba(255,0,0,0.15); object-fit: cover;" src="">
+        
+        <div class="mt-2">
+          <div id="user-name" class="fw-bold text-dark mb-2" style="font-size: 18px;"></div>
+          <div id="user-meta" class="badge rounded-pill fw-normal shadow-sm" style="background: linear-gradient(45deg, #ff0000, #ff4d4d); font-size: 13px; padding: 6px 16px; letter-spacing: 0.5px;"></div>
         </div>
       </div>
       
-      <label class="small fw-bold mb-2 ps-1 text-muted text-start w-100">เลือกหัวข้อข่าวสารที่ต้องการรับทราบ</label>
-      <select id="topicSelect" class="form-select form-select-lg rounded-4 mb-4" style="text-align: center; text-align-last: center;"></select>
+      <label class="fw-bold mb-2 ps-2 text-muted text-start w-100" style="font-size: 12px;">เลือกหัวข้อข่าวสารที่ต้องการรับทราบ</label>
       
-      <div class="consent-box text-start" onclick="handleSubmit()">
-        <input type="checkbox" id="consentCheck" style="width:24px; height:24px; accent-color:#ff0000;" onclick="event.stopPropagation(); handleSubmit();">
-        <label class="m-0 fw-bold small text-warning-emphasis ms-2">รับทราบ และ ปฏิบัติตามอย่างเคร่งครัด</label>
+      <select id="topicSelect" class="form-select form-select-lg rounded-4 mb-4 shadow-sm" style="text-align: center; text-align-last: center; font-size: 15px; border-color: #eee;"></select>
+      
+      <div class="consent-box text-start shadow-sm" onclick="handleSubmit()" style="background: #fffbdf; border-color: #ffeba1;">
+        <input type="checkbox" id="consentCheck" style="width:22px; height:22px; accent-color:#ff0000;" onclick="event.stopPropagation(); handleSubmit();">
+        <label class="m-0 fw-bold text-warning-emphasis ms-2" style="font-size: 13px;">รับทราบ และ ปฏิบัติตามอย่างเคร่งครัด</label>
       </div>
     </div>
 
@@ -133,8 +137,10 @@
         if (res.isRegistered) {
           userObj = res.user;
           document.getElementById('user-pfp').src = p.pictureUrl;
-          // แสดงผลชื่อแบบคอลัมน์เดียว
-          document.getElementById('user-name').innerText = userObj.fullName;
+          
+          // --- เพิ่มคำว่า "คุณ " นำหน้าชื่อตรงนี้ ---
+          document.getElementById('user-name').innerText = "คุณ " + userObj.fullName;
+          
           document.getElementById('user-meta').innerText = "ID: " + userObj.empId + " | " + userObj.channel;
           
           const sel = document.getElementById('topicSelect');
@@ -178,7 +184,6 @@
             regLoading.classList.add('hidden');
 
             if (res) {
-              // ดึงข้อมูลชื่อจาก fullName
               document.getElementById('reg-name').innerText = res.fullName;
               document.getElementById('reg-channel').innerText = res.channel;
               regInfo.classList.remove('hidden');
@@ -206,7 +211,6 @@
     }
 
     async function confirmReg() {
-      // ส่งข้อมูล fullName ไปบันทึกโดยไม่ต้อง split
       const payload = { 
         lineId, 
         empId: document.getElementById('reg-id').value, 
@@ -239,7 +243,7 @@
       const payload = { 
         topic: t, 
         empId: userObj.empId, 
-        fullName: userObj.fullName, // ใช้ fullName ได้เลย
+        fullName: userObj.fullName, 
         channel: userObj.channel, 
         category: (topicList.find(x => x.name === t) || {}).category, 
         device: "LINE (" + liff.getOS() + ")" 
