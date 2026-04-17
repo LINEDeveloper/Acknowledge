@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | True Acknowledge System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body { font-family: 'Sarabun', sans-serif; background-color: #f4f6f9; color: #333; }
+    .top-header { background: linear-gradient(45deg, #ff0000, #cc0000); color: white; padding: 20px 30px; border-radius: 0 0 20px 20px; box-shadow: 0 4px 15px rgba(255,0,0,0.2); display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    .card-stat { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; border: 1px solid #eee; }
+    .card-stat h3 { color: #ff0000; font-weight: bold; font-size: 36px; margin-bottom: 5px; }
+    .btn-export { background: white; color: #ff0000; border: none; padding: 10px 20px; border-radius: 50px; font-weight: bold; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .btn-export:hover { background: #ffe6e6; transform: scale(0.98); }
+    .table-container { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); border: 1px solid #eee; }
+    .status-active { background-color: #e6f4ea; color: #1e8e3e; padding: 5px 10px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+    .status-expired { background-color: #f1f3f4; color: #5f6368; padding: 5px 10px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <div class="container-fluid px-4 max-w-1200" style="max-width: 1200px; margin: 0 auto;">
+    
+    <div class="top-header">
+      <div>
+        <h2 class="m-0 fw-bold"><i class="fas fa-chart-line me-2"></i> Admin Dashboard</h2>
+        <p class="m-0 opacity-75 small">ระบบจัดการข้อมูลพนักงาน True Acknowledge System</p>
+      </div>
+      <button class="btn-export" onclick="exportReport()">
+        <i class="fas fa-file-excel me-1"></i> ส่งออกรายงาน Excel (ส่งเข้าอีเมล)
+      </button>
+    </div>
+
+    <div id="loading" class="text-center py-5">
+      <div class="spinner-border text-danger" role="status"></div>
+      <p class="mt-3 text-muted">กำลังโหลดข้อมูล เรียลไทม์...</p>
+    </div>
+
+    <div id="dashboard-content" class="d-none">
+      <div class="row g-4 mb-4">
+        <div class="col-md-6">
+          <div class="card-stat">
+            <h5 class="text-muted small fw-bold text-uppercase">พนักงานในระบบทั้งหมด</h5>
+            <h3 id="stat-users">0</h3>
+            <span class="text-muted small">ท่าน</span>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card-stat">
+            <h5 class="text-muted small fw-bold text-uppercase">ยอดการรับทราบข่าวสารรวม</h5>
+            <h3 id="stat-ack">0</h3>
+            <span class="text-muted small">ครั้ง</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <h5 class="fw-bold mb-3 text-dark"><i class="fas fa-list-alt text-danger me-2"></i> สรุปผลรายหัวข้อข่าวสาร</h5>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>ชื่อหัวข้อข่าวสาร</th>
+                <th>หมวดหมู่</th>
+                <th class="text-center">สถานะ</th>
+                <th>วันที่สิ้นสุด</th>
+                <th class="text-center">ยอดรับทราบ (คน)</th>
+              </tr>
+            </thead>
+            <tbody id="table-body">
+              </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ⚠️ ลิงก์ GAS URL ของคุณ
+    const GAS_URL = "https://script.google.com/macros/s/AKfycby-pLn-ACbareuCdomxdkX2Oe1H9gVNseUDb2k-CENm3DX3YrQvbtoFYErSZvHQppU/exec";
+
+    async function loadStats() {
+      try {
+        const res = await fetch(`${GAS_URL}?action=adminStats`).then(r => r.json());
+        
+        document.getElementById('loading').classList.add('d-none');
+        document.getElementById('dashboard-content').classList.remove('d-none');
+        
+        // อัปเดตตัวเลข
+        document.getElementById('stat-users').innerText = res.totalUsers.toLocaleString();
+        document.getElementById('stat-ack').innerText = res.totalAck.toLocaleString();
+
+        // สร้างตาราง
+        const tbody = document.getElementById('table-body');
+        tbody.innerHTML = res.topics.map(t => `
+          <tr>
+            <td class="fw-bold">${t.name}</td>
+            <td class="text-muted">${t.category}</td>
+            <td class="text-center">
+              <span class="${t.status === 'สิ้นสุดแล้ว' ? 'status-expired' : 'status-active'}">${t.status}</span>
+            </td>
+            <td>${t.endDate}</td>
+            <td class="text-center fs-5 fw-bold text-danger">${t.count.toLocaleString()}</td>
+          </tr>
+        `).join('');
+
+      } catch (error) {
+        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลได้', 'error');
+      }
+    }
+
+    async function exportReport() {
+      Swal.fire({
+        title: 'กำลังสร้างไฟล์ Excel...',
+        text: 'ระบบกำลังดึงข้อมูลและจะส่งเข้าอีเมลของท่าน',
+        didOpen: () => Swal.showLoading(),
+        allowOutsideClick: false
+      });
+
+      try {
+        await fetch(GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'exportReport' })
+        });
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'ส่งออกสำเร็จ!',
+          text: 'กรุณาตรวจสอบไฟล์ Excel ที่อีเมลของคุณ'
+        });
+      } catch (error) {
+        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถส่งออกรายงานได้', 'error');
+      }
+    }
+
+    // โหลดข้อมูลทันทีที่เปิดหน้าเว็บ
+    window.onload = loadStats;
+  </script>
+</body>
+</html>
