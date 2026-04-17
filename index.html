@@ -17,7 +17,11 @@
     .consent-box:active { transform: scale(0.98); }
     .profile-card { padding: 15px; background: #fff5f5; border-radius: 20px; display: flex; align-items: center; gap: 15px; margin-bottom: 20px; border: 1px solid #ffe6e6; }
     .hidden { display: none !important; }
-    .swal-true-popup { border-radius: 24px !important; padding: 20px !important; }
+    
+    /* ปรับปรุงขนาดฟอนต์ของ SweetAlert ให้เล็กลงและสวยงามพอดี */
+    .swal-true-popup { border-radius: 24px !important; padding: 20px !important; font-family: 'Sarabun', sans-serif !important; }
+    .swal-true-popup .swal2-title { font-size: 20px !important; font-weight: 700 !important; color: #333 !important; }
+    .swal-true-popup .swal2-html-container { font-size: 14px !important; color: #666 !important; }
   </style>
 </head>
 <body>
@@ -44,7 +48,11 @@
       </div>
 
       <div id="reg-error" class="text-danger small fw-bold mb-3 hidden">
-        <i class="fas fa-exclamation-circle"></i> ไม่พบรหัสพนักงานนี้ในระบบ โปรดตรวจสอบอีกครั้ง
+        <div><i class="fas fa-exclamation-circle"></i> ไม่พบรหัสพนักงานนี้ในระบบ โปรดตรวจสอบอีกครั้ง</div>
+        <div id="reg-help" class="mt-2 p-2 rounded-3 hidden" style="background-color: #fff5f5; border: 1px solid #ffe6e6;">
+          หากตรวจสอบแล้วไม่พบข้อมูล <br>
+          <a href="https://liff.line.me/1656846002-j80kkZEY" style="color: #ff0000; text-decoration: underline;">คลิกที่นี่เพื่อแจ้งปัญหา</a>
+        </div>
       </div>
 
       <div id="reg-info" class="hidden text-start">
@@ -85,7 +93,8 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycby-pLn-ACbareuCdomxdkX2Oe1H9gVNseUDb2k-CENm3DX3YrQvbtoFYErSZvHQppU/exec"; 
     
     let lineId, userObj, topicList;
-    let typingTimer; // เพิ่มตัวแปรสำหรับหน่วงเวลาการค้นหา
+    let typingTimer;
+    let failCount = 0; 
 
     const TrueSwal = Swal.mixin({
       customClass: { popup: 'swal-true-popup', confirmButton: 'btn-true' },
@@ -137,35 +146,39 @@
       document.getElementById('view-' + v).classList.remove('hidden'); 
     }
 
-    // ปรับปรุงฟังก์ชันค้นหาให้มีสถานะ Loading
     async function searchEmp(id) {
       const regInfo = document.getElementById('reg-info');
       const regError = document.getElementById('reg-error');
       const regLoading = document.getElementById('reg-loading');
+      const regHelp = document.getElementById('reg-help'); 
 
-      // ล้างเวลาเก่าออกเมื่อมีการพิมพ์ใหม่
       clearTimeout(typingTimer);
 
       if (id.length >= 5) {
-        // ซ่อนข้อความอื่น โชว์สถานะกำลังตรวจสอบ
         regInfo.classList.add('hidden');
         regError.classList.add('hidden');
         regLoading.classList.remove('hidden');
 
-        // หน่วงเวลา 0.6 วินาที รอพิมพ์เสร็จค่อยดึงข้อมูลจาก Server
         typingTimer = setTimeout(async () => {
           try {
             const res = await fetch(`${GAS_URL}?action=findEmployee&empId=${id}`).then(r => r.json());
             
-            // ปิดสถานะกำลังตรวจสอบเมื่อได้ผลลัพธ์แล้ว
             regLoading.classList.add('hidden');
 
             if (res) {
               document.getElementById('reg-name').innerText = res.firstName + " " + res.lastName;
               document.getElementById('reg-channel').innerText = res.channel;
               regInfo.classList.remove('hidden');
+              
+              failCount = 0;
+              regHelp.classList.add('hidden');
             } else { 
+              failCount++;
               regError.classList.remove('hidden');
+              
+              if (failCount >= 2) {
+                regHelp.classList.remove('hidden');
+              }
             }
           } catch (e) { 
             console.error(e); 
@@ -173,7 +186,6 @@
           }
         }, 600); 
       } else {
-        // ถ้ารหัสยังไม่ถึง 5 ตัว ให้ซ่อนทุกอย่าง
         regInfo.classList.add('hidden');
         regError.classList.add('hidden');
         regLoading.classList.add('hidden');
@@ -230,7 +242,8 @@
     }
 
     async function callApi(action, payload) {
-      TrueSwal.fire({ title: 'กำลังประมวลผล...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+      /* --- เปลี่ยนข้อความตรงนี้เป็น "กำลังตรวจสอบ โปรดรอสักครู่..." --- */
+      TrueSwal.fire({ title: 'กำลังตรวจสอบ โปรดรอสักครู่...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
       try {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action, payload }) }).then(r => r.json());
         Swal.close();
