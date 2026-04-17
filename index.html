@@ -23,9 +23,13 @@
 <body>
 
   <div class="main-card">
+    
     <div id="view-loading" class="p-5 text-center">
-      <div class="spinner-border text-danger" role="status" style="width: 3rem; height: 3rem;"></div>
-      <p class="mt-3 text-muted fw-bold">กำลังเชื่อมต่อระบบ...</p>
+      <div style="position: relative; display: inline-block; margin-bottom: 10px;">
+        <img id="loading-pfp" src="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23e9ecef'/%3E%3Cpath d='M50 55c-15 0-25 10-25 25v5h50v-5c0-15-10-25-25-25zM50 45a15 15 0 1 0 0-30 15 15 0 0 0 0 30z' fill='%23adb5bd'/%3E%3C/svg%3E" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; z-index: 2;">
+        <div class="spinner-border text-danger" role="status" style="width: 90px; height: 90px; position: absolute; top: -5px; left: -5px; z-index: 1; border-width: 3px;"></div>
+      </div>
+      <p class="mt-3 text-muted fw-bold">กำลังตรวจสอบข้อมูลยืนยันตัว<br>โปรดรอสักครู่...</p>
     </div>
 
     <div id="view-register" class="p-4 hidden text-center">
@@ -90,6 +94,11 @@
         
         const p = await liff.getProfile(); 
         lineId = p.userId;
+        
+        // --- ส่วนที่เพิ่มเข้ามา: สั่งให้เอารูปโปรไฟล์ LINE มาโชว์ในหน้า Loading ทันที ---
+        if (p.pictureUrl) {
+          document.getElementById('loading-pfp').src = p.pictureUrl;
+        }
         
         const response = await fetch(`${GAS_URL}?action=getInitialData&lineId=${lineId}`);
         if(!response.ok) throw new Error("Network response was not ok");
@@ -165,21 +174,18 @@
     }
 
     async function handleSubmit() {
-      // 1. เช็คว่ามีข่าวในระบบหรือไม่
       if (!topicList || topicList.length === 0) {
-        document.getElementById('consentCheck').checked = false; // เอาเครื่องหมายถูกออก
+        document.getElementById('consentCheck').checked = false;
         return TrueSwal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'ขณะนี้ยังไม่มีหัวข้อข่าวสารให้รับทราบ' });
       }
 
       const t = document.getElementById('topicSelect').value;
       
-      // 2. เช็คว่าผู้ใช้ได้เลือกหัวข้อข่าวแล้วหรือยัง
       if (!t || t === "-- ไม่มีข่าว --") {
-        document.getElementById('consentCheck').checked = false; // เอาเครื่องหมายถูกออก
+        document.getElementById('consentCheck').checked = false;
         return TrueSwal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'โปรดเลือกหัวข้อข่าวสารก่อนกดยอมรับ' });
       }
       
-      // ถ้าผ่านเงื่อนไขให้ดำเนินการบันทึกตามปกติ
       document.getElementById('consentCheck').checked = true;
       const payload = { 
         topic: t, 
