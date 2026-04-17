@@ -15,10 +15,11 @@
     .btn-true:active { transform: scale(0.96); box-shadow: 0 2px 8px rgba(255,0,0,0.2); }
     .consent-box { background-color: #fff3cd; border: 1px solid #ffecb5; border-radius: 22px; padding: 18px 22px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; }
     .consent-box:active { transform: scale(0.98); }
-    .profile-card { padding: 15px; background: #fff5f5; border-radius: 20px; display: flex; align-items: center; gap: 15px; margin-bottom: 20px; border: 1px solid #ffe6e6; }
-    .hidden { display: none !important; }
     
-    /* ปรับปรุงขนาดฟอนต์ของ SweetAlert ให้เล็กลงและสวยงามพอดี */
+    /* ปรับปรุง profile-card ใหม่ให้อยู่ตรงกลาง แนวตั้ง */
+    .profile-card { padding: 25px 15px; background: #fff5f5; border-radius: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; margin-bottom: 25px; border: 1px solid #ffe6e6; position: relative; }
+    
+    .hidden { display: none !important; }
     .swal-true-popup { border-radius: 24px !important; padding: 20px !important; font-family: 'Sarabun', sans-serif !important; }
     .swal-true-popup .swal2-title { font-size: 20px !important; font-weight: 700 !important; color: #333 !important; }
     .swal-true-popup .swal2-html-container { font-size: 14px !important; color: #666 !important; }
@@ -64,18 +65,23 @@
       </div>
     </div>
 
-    <div id="view-acknowledge" class="p-4 hidden">
-      <div class="text-center mb-4"><img src="https://img1.pic.in.th/images/True--C.png" style="width:70px"></div>
-      <div class="profile-card">
-        <img id="user-pfp" style="width:60px; height:60px; border-radius:50%; box-shadow: 0 3px 10px rgba(0,0,0,0.1);" src="">
-        <div>
-          <div id="user-name" class="fw-bold text-dark fs-6"></div>
-          <div id="user-meta" class="text-danger small fw-bold"></div>
+    <div id="view-acknowledge" class="p-4 hidden text-center">
+      
+      <img src="https://img1.pic.in.th/images/True--C.png" style="width:75px; margin-bottom: 5px;">
+      <h6 class="fw-bold text-muted mb-3 small">ยินดีต้อนรับเข้าสู่ระบบ</h6>
+      
+      <div class="profile-card mx-auto">
+        <img id="user-pfp" style="width: 75px; height: 75px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 15px rgba(255,0,0,0.15); object-fit: cover;" src="">
+        <div class="mt-1">
+          <div id="user-name" class="fw-bold text-dark fs-5 mb-2"></div>
+          <div id="user-meta" class="badge rounded-pill fw-normal shadow-sm" style="background: linear-gradient(45deg, #ff0000, #ff4d4d); font-size: 13px; padding: 6px 14px; letter-spacing: 0.5px;"></div>
         </div>
       </div>
-      <label class="small fw-bold mb-2 ps-1 text-muted">เลือกหัวข้อข่าวสารที่ต้องการรับทราบ</label>
-      <select id="topicSelect" class="form-select form-select-lg rounded-4 mb-4"></select>
-      <div class="consent-box" onclick="handleSubmit()">
+      
+      <label class="small fw-bold mb-2 ps-1 text-muted text-start w-100">เลือกหัวข้อข่าวสารที่ต้องการรับทราบ</label>
+      <select id="topicSelect" class="form-select form-select-lg rounded-4 mb-4" style="text-align: center; text-align-last: center;"></select>
+      
+      <div class="consent-box text-start" onclick="handleSubmit()">
         <input type="checkbox" id="consentCheck" style="width:24px; height:24px; accent-color:#ff0000;" onclick="event.stopPropagation(); handleSubmit();">
         <label class="m-0 fw-bold small text-warning-emphasis ms-2">รับทราบ และ ปฏิบัติตามอย่างเคร่งครัด</label>
       </div>
@@ -242,7 +248,6 @@
     }
 
     async function callApi(action, payload) {
-      /* --- เปลี่ยนข้อความตรงนี้เป็น "กำลังตรวจสอบ โปรดรอสักครู่..." --- */
       TrueSwal.fire({ title: 'กำลังตรวจสอบ โปรดรอสักครู่...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
       try {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action, payload }) }).then(r => r.json());
