@@ -39,6 +39,10 @@
       
       <input type="text" id="reg-id" class="form-control form-control-lg text-center rounded-4 mb-3" placeholder="รหัสพนักงาน 8 หลัก" oninput="searchEmp(this.value)">
       
+      <div id="reg-loading" class="text-muted small fw-bold mb-3 hidden">
+        <div class="spinner-border spinner-border-sm text-danger me-2" role="status"></div>กำลังตรวจสอบ โปรดรอสักครู่...
+      </div>
+
       <div id="reg-error" class="text-danger small fw-bold mb-3 hidden">
         <i class="fas fa-exclamation-circle"></i> ไม่พบรหัสพนักงานนี้ในระบบ โปรดตรวจสอบอีกครั้ง
       </div>
@@ -81,6 +85,7 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycby-pLn-ACbareuCdomxdkX2Oe1H9gVNseUDb2k-CENm3DX3YrQvbtoFYErSZvHQppU/exec"; 
     
     let lineId, userObj, topicList;
+    let typingTimer; // เพิ่มตัวแปรสำหรับหน่วงเวลาการค้นหา
 
     const TrueSwal = Swal.mixin({
       customClass: { popup: 'swal-true-popup', confirmButton: 'btn-true' },
@@ -95,7 +100,6 @@
         const p = await liff.getProfile(); 
         lineId = p.userId;
         
-        // --- ส่วนที่เพิ่มเข้ามา: สั่งให้เอารูปโปรไฟล์ LINE มาโชว์ในหน้า Loading ทันที ---
         if (p.pictureUrl) {
           document.getElementById('loading-pfp').src = p.pictureUrl;
         }
@@ -133,26 +137,46 @@
       document.getElementById('view-' + v).classList.remove('hidden'); 
     }
 
+    // ปรับปรุงฟังก์ชันค้นหาให้มีสถานะ Loading
     async function searchEmp(id) {
       const regInfo = document.getElementById('reg-info');
       const regError = document.getElementById('reg-error');
+      const regLoading = document.getElementById('reg-loading');
+
+      // ล้างเวลาเก่าออกเมื่อมีการพิมพ์ใหม่
+      clearTimeout(typingTimer);
 
       if (id.length >= 5) {
-        try {
-          const res = await fetch(`${GAS_URL}?action=findEmployee&empId=${id}`).then(r => r.json());
-          if (res) {
-            document.getElementById('reg-name').innerText = res.firstName + " " + res.lastName;
-            document.getElementById('reg-channel').innerText = res.channel;
-            regInfo.classList.remove('hidden');
-            regError.classList.add('hidden');
-          } else { 
-            regInfo.classList.add('hidden'); 
-            regError.classList.remove('hidden');
-          }
-        } catch (e) { console.error(e); }
-      } else {
+        // ซ่อนข้อความอื่น โชว์สถานะกำลังตรวจสอบ
         regInfo.classList.add('hidden');
         regError.classList.add('hidden');
+        regLoading.classList.remove('hidden');
+
+        // หน่วงเวลา 0.6 วินาที รอพิมพ์เสร็จค่อยดึงข้อมูลจาก Server
+        typingTimer = setTimeout(async () => {
+          try {
+            const res = await fetch(`${GAS_URL}?action=findEmployee&empId=${id}`).then(r => r.json());
+            
+            // ปิดสถานะกำลังตรวจสอบเมื่อได้ผลลัพธ์แล้ว
+            regLoading.classList.add('hidden');
+
+            if (res) {
+              document.getElementById('reg-name').innerText = res.firstName + " " + res.lastName;
+              document.getElementById('reg-channel').innerText = res.channel;
+              regInfo.classList.remove('hidden');
+            } else { 
+              regError.classList.remove('hidden');
+            }
+          } catch (e) { 
+            console.error(e); 
+            regLoading.classList.add('hidden');
+          }
+        }, 600); 
+      } else {
+        // ถ้ารหัสยังไม่ถึง 5 ตัว ให้ซ่อนทุกอย่าง
+        regInfo.classList.add('hidden');
+        regError.classList.add('hidden');
+        regLoading.classList.add('hidden');
       }
     }
 
