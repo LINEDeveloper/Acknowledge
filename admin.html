@@ -139,23 +139,22 @@
     }
 
     // ฟังก์ชันดาวน์โหลดไฟล์โดยตรง (อัปเดตเป็นระบบดึง Base64 เพื่อแก้ปัญหาติดบล็อก)
-    async function downloadFile() {
+   async function downloadFile() {
       Swal.fire({
         title: 'กำลังเตรียมไฟล์ดาวน์โหลด...',
-        text: 'โปรดรอสักครู่ ระบบกำลังสร้างไฟล์ Excel',
+        text: 'ระบบกำลังสรุปข้อมูลเฉพาะชีท Data และ Summary Report',
         didOpen: () => Swal.showLoading(),
         allowOutsideClick: false
       });
 
       try {
-        // วิ่งไปขอไฟล์ที่แปลงโค้ดมาแล้วจาก Google Apps Script
+        // เปลี่ยน action เป็น downloadCleanExcel
         const res = await fetch(GAS_URL, {
           method: 'POST',
-          body: JSON.stringify({ action: 'downloadBase64' })
+          body: JSON.stringify({ action: 'downloadCleanExcel' })
         }).then(r => r.json());
 
         if (res && res.base64) {
-          // สร้างลิงก์เสมือนและสั่งคลิกโหลดอัตโนมัติ
           const dataUrl = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + res.base64;
           const a = document.createElement('a');
           a.href = dataUrl;
@@ -164,13 +163,13 @@
           a.click();
           document.body.removeChild(a);
 
-          Swal.fire({ icon: 'success', title: 'ดาวน์โหลดสำเร็จ', timer: 2000, showConfirmButton: false });
+          Swal.fire({ icon: 'success', title: 'ดาวน์โหลดสำเร็จ', text: 'ได้ไฟล์สรุปข้อมูลเรียบร้อยแล้ว', timer: 2000, showConfirmButton: false });
         } else {
-          throw new Error("ไม่มีข้อมูลไฟล์");
+          throw new Error("Data missing");
         }
       } catch (error) {
         Swal.close();
-        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถดาวน์โหลดไฟล์ได้ โปรดลองอีกครั้ง', 'error');
+        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถสรุปไฟล์ได้ในขณะนี้', 'error');
       }
     }
 
