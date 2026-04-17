@@ -9,20 +9,25 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { font-family: 'Sarabun', sans-serif; background-color: #f8f9fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+    /* เพิ่ม flex-direction: column เพื่อให้ Card กับ Footer เรียงต่อกันแนวตั้ง */
+    body { font-family: 'Sarabun', sans-serif; background-color: #f8f9fa; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px 0; }
+    
     .main-card { background: white; width: 100%; max-width: 420px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid #f1f1f1; margin: 15px; }
     .btn-true { background: linear-gradient(45deg, #ff0000, #ff4d4d); color: white; border: none; border-radius: 50px; padding: 12px 24px; font-weight: 700; width: 100%; box-shadow: 0 4px 15px rgba(255,0,0,0.25); transition: 0.3s; cursor: pointer; }
     .btn-true:active { transform: scale(0.96); box-shadow: 0 2px 8px rgba(255,0,0,0.2); }
     .consent-box { background-color: #fff3cd; border: 1px solid #ffecb5; border-radius: 22px; padding: 18px 22px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; }
     .consent-box:active { transform: scale(0.98); }
-    
-    /* ปรับปรุง profile-card ใหม่ให้อยู่ตรงกลาง แนวตั้ง */
     .profile-card { padding: 25px 15px; background: #fff5f5; border-radius: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; margin-bottom: 25px; border: 1px solid #ffe6e6; position: relative; }
-    
     .hidden { display: none !important; }
+    
     .swal-true-popup { border-radius: 24px !important; padding: 20px !important; font-family: 'Sarabun', sans-serif !important; }
     .swal-true-popup .swal2-title { font-size: 20px !important; font-weight: 700 !important; color: #333 !important; }
     .swal-true-popup .swal2-html-container { font-size: 14px !important; color: #666 !important; }
+
+    /* ตกแต่ง Footer ให้สวยงามเข้ากับธีม */
+    .footer { text-align: center; font-size: 11px; color: #888; margin-top: 5px; line-height: 1.6; }
+    .footer a { color: #cc0000; text-decoration: none; font-weight: bold; transition: 0.2s; }
+    .footer a:hover { text-decoration: underline; color: #ff0000; }
   </style>
 </head>
 <body>
@@ -66,7 +71,6 @@
     </div>
 
     <div id="view-acknowledge" class="p-4 hidden text-center">
-      
       <img src="https://img1.pic.in.th/images/True--C.png" style="width:75px; margin-bottom: 5px;">
       <h6 class="fw-bold text-muted mb-3 small">ยินดีต้อนรับเข้าสู่ระบบ</h6>
       
@@ -93,6 +97,11 @@
       <p class="text-muted small mb-4">ข้อมูลของท่านถูกบันทึกเข้าระบบเรียบร้อย</p>
       <button class="btn-true" onclick="liff.closeWindow()">ปิดหน้าต่าง</button>
     </div>
+  </div>
+
+  <div class="footer">
+    บริษัท ทรู คอร์ปอเรชั่น จำกัด (มหาชน)<br>
+    <a href="privacy.html" target="_blank">นโยบายความเป็นส่วนตัว (Privacy Policy)</a>
   </div>
 
   <script>
