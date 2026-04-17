@@ -35,6 +35,10 @@
       
       <input type="text" id="reg-id" class="form-control form-control-lg text-center rounded-4 mb-3" placeholder="รหัสพนักงาน 8 หลัก" oninput="searchEmp(this.value)">
       
+      <div id="reg-error" class="text-danger small fw-bold mb-3 hidden">
+        <i class="fas fa-exclamation-circle"></i> ไม่พบรหัสพนักงานนี้ในระบบ โปรดตรวจสอบอีกครั้ง
+      </div>
+
       <div id="reg-info" class="hidden text-start">
         <div class="p-3 mb-4 rounded-4" style="background:#fcfcfc; border-left: 5px solid #ff0000; box-shadow: inset 0 0 5px rgba(0,0,0,0.02);">
           <div id="reg-name" class="fw-bold text-dark fs-5"></div>
@@ -120,20 +124,27 @@
       document.getElementById('view-' + v).classList.remove('hidden'); 
     }
 
+    // ปรับแก้การดึงข้อมูลและแสดง Error
     async function searchEmp(id) {
+      const regInfo = document.getElementById('reg-info');
+      const regError = document.getElementById('reg-error');
+
       if (id.length >= 5) {
         try {
           const res = await fetch(`${GAS_URL}?action=findEmployee&empId=${id}`).then(r => r.json());
           if (res) {
             document.getElementById('reg-name').innerText = res.firstName + " " + res.lastName;
             document.getElementById('reg-channel').innerText = res.channel;
-            document.getElementById('reg-info').classList.remove('hidden');
+            regInfo.classList.remove('hidden');
+            regError.classList.add('hidden');
           } else { 
-            document.getElementById('reg-info').classList.add('hidden'); 
+            regInfo.classList.add('hidden'); 
+            regError.classList.remove('hidden');
           }
         } catch (e) { console.error(e); }
       } else {
-        document.getElementById('reg-info').classList.add('hidden');
+        regInfo.classList.add('hidden');
+        regError.classList.add('hidden');
       }
     }
 
