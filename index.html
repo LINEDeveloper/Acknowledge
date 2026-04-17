@@ -2,7 +2,6 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>True Corporation</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -10,9 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    /* เพิ่ม flex-direction: column เพื่อให้ Card กับ Footer เรียงต่อกันแนวตั้ง */
     body { font-family: 'Sarabun', sans-serif; background-color: #f8f9fa; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px 0; }
-    
     .main-card { background: white; width: 100%; max-width: 420px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid #f1f1f1; margin: 15px; }
     .btn-true { background: linear-gradient(45deg, #ff0000, #ff4d4d); color: white; border: none; border-radius: 50px; padding: 12px 24px; font-weight: 700; width: 100%; box-shadow: 0 4px 15px rgba(255,0,0,0.25); transition: 0.3s; cursor: pointer; }
     .btn-true:active { transform: scale(0.96); box-shadow: 0 2px 8px rgba(255,0,0,0.2); }
@@ -20,12 +17,9 @@
     .consent-box:active { transform: scale(0.98); }
     .profile-card { padding: 25px 15px; background: #fff5f5; border-radius: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; margin-bottom: 25px; border: 1px solid #ffe6e6; position: relative; }
     .hidden { display: none !important; }
-    
     .swal-true-popup { border-radius: 24px !important; padding: 20px !important; font-family: 'Sarabun', sans-serif !important; }
     .swal-true-popup .swal2-title { font-size: 20px !important; font-weight: 700 !important; color: #333 !important; }
     .swal-true-popup .swal2-html-container { font-size: 14px !important; color: #666 !important; }
-
-    /* ตกแต่ง Footer ให้สวยงามเข้ากับธีม */
     .footer { text-align: center; font-size: 11px; color: #888; margin-top: 5px; line-height: 1.6; }
     .footer a { color: #cc0000; text-decoration: none; font-weight: bold; transition: 0.2s; }
     .footer a:hover { text-decoration: underline; color: #ff0000; }
@@ -48,7 +42,7 @@
       <h5 class="fw-bold">ผูกบัญชีใช้งาน</h5>
       <p class="text-muted small mb-4">กรุณาระบุรหัสพนักงานเพื่อเชื่อมต่อ LINE</p>
       
-      <input type="text" id="reg-id" class="form-control form-control-lg text-center rounded-4 mb-3" placeholder="รหัสพนักงาน" oninput="searchEmp(this.value)">
+      <input type="text" id="reg-id" class="form-control form-control-lg text-center rounded-4 mb-3" placeholder="รหัสพนักงาน 8 หลัก" oninput="searchEmp(this.value)">
       
       <div id="reg-loading" class="text-muted small fw-bold mb-3 hidden">
         <div class="spinner-border spinner-border-sm text-danger me-2" role="status"></div>กำลังตรวจสอบ โปรดรอสักครู่...
@@ -102,7 +96,7 @@
 
   <div class="footer">
     บริษัท ทรู คอร์ปอเรชั่น จำกัด (มหาชน)<br>
-    <a href="https://linedeveloper.github.io/True/privacy.html" target="_blank">นโยบายความเป็นส่วนตัว (Privacy Policy)</a>
+    <a href="privacy.html" target="_blank">นโยบายความเป็นส่วนตัว (Privacy Policy)</a>
   </div>
 
   <script>
@@ -138,7 +132,8 @@
         if (res.isRegistered) {
           userObj = res.user;
           document.getElementById('user-pfp').src = p.pictureUrl;
-          document.getElementById('user-name').innerText = userObj.firstName + " " + userObj.lastName;
+          // แสดงผลชื่อแบบคอลัมน์เดียว
+          document.getElementById('user-name').innerText = userObj.fullName;
           document.getElementById('user-meta').innerText = "ID: " + userObj.empId + " | " + userObj.channel;
           
           const sel = document.getElementById('topicSelect');
@@ -182,7 +177,8 @@
             regLoading.classList.add('hidden');
 
             if (res) {
-              document.getElementById('reg-name').innerText = res.firstName + " " + res.lastName;
+              // ดึงข้อมูลชื่อจาก fullName
+              document.getElementById('reg-name').innerText = res.fullName;
               document.getElementById('reg-channel').innerText = res.channel;
               regInfo.classList.remove('hidden');
               
@@ -209,11 +205,11 @@
     }
 
     async function confirmReg() {
+      // ส่งข้อมูล fullName ไปบันทึกโดยไม่ต้อง split
       const payload = { 
         lineId, 
         empId: document.getElementById('reg-id').value, 
-        firstName: document.getElementById('reg-name').innerText.split(' ')[0], 
-        lastName: document.getElementById('reg-name').innerText.split(' ')[1], 
+        fullName: document.getElementById('reg-name').innerText, 
         channel: document.getElementById('reg-channel').innerText 
       };
       
@@ -242,7 +238,7 @@
       const payload = { 
         topic: t, 
         empId: userObj.empId, 
-        fullName: userObj.firstName + " " + userObj.lastName, 
+        fullName: userObj.fullName, // ใช้ fullName ได้เลย
         channel: userObj.channel, 
         category: (topicList.find(x => x.name === t) || {}).category, 
         device: "LINE (" + liff.getOS() + ")" 
