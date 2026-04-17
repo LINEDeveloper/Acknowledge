@@ -124,7 +124,6 @@
       document.getElementById('view-' + v).classList.remove('hidden'); 
     }
 
-    // ปรับแก้การดึงข้อมูลและแสดง Error
     async function searchEmp(id) {
       const regInfo = document.getElementById('reg-info');
       const regError = document.getElementById('reg-error');
@@ -166,9 +165,21 @@
     }
 
     async function handleSubmit() {
+      // 1. เช็คว่ามีข่าวในระบบหรือไม่
+      if (!topicList || topicList.length === 0) {
+        document.getElementById('consentCheck').checked = false; // เอาเครื่องหมายถูกออก
+        return TrueSwal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'ขณะนี้ยังไม่มีหัวข้อข่าวสารให้รับทราบ' });
+      }
+
       const t = document.getElementById('topicSelect').value;
-      if (!t) return TrueSwal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'โปรดเลือกหัวข้อข่าวสารก่อนกดยอมรับ' });
       
+      // 2. เช็คว่าผู้ใช้ได้เลือกหัวข้อข่าวแล้วหรือยัง
+      if (!t || t === "-- ไม่มีข่าว --") {
+        document.getElementById('consentCheck').checked = false; // เอาเครื่องหมายถูกออก
+        return TrueSwal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'โปรดเลือกหัวข้อข่าวสารก่อนกดยอมรับ' });
+      }
+      
+      // ถ้าผ่านเงื่อนไขให้ดำเนินการบันทึกตามปกติ
       document.getElementById('consentCheck').checked = true;
       const payload = { 
         topic: t, 
