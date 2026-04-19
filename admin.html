@@ -3,25 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>True Corporation</title>
+  <title>Admin Dashboard | True Acknowledge System</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <style>
     body { font-family: 'Sarabun', sans-serif; background-color: #f4f6f9; color: #333; }
     .top-header { background: linear-gradient(45deg, #ff0000, #cc0000); color: white; padding: 20px 30px; border-radius: 0 0 20px 20px; box-shadow: 0 4px 15px rgba(255,0,0,0.2); display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
     .card-stat { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; border: 1px solid #eee; }
     .card-stat h3 { color: #ff0000; font-weight: bold; font-size: 36px; margin-bottom: 5px; }
     
-    /* สไตล์กลุ่มปุ่ม Action */
-    .btn-action-group { display: flex; gap: 10px; }
+    .btn-action-group { display: flex; flex-wrap: wrap; gap: 10px; }
     .btn-custom { border: none; padding: 10px 22px; border-radius: 50px; font-weight: bold; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.15); font-size: 14px; }
-    .btn-email { background: white; color: #ff0000; }
+    
+    /* สไตล์ปุ่มต่างๆ */
+    .btn-add { background: #ffffff; color: #ff0000; }
+    .btn-add:hover { background: #ffe6e6; transform: translateY(-2px); }
+    .btn-email { background: #fff5f5; color: #ff0000; border: 1px solid #ffe6e6; }
     .btn-email:hover { background: #ffe6e6; transform: translateY(-2px); }
     .btn-download { background: #333; color: white; }
     .btn-download:hover { background: #000; transform: translateY(-2px); }
     
+    /* ปุ่มกดยืนยันใน Form (สไตล์ True) */
+    .btn-true { background: linear-gradient(45deg, #ff0000, #ff4d4d); color: white; border: none; border-radius: 50px; padding: 12px 24px; font-weight: 700; width: 100%; box-shadow: 0 4px 15px rgba(255,0,0,0.25); transition: 0.3s; cursor: pointer; }
+    .btn-true:active { transform: scale(0.96); box-shadow: 0 2px 8px rgba(255,0,0,0.2); }
+
     .table-container { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); border: 1px solid #eee; }
     .status-active { background-color: #e6f4ea; color: #1e8e3e; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
     .status-expired { background-color: #f1f3f4; color: #5f6368; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
@@ -38,6 +46,9 @@
       </div>
       
       <div class="btn-action-group">
+        <button class="btn-custom btn-add" onclick="showAddTopicModal()">
+          <i class="fas fa-plus-circle me-1"></i> เพิ่มหัวข้อข่าว
+        </button>
         <button class="btn-custom btn-download" onclick="downloadFile()">
           <i class="fas fa-download me-1"></i> ดาวน์โหลดไฟล์
         </button>
@@ -90,6 +101,46 @@
     </div>
   </div>
 
+  <div class="modal fade" id="addTopicModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 20px; border: none;">
+        <div class="modal-header" style="background: linear-gradient(45deg, #ff0000, #cc0000); color: white; border-radius: 20px 20px 0 0;">
+          <h5 class="modal-title fw-bold"><i class="fas fa-file-alt me-2"></i> เพิ่มหัวข้อข่าวสารใหม่</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-muted">ชื่อหัวข้อข่าวสาร</label>
+            <input type="text" id="newTopicName" class="form-control form-control-lg rounded-4" placeholder="เช่น แคมเปญ 7,000 ก้าว">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-muted">วันที่เริ่ม (ค.ศ.)</label>
+            <input type="date" id="newTopicStart" class="form-control rounded-4">
+          </div>
+          <div class="row mb-3">
+            <div class="col-6">
+              <label class="form-label fw-bold small text-muted">วันที่สิ้นสุด (ค.ศ.)</label>
+              <input type="date" id="newTopicEnd" class="form-control rounded-4">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-bold small text-muted">เวลาสิ้นสุด</label>
+              <input type="time" id="newTopicTime" class="form-control rounded-4" value="23:59">
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-bold small text-muted">ประเภท</label>
+            <select id="newTopicCat" class="form-select rounded-4">
+              <option value="Shop">Shop</option>
+              <option value="Non Shop">Non Shop</option>
+              <option value="All">All</option>
+            </select>
+          </div>
+          <button class="btn-true w-100" onclick="saveNewTopic()">บันทึกเข้าระบบ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycby-pLn-ACbareuCdomxdkX2Oe1H9gVNseUDb2k-CENm3DX3YrQvbtoFYErSZvHQppU/exec";
 
@@ -118,7 +169,6 @@
       }
     }
 
-    // ฟังก์ชันส่งเข้าอีเมล Admin
     async function exportReport() {
       Swal.fire({
         title: 'กำลังส่งอีเมล...',
@@ -138,17 +188,15 @@
       }
     }
 
-    // ฟังก์ชันดาวน์โหลดไฟล์โดยตรง (อัปเดตเป็นระบบดึง Base64 เพื่อแก้ปัญหาติดบล็อก)
-   async function downloadFile() {
+    async function downloadFile() {
       Swal.fire({
         title: 'กำลังเตรียมไฟล์ดาวน์โหลด...',
-        text: 'ระบบกำลังสรุปข้อมูลเฉพาะชีท Data และ Summary Report',
+        text: 'โปรดรอสักครู่ ระบบกำลังสร้างไฟล์ Excel',
         didOpen: () => Swal.showLoading(),
         allowOutsideClick: false
       });
 
       try {
-        // เปลี่ยน action เป็น downloadCleanExcel
         const res = await fetch(GAS_URL, {
           method: 'POST',
           body: JSON.stringify({ action: 'downloadCleanExcel' })
@@ -163,13 +211,66 @@
           a.click();
           document.body.removeChild(a);
 
-          Swal.fire({ icon: 'success', title: 'ดาวน์โหลดสำเร็จ', text: 'ได้ไฟล์สรุปข้อมูลเรียบร้อยแล้ว', timer: 2000, showConfirmButton: false });
+          Swal.fire({ icon: 'success', title: 'ดาวน์โหลดสำเร็จ', timer: 2000, showConfirmButton: false });
         } else {
-          throw new Error("Data missing");
+          throw new Error("ไม่มีข้อมูลไฟล์");
         }
       } catch (error) {
         Swal.close();
-        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถสรุปไฟล์ได้ในขณะนี้', 'error');
+        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถดาวน์โหลดไฟล์ได้ โปรดลองอีกครั้ง', 'error');
+      }
+    }
+
+    // --- ส่วนที่เพิ่มใหม่: ฟังก์ชันสำหรับเปิด Modal และบันทึกข่าวสาร ---
+    
+    // เปิดหน้าต่างฟอร์ม
+    function showAddTopicModal() {
+      const modal = new bootstrap.Modal(document.getElementById('addTopicModal'));
+      modal.show();
+    }
+
+    // ส่งข้อมูลไปบันทึก
+    async function saveNewTopic() {
+      const name = document.getElementById('newTopicName').value;
+      const startDate = document.getElementById('newTopicStart').value;
+      const endDate = document.getElementById('newTopicEnd').value;
+      const endTime = document.getElementById('newTopicTime').value;
+      const cat = document.getElementById('newTopicCat').value;
+
+      if (!name || !startDate || !endDate || !endTime) {
+        return Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบถ้วนก่อนบันทึก', 'warning');
+      }
+
+      // จัดฟอร์แมตวันที่ให้ Google Sheets (YYYY-MM-DD HH:mm:ss)
+      const payload = {
+        name: name,
+        startDate: startDate + " 00:00:00",
+        endDate: endDate + " " + endTime + ":00",
+        category: cat
+      };
+
+      Swal.fire({ title: 'กำลังบันทึกข้อมูล...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+
+      try {
+        const res = await fetch(GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'addTopic', payload: payload })
+        }).then(r => r.json());
+
+        if (res === 'Success') {
+          // ปิด Modal อัตโนมัติ
+          bootstrap.Modal.getInstance(document.getElementById('addTopicModal')).hide();
+          
+          Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', text: 'ระบบได้เพิ่มหัวข้อข่าวเรียบร้อยแล้ว', timer: 2000, showConfirmButton: false });
+          
+          // ล้างค่าฟอร์มให้ว่างเพื่อเตรียมกรอกครั้งถัดไป
+          document.getElementById('newTopicName').value = '';
+          
+          // โหลดตารางใหม่แบบ Real-time ทันที
+          loadStats();
+        }
+      } catch (error) {
+        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้ โปรดลองอีกครั้ง', 'error');
       }
     }
 
