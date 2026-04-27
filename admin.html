@@ -103,7 +103,7 @@
 
     <div class="table-container">
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <h5 class="fw-bold m-0"><i class="fas fa-list-alt text-danger me-2"></i> รายการทั้งหมด</h5>
+        <h5 class="fw-bold m-0"><i class="fas fa-list-alt text-danger me-2"></i> หัวข่าวสาร</h5>
         <button class="btn btn-true btn-sm px-4" onclick="addTopic()"><i class="fas fa-plus me-1"></i> เพิ่มหัวข้อใหม่</button>
       </div>
       
@@ -120,7 +120,7 @@
             </tr>
           </thead>
           <tbody id="table-body">
-            </tbody>
+          </tbody>
         </table>
       </div>
     </div>
@@ -128,10 +128,10 @@
   </div>
 
   <script>
-    // ⚠️ ใส่ GAS_URL ของคุณหลังจาก Deploy New Version
     const GAS_URL = "https://script.google.com/macros/s/AKfycby-pLn-ACbareuCdomxdkX2Oe1H9gVNseUDb2k-CENm3DX3YrQvbtoFYErSZvHQppU/exec"; 
 
     let globalTopicStats = {}; 
+    let topicCategoryMap = {}; // ตัวแปรเก็บประเภทของแต่ละหัวข้อข่าว
     let chartInstances = {};   
 
     async function loadData() {
@@ -148,6 +148,8 @@
         selector.innerHTML = '<option value="" disabled selected>-- โปรดเลือกหัวข้อข่าวสาร --</option>';
         res.topics.forEach(t => {
           selector.innerHTML += `<option value="${t.name}">${t.name}</option>`;
+          // เก็บหมวดหมู่ของข่าวไว้ใช้งานตอนกรองกราฟ
+          topicCategoryMap[t.name] = t.category;
         });
 
         const tbody = document.getElementById('table-body');
@@ -156,7 +158,6 @@
           tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">ยังไม่มีข้อมูล</td></tr>';
         } else {
           res.topics.forEach(t => {
-            // เอา Badge ออก ใช้ Text Color ปกติและไอคอนจุดให้ดูคลีนๆ
             const statusColor = t.status === "กำลังดำเนินการ" ? "text-success" : "text-secondary";
             const icon = t.status === "กำลังดำเนินการ" ? "fa-circle-dot" : "fa-circle-stop";
             
@@ -183,17 +184,33 @@
       }
     }
 
+    // ฟังก์ชันตรวจสอบกลุ่มช่องทางว่าเป็น Shop หรือไม่
+    function isShopChannel(name) {
+      const n = name.toLowerCase();
+      return n.includes("shop") || n.includes("coco") || n.includes("hall");
+    }
+
     function updateCharts(topicName) {
       const container = document.getElementById('chart-container');
       container.innerHTML = ''; 
       
       const stats = globalTopicStats[topicName];
+      const topicCat = (topicCategoryMap[topicName] || "").toLowerCase();
+      
       if (!stats) return;
 
+      // กรองช่องทางตามประเภทหัวข้อข่าว
+      const isShopTopic = topicCat.includes("shop");
+      const isNonShopTopic = topicCat === "non shop";
+
       for (let ch in stats) {
+        // --- ส่วนเงื่อนไขการกรองกราฟ ---
+        if (isShopTopic && !isShopChannel(ch)) continue; // ถ้าข่าวเป็น Shop แต่ช่องทางไม่ใช่ Shop ให้ข้าม
+        if (isNonShopTopic && isShopChannel(ch)) continue; // ถ้าข่าวเป็น Non Shop แต่ช่องทางเป็น Shop ให้ข้าม
+        // ---------------------------
+
         const data = stats[ch];
         const notAcked = data.total - data.acked;
-        
         const percent = data.total > 0 ? Math.round((data.acked / data.total) * 100) : 0;
 
         const col = document.createElement('div');
@@ -227,9 +244,7 @@
         `;
         container.appendChild(col);
 
-        if (chartInstances[ch]) {
-          chartInstances[ch].destroy();
-        }
+        if (chartInstances[ch]) chartInstances[ch].destroy();
 
         const ctx = document.getElementById(`chart-${ch}`).getContext('2d');
         chartInstances[ch] = new Chart(ctx, {
@@ -249,6 +264,11 @@
             responsive: true
           }
         });
+      }
+
+      // กรณีไม่พบข้อมูลที่ตรงเงื่อนไขกรอง
+      if (container.innerHTML === '') {
+        container.innerHTML = '<div class="col-12 text-center text-muted py-5"><p>ไม่มีกลุ่มเป้าหมายที่ตรงกับประเภทข่าวนี้</p></div>';
       }
     }
 
@@ -338,7 +358,7 @@
         confirmButtonText: 'ใช่, ส่งอีเมลเลย!'
       }).then((result) => {
         if (result.isConfirmed) {
-          callApi('exportReport', {}, 'กำลังสร้างและส่งอีเมล... อาจใช้เวลาสักครู่');
+          callApi('exportReport', {}, 'กำลังสร้างและส่งอีเมล...');
         }
       });
     }
@@ -359,7 +379,7 @@
       const { value: selectedChannel, isConfirmed } = await Swal.fire({
         title: 'ดาวน์โหลดรายงาน Excel',
         html: `
-          <div class="text-start mb-2 fw-bold text-muted" style="font-size: 14px;">เลือกระบุช่องทาง (Channel) ที่ต้องการสรุปข้อมูล:</div>
+          <div class="text-start mb-2 fw-bold text-muted" style="font-size: 14px;">ระบุช่องทาง (Channel) ที่ต้องการสรุปข้อมูล:</div>
           <select id="export-channel" class="form-select form-select-lg" style="border-radius: 12px;">
             ${optionsHtml}
           </select>
@@ -374,7 +394,7 @@
       });
 
       if (isConfirmed) {
-        Swal.fire({ title: 'กำลังเตรียมไฟล์ Excel...', text: 'โปรดรอสักครู่ ระบบกำลังจัดเตรียมข้อมูลตามกลุ่มที่คุณเลือก', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+        Swal.fire({ title: 'กำลังเตรียมไฟล์ Excel...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
         try {
           const res = await fetch(GAS_URL, { 
             method: 'POST', 
@@ -385,11 +405,9 @@
           if(res && res.base64) {
             const link = document.createElement('a');
             link.href = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + res.base64;
-            
             const safeChannelName = selectedChannel === "All" ? "All_Channels" : selectedChannel.replace(/\s+/g, '_');
             link.download = res.fileName.replace('.xlsx', `_${safeChannelName}.xlsx`);
             link.click();
-            
             Swal.fire('สำเร็จ!', 'ดาวน์โหลดไฟล์ Excel เรียบร้อยแล้ว', 'success');
           }
         } catch (e) {
