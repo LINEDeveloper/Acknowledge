@@ -82,7 +82,32 @@
       </div>
     </div>
 
-    <div class="table-container mb-4" style="background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);">
+    <div class="table-container mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="fw-bold m-0"><i class="fas fa-list-alt text-danger me-2"></i> หัวข้อข่าวสาร</h5>
+        <button class="btn btn-true btn-sm px-4" onclick="addTopic()"><i class="fas fa-plus me-1"></i> เพิ่มหัวข้อใหม่</button>
+      </div>
+      
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th class="text-start">หัวข้อข่าวสาร</th>
+              <th>ประเภท</th>
+              <th>วันเริ่ม</th>
+              <th>วันสิ้นสุด</th>
+              <th>ยอดรับทราบ</th>
+              <th>สถานะ</th>
+              <th>จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="table-container" style="background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);">
       <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
         <h5 class="fw-bold m-0"><i class="fas fa-chart-donut text-danger me-2"></i> %รับทราบหัวข้อ แยกตามช่องทาง</h5>
         <div class="d-flex align-items-center gap-2">
@@ -96,32 +121,8 @@
       <div class="row g-4" id="chart-container">
         <div class="col-12 text-center text-muted py-5">
           <i class="fas fa-chart-pie mb-2" style="font-size: 40px; opacity: 0.2;"></i>
-          <p class="m-0">โปรดเลือกหัวข้อข่าวสารเพื่อดู %รับทราบ</p>
+          <p class="m-0">โปรดเลือกหัวข้อข่าวสารด้านบนเพื่อดู %รับทราบ</p>
         </div>
-      </div>
-    </div>
-
-    <div class="table-container">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h5 class="fw-bold m-0"><i class="fas fa-list-alt text-danger me-2"></i> หัวข่าวสาร</h5>
-        <button class="btn btn-true btn-sm px-4" onclick="addTopic()"><i class="fas fa-plus me-1"></i> เพิ่มหัวข้อใหม่</button>
-      </div>
-      
-      <div class="table-responsive">
-        <table class="table table-hover align-middle">
-          <thead>
-            <tr>
-              <th class="text-start">หัวข้อข่าวสาร</th>
-              <th>ประเภท</th>
-              <th>วันเริ่ม</th>  <th>วันสิ้นสุด</th>
-              <th>ยอดรับทราบ</th>
-              <th>สถานะ</th>
-              <th>จัดการ</th>
-            </tr>
-          </thead>
-          <tbody id="table-body">
-          </tbody>
-        </table>
       </div>
     </div>
 
@@ -164,7 +165,8 @@
               <tr>
                 <td class="text-start fw-bold text-dark">${t.name}</td>
                 <td class="text-secondary">${t.category}</td>
-                <td>${t.startDate}</td> <td>${t.endDate}</td>
+                <td>${t.startDate}</td>
+                <td>${t.endDate}</td>
                 <td><h5 class="m-0 fw-bold text-danger">${t.count}</h5></td>
                 <td class="${statusColor} fw-bold"><i class="fas ${icon} me-1" style="font-size:10px;"></i> ${t.status}</td>
                 <td>
