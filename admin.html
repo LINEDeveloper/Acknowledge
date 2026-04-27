@@ -1,298 +1,308 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>Admin Dashboard | True Acknowledge</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | True Acknowledge System</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <style>
     body { font-family: 'Sarabun', sans-serif; background-color: #f4f6f9; color: #333; }
-    .navbar-true { background: linear-gradient(90deg, #ff0000, #cc0000); padding: 15px 20px; box-shadow: 0 4px 10px rgba(255,0,0,0.15); }
-    .navbar-true .navbar-brand { color: white; font-weight: 700; font-size: 24px; letter-spacing: 0.5px; }
-    .stat-card { background: #fff; border-radius: 20px; padding: 25px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); border: 1px solid #f0f0f0; display: flex; align-items: center; gap: 20px; transition: 0.3s; }
-    .stat-card:hover { transform: translateY(-5px); box-shadow: 0 12px 25px rgba(0,0,0,0.08); }
-    .stat-icon { width: 60px; height: 60px; border-radius: 15px; display: flex; justify-content: center; align-items: center; font-size: 28px; }
-    .bg-red-light { background: #ffe6e6; color: #ff0000; }
-    .bg-blue-light { background: #e6f0ff; color: #0066ff; }
-    .table-container { background: #fff; border-radius: 20px; padding: 25px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); border: 1px solid #f0f0f0; margin-top: 30px; }
-    .btn-true { background: linear-gradient(45deg, #ff0000, #ff4d4d); color: white; border: none; border-radius: 50px; padding: 10px 25px; font-weight: 600; transition: 0.2s; }
-    .btn-true:hover { background: linear-gradient(45deg, #cc0000, #ff0000); color: white; transform: scale(1.05); }
-    .btn-outline-true { border: 2px solid #ff0000; color: #ff0000; border-radius: 50px; padding: 8px 20px; font-weight: 600; transition: 0.2s; background: transparent; }
-    .btn-outline-true:hover { background: #ff0000; color: white; }
-    .table thead th { background: #f8f9fa; color: #555; border-bottom: 2px solid #eee; padding: 15px; font-weight: 600; text-align: center; }
-    .table tbody td { padding: 15px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f1f1f1; }
-    .badge-status { padding: 8px 15px; border-radius: 50px; font-size: 13px; font-weight: 600; }
-    .status-active { background: #e6ffed; color: #00b33c; }
-    .status-expired { background: #f2f2f2; color: #888; }
-    .badge-cat { padding: 5px 12px; border-radius: 8px; font-size: 12px; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
-    #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .top-header { background: linear-gradient(45deg, #ff0000, #cc0000); color: white; padding: 20px 30px; border-radius: 0 0 20px 20px; box-shadow: 0 4px 15px rgba(255,0,0,0.2); display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
+    .card-stat { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; border: 1px solid #eee; }
+    .card-stat h3 { color: #ff0000; font-weight: bold; font-size: 36px; margin-bottom: 5px; }
+    
+    .btn-action-group { display: flex; flex-wrap: wrap; gap: 10px; }
+    .btn-custom { border: none; padding: 10px 22px; border-radius: 50px; font-weight: bold; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.15); font-size: 14px; }
+    
+    .btn-add { background: #ffffff; color: #ff0000; }
+    .btn-add:hover { background: #ffe6e6; transform: translateY(-2px); }
+    .btn-email { background: #fff5f5; color: #ff0000; border: 1px solid #ffe6e6; }
+    .btn-email:hover { background: #ffe6e6; transform: translateY(-2px); }
+    .btn-download { background: #333; color: white; }
+    .btn-download:hover { background: #000; transform: translateY(-2px); }
+    
+    .btn-true { background: linear-gradient(45deg, #ff0000, #ff4d4d); color: white; border: none; border-radius: 50px; padding: 12px 24px; font-weight: 700; width: 100%; box-shadow: 0 4px 15px rgba(255,0,0,0.25); transition: 0.3s; cursor: pointer; }
+    .btn-true:active { transform: scale(0.96); box-shadow: 0 2px 8px rgba(255,0,0,0.2); }
+
+    .table-container { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); border: 1px solid #eee; }
+    .status-active { background-color: #e6f4ea; color: #1e8e3e; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+    .status-expired { background-color: #f1f3f4; color: #5f6368; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+    
+    /* สไตล์ปุ่มแก้ไขในตาราง */
+    .btn-table-edit { color: #888; background: #f8f9fa; border: 1px solid #ddd; width: 32px; height: 32px; display: inline-flex; justify-content: center; align-items: center; border-radius: 50%; transition: 0.2s; }
+    .btn-table-edit:hover { background: #fff5f5; color: #ff0000; border-color: #ff0000; }
   </style>
 </head>
 <body>
 
-  <div id="loading-overlay">
-    <div class="spinner-border text-danger" style="width: 3rem; height: 3rem;" role="status"></div>
-    <h5 class="mt-3 fw-bold text-danger">กำลังโหลดข้อมูลกลุ่มเป้าหมาย...</h5>
-  </div>
-
-  <nav class="navbar navbar-true mb-4">
-    <div class="container">
-      <span class="navbar-brand mb-0 h1"><i class="fas fa-chart-pie me-2"></i> True Acknowledge | Admin Dashboard</span>
-    </div>
-  </nav>
-
-  <div class="container mb-5">
+  <div class="container-fluid px-4 max-w-1200" style="max-width: 1200px; margin: 0 auto;">
     
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-      <h4 class="fw-bold m-0"><i class="fas fa-tachometer-alt me-2 text-danger"></i> ภาพรวมระบบ (เฉพาะกลุ่มเป้าหมาย)</h4>
-      <div class="d-flex gap-2">
-        <button class="btn btn-outline-true" onclick="downloadExcel()"><i class="fas fa-file-excel me-1"></i> โหลดไฟล์ Excel</button>
-        <button class="btn btn-true" onclick="exportReport()"><i class="fas fa-envelope me-1"></i> ส่งรายงานเข้า Email</button>
-      </div>
-    </div>
-
-    <div class="row g-4">
-      <div class="col-md-6">
-        <div class="stat-card">
-          <div class="stat-icon bg-blue-light"><i class="fas fa-users"></i></div>
-          <div>
-            <p class="text-muted m-0 small fw-bold">พนักงานกลุ่มเป้าหมายทั้งหมด (Target Users)</p>
-            <h2 class="fw-bold m-0" id="total-users">0</h2>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="stat-card">
-          <div class="stat-icon bg-red-light"><i class="fas fa-check-double"></i></div>
-          <div>
-            <p class="text-muted m-0 small fw-bold">ยอดการรับทราบรวม (จากกลุ่มเป้าหมาย)</p>
-            <h2 class="fw-bold text-danger m-0" id="total-ack">0</h2>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="table-container">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h5 class="fw-bold m-0">รายการข่าวสารและแคมเปญ</h5>
-        <button class="btn btn-true btn-sm px-4" onclick="addTopic()"><i class="fas fa-plus me-1"></i> เพิ่มหัวข้อใหม่</button>
+    <div class="top-header">
+      <div>
+        <h2 class="m-0 fw-bold"><i class="fas fa-user-shield me-2"></i> Admin Management</h2>
+        <p class="m-0 opacity-75 small">ระบบรายงานผลการรับทราบข้อมูล | Channel Communication</p>
       </div>
       
-      <div class="table-responsive">
-        <table class="table table-hover align-middle">
-          <thead>
-            <tr>
-              <th class="text-start">หัวข้อข่าวสาร</th>
-              <th>เป้าหมาย (Category)</th>
-              <th>วันสิ้นสุดแคมเปญ</th>
-              <th>ยอดรับทราบ</th>
-              <th>สถานะ</th>
-              <th>จัดการ</th>
-            </tr>
-          </thead>
-          <tbody id="table-body">
-            </tbody>
-        </table>
+      <div class="btn-action-group">
+        <button class="btn-custom btn-add" onclick="showAddTopicModal()">
+          <i class="fas fa-plus-circle me-1"></i> เพิ่มหัวข้อข่าว
+        </button>
+        <button class="btn-custom btn-download" onclick="downloadFile()">
+          <i class="fas fa-download me-1"></i> ดาวน์โหลดไฟล์
+        </button>
+        <button class="btn-custom btn-email" onclick="exportReport()">
+          <i class="fas fa-paper-plane me-1"></i> ส่งเข้าอีเมล admin
+        </button>
       </div>
     </div>
 
+    <div id="loading" class="text-center py-5">
+      <div class="spinner-border text-danger" role="status"></div>
+      <p class="mt-3 text-muted">กำลังดึงข้อมูลล่าสุด...</p>
+    </div>
+
+    <div id="dashboard-content" class="d-none">
+      <div class="row g-4 mb-4">
+        <div class="col-md-6">
+          <div class="card-stat">
+            <h5 class="text-muted small fw-bold text-uppercase">พนักงานลงทะเบียนทั้งหมด</h5>
+            <h3 id="stat-users">0</h3>
+            <span class="text-muted small">ท่าน</span>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card-stat">
+            <h5 class="text-muted small fw-bold text-uppercase">ยอดรับทราบข่าวสารรวม</h5>
+            <h3 id="stat-ack">0</h3>
+            <span class="text-muted small">ครั้ง</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-clipboard-list text-danger me-2"></i> สรุปผลเรียลไทม์แยกตามหัวข้อ</h5>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>หัวข้อข่าวสาร</th>
+                <th>หมวดหมู่</th>
+                <th class="text-center">สถานะ</th>
+                <th>สิ้นสุดเมื่อ</th>
+                <th class="text-center">ยอดรับทราบ</th>
+                <th class="text-center">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="addTopicModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 20px; border: none;">
+        <div class="modal-header" style="background: linear-gradient(45deg, #ff0000, #cc0000); color: white; border-radius: 20px 20px 0 0;">
+          <h5 class="modal-title fw-bold"><i class="fas fa-plus-circle me-2"></i> เพิ่มหัวข้อข่าวสารใหม่</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-muted">ชื่อหัวข้อข่าวสาร</label>
+            <input type="text" id="newTopicName" class="form-control form-control-lg rounded-4" placeholder="เช่น แคมเปญ 7,000 ก้าว">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-muted">วันที่เริ่ม (ค.ศ.)</label>
+            <input type="date" id="newTopicStart" class="form-control rounded-4">
+          </div>
+          <div class="row mb-3">
+            <div class="col-6">
+              <label class="form-label fw-bold small text-muted">วันที่สิ้นสุด (ค.ศ.)</label>
+              <input type="date" id="newTopicEnd" class="form-control rounded-4">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-bold small text-muted">เวลาสิ้นสุด</label>
+              <input type="time" id="newTopicTime" class="form-control rounded-4" value="23:59">
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-bold small text-muted">ประเภท</label>
+            <select id="newTopicCat" class="form-select rounded-4">
+              <option value="Shop">Shop</option>
+              <option value="Non Shop">Non Shop</option>
+              <option value="All">All</option>
+            </select>
+          </div>
+          <button class="btn-true w-100" onclick="saveNewTopic()">บันทึกเข้าระบบ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="editTopicModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 20px; border: none;">
+        <div class="modal-header" style="background: linear-gradient(45deg, #333, #000); color: white; border-radius: 20px 20px 0 0;">
+          <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2"></i> แก้ไข / ขยายเวลา</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <input type="hidden" id="editTopicOldName">
+          
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-muted">ชื่อหัวข้อข่าวสาร</label>
+            <input type="text" id="editTopicName" class="form-control form-control-lg rounded-4">
+          </div>
+          <div class="row mb-3">
+            <div class="col-6">
+              <label class="form-label fw-bold small text-muted">วันที่สิ้นสุด (ค.ศ.)</label>
+              <input type="date" id="editTopicEnd" class="form-control rounded-4">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-bold small text-muted">เวลาสิ้นสุด</label>
+              <input type="time" id="editTopicTime" class="form-control rounded-4">
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-bold small text-muted">ประเภท</label>
+            <select id="editTopicCat" class="form-select rounded-4">
+              <option value="Shop">Shop</option>
+              <option value="Non Shop">Non Shop</option>
+              <option value="All">All</option>
+            </select>
+          </div>
+          <button class="btn-true w-100" onclick="saveEditTopic()">อัปเดตข้อมูล</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
-    // ⚠️ ใส่ GAS_URL ของคุณที่ได้จากการ Deploy New Version ตรงนี้
-    const GAS_URL = "https://script.google.com/macros/s/AKfycby-pLn-ACbareuCdomxdkX2Oe1H9gVNseUDb2k-CENm3DX3YrQvbtoFYErSZvHQppU/exec"; 
+    const GAS_URL = "https://script.google.com/macros/s/AKfycby-pLn-ACbareuCdomxdkX2Oe1H9gVNseUDb2k-CENm3DX3YrQvbtoFYErSZvHQppU/exec";
 
-    async function loadData() {
-      document.getElementById('loading-overlay').style.display = 'flex';
+    async function loadStats() {
       try {
         const res = await fetch(`${GAS_URL}?action=adminStats`).then(r => r.json());
-        
-        // แอนิเมชันตัวเลข
-        animateValue("total-users", 0, res.totalUsers, 1000);
-        animateValue("total-ack", 0, res.totalAck, 1000);
+        document.getElementById('loading').classList.add('d-none');
+        document.getElementById('dashboard-content').classList.remove('d-none');
+        document.getElementById('stat-users').innerText = res.totalUsers.toLocaleString();
+        document.getElementById('stat-ack').innerText = res.totalAck.toLocaleString();
 
         const tbody = document.getElementById('table-body');
-        tbody.innerHTML = '';
-        
-        if (res.topics.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">ยังไม่มีข้อมูลแคมเปญ</td></tr>';
-        } else {
-          res.topics.forEach(t => {
-            const statusClass = t.status === "กำลังดำเนินการ" ? "status-active" : "status-expired";
-            const icon = t.status === "กำลังดำเนินการ" ? "fa-broadcast-tower" : "fa-calendar-times";
-            
-            tbody.innerHTML += `
-              <tr>
-                <td class="text-start fw-bold text-dark">${t.name}</td>
-                <td><span class="badge-cat"><i class="fas fa-filter me-1"></i>${t.category}</span></td>
-                <td>${t.endDate}</td>
-                <td><h5 class="m-0 fw-bold text-danger">${t.count}</h5></td>
-                <td><span class="badge-status ${statusClass}"><i class="fas ${icon} me-1"></i>${t.status}</span></td>
-                <td>
-                  <button class="btn btn-light btn-sm text-primary rounded-circle" onclick="editTopic('${t.name}', '${t.rawDate}', '${t.category}')" title="แก้ไข / ขยายเวลา">
-                    <i class="fas fa-pen"></i>
-                  </button>
-                </td>
-              </tr>
-            `;
-          });
-        }
-      } catch (e) {
-        Swal.fire('Error', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error');
-      } finally {
-        document.getElementById('loading-overlay').style.display = 'none';
+        tbody.innerHTML = res.topics.map(t => `
+          <tr>
+            <td class="fw-bold text-dark">${t.name}</td>
+            <td><span class="text-muted small">${t.category}</span></td>
+            <td class="text-center">
+              <span class="${t.status === 'สิ้นสุดแล้ว' ? 'status-expired' : 'status-active'}">${t.status}</span>
+            </td>
+            <td class="small text-muted">${t.endDate}</td>
+            <td class="text-center fs-5 fw-bold text-danger">${t.count.toLocaleString()}</td>
+            <td class="text-center">
+              <button class="btn-table-edit" onclick="showEditTopicModal('${t.name}', '${t.category}', '${t.rawDate}', '${t.rawTime}')" title="แก้ไข/ขยายเวลา">
+                <i class="fas fa-pen"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        Swal.fire('Error', 'ไม่สามารถเชื่อมต่อข้อมูลได้', 'error');
       }
     }
 
-    // --- ฟังก์ชันเพิ่มข่าวใหม่ ---
-    async function addTopic() {
-      const { value: formValues } = await Swal.fire({
-        title: 'เพิ่มหัวข้อข่าวใหม่',
-        html: `
-          <input id="swal-name" class="form-control mb-3" placeholder="ชื่อหัวข้อ (เช่น แคมเปญ 7000 ก้าว)">
-          <div class="text-start mb-1 small fw-bold">กลุ่มเป้าหมาย:</div>
-          <select id="swal-cat" class="form-select mb-3">
-            <option value="All">All (ทุกคน)</option>
-            <option value="Shop">Shop (พนักงานสาขา)</option>
-            <option value="Non Shop">Non Shop (พนักงานออฟฟิศ)</option>
-          </select>
-          <div class="row">
-            <div class="col-6">
-              <div class="text-start mb-1 small fw-bold">วันเริ่ม:</div>
-              <input type="date" id="swal-start" class="form-control">
-            </div>
-            <div class="col-6">
-              <div class="text-start mb-1 small fw-bold">วันสิ้นสุด:</div>
-              <input type="date" id="swal-end" class="form-control">
-            </div>
-          </div>
-        `,
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonText: 'บันทึกข้อมูล',
-        confirmButtonColor: '#ff0000',
-        preConfirm: () => {
-          return {
-            name: document.getElementById('swal-name').value,
-            category: document.getElementById('swal-cat').value,
-            startDate: document.getElementById('swal-start').value,
-            endDate: document.getElementById('swal-end').value + " 23:59:59"
-          }
-        }
-      });
-
-      if (formValues && formValues.name && formValues.startDate) {
-        callApi('addTopic', formValues, 'กำลังเพิ่มหัวข้อ...');
-      }
-    }
-
-    // --- ฟังก์ชันแก้ไข/ขยายเวลาข่าว ---
-    async function editTopic(oldName, oldEndDate, oldCat) {
-      const { value: formValues } = await Swal.fire({
-        title: 'แก้ไขหัวข้อข่าว',
-        html: `
-          <div class="text-start mb-1 small fw-bold text-danger">ชื่อหัวข้อเดิม: ${oldName}</div>
-          <input id="edit-name" class="form-control mb-3" value="${oldName}" placeholder="แก้ไขชื่อหัวข้อ">
-          
-          <div class="text-start mb-1 small fw-bold">กลุ่มเป้าหมาย:</div>
-          <select id="edit-cat" class="form-select mb-3">
-            <option value="All" ${oldCat === 'All' ? 'selected' : ''}>All (ทุกคน)</option>
-            <option value="Shop" ${oldCat === 'Shop' ? 'selected' : ''}>Shop (พนักงานสาขา)</option>
-            <option value="Non Shop" ${oldCat === 'Non Shop' ? 'selected' : ''}>Non Shop (พนักงานออฟฟิศ)</option>
-          </select>
-
-          <div class="text-start mb-1 small fw-bold">วันสิ้นสุดแคมเปญ:</div>
-          <input type="date" id="edit-end" class="form-control" value="${oldEndDate}">
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'บันทึกการแก้ไข',
-        confirmButtonColor: '#ff0000',
-        preConfirm: () => {
-          return {
-            oldName: oldName,
-            newName: document.getElementById('edit-name').value,
-            newCategory: document.getElementById('edit-cat').value,
-            newEndDate: document.getElementById('edit-end').value + " 23:59:59"
-          }
-        }
-      });
-
-      if (formValues && formValues.newName) {
-        callApi('editTopic', formValues, 'กำลังอัปเดตข้อมูล...');
-      }
-    }
-
-    // --- ฟังก์ชันส่ง Email ---
-    function exportReport() {
-      Swal.fire({
-        title: 'ยืนยันการส่งรายงาน?',
-        text: "ระบบจะสรุปยอดเฉพาะกลุ่มเป้าหมาย พร้อมไฟล์ Excel ส่งเข้าอีเมลผู้บริหารทันที",
-        icon: 'info',
-        showCancelButton: true,
-        confirmButtonColor: '#ff0000',
-        confirmButtonText: 'ใช่, ส่งอีเมลเลย!'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          callApi('exportReport', {}, 'กำลังสร้างและส่งอีเมล... อาจใช้เวลาสักครู่');
-        }
-      });
-    }
-
-    // --- ฟังก์ชันดาวน์โหลด Excel ตรงลงเครื่อง ---
-    async function downloadExcel() {
-      Swal.fire({ title: 'กำลังเตรียมไฟล์ Excel...', text: 'โปรดรอสักครู่ ระบบกำลังคำนวณข้อมูล', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+    async function exportReport() {
+      Swal.fire({ title: 'กำลังส่งอีเมล...', text: 'ระบบกำลังแนบไฟล์ Excel และส่งไปยังกล่องข้อความของท่าน', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
       try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'downloadCleanExcel', payload: {} }) }).then(r => r.json());
-        Swal.close();
-        if(res && res.base64) {
-          const link = document.createElement('a');
-          link.href = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + res.base64;
-          link.download = res.fileName;
-          link.click();
-          Swal.fire('สำเร็จ!', 'ดาวน์โหลดไฟล์ Excel เรียบร้อยแล้ว', 'success');
-        }
-      } catch (e) {
-        Swal.close();
-        Swal.fire('Error', 'ไม่สามารถดาวน์โหลดไฟล์ได้', 'error');
+        await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'exportReport' }) });
+        Swal.fire({ icon: 'success', title: 'ส่งสำเร็จ', text: 'ตรวจสอบอีเมลของท่านได้ทันที' });
+      } catch (error) {
+        Swal.fire('Error', 'ไม่สามารถส่งอีเมลได้ในขณะนี้', 'error');
       }
     }
 
-    // --- ตัวจัดการยิง API ---
-    async function callApi(action, payload, loadingText) {
-      Swal.fire({ title: loadingText, didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+    async function downloadFile() {
+      Swal.fire({ title: 'กำลังเตรียมไฟล์ดาวน์โหลด...', text: 'โปรดรอสักครู่ ระบบกำลังสร้างไฟล์ Excel', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
       try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action, payload }) }).then(r => r.json());
-        Swal.close();
-        if (res === "Success") {
-          Swal.fire({ icon: 'success', title: 'สำเร็จ', timer: 1500, showConfirmButton: false }).then(() => loadData());
-        } else {
-          Swal.fire('Error', 'เกิดข้อผิดพลาดในการบันทึก', 'error');
-        }
-      } catch (e) {
-        Swal.close();
-        Swal.fire('Error', 'ไม่สามารถเชื่อมต่อระบบได้', 'error');
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'downloadCleanExcel' }) }).then(r => r.json());
+        if (res && res.base64) {
+          const dataUrl = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + res.base64;
+          const a = document.createElement('a'); a.href = dataUrl; a.download = res.fileName;
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          Swal.fire({ icon: 'success', title: 'ดาวน์โหลดสำเร็จ', timer: 2000, showConfirmButton: false });
+        } else { throw new Error("ไม่มีข้อมูลไฟล์"); }
+      } catch (error) {
+        Swal.close(); Swal.fire('ข้อผิดพลาด', 'ไม่สามารถดาวน์โหลดไฟล์ได้ โปรดลองอีกครั้ง', 'error');
       }
     }
 
-    // Effect นับตัวเลข
-    function animateValue(id, start, end, duration) {
-      if (start === end) { document.getElementById(id).innerHTML = end; return; }
-      let current = start;
-      const range = end - start;
-      const increment = end > start ? 1 : -1;
-      const stepTime = Math.abs(Math.floor(duration / range));
-      const obj = document.getElementById(id);
-      const timer = setInterval(() => {
-        current += increment;
-        obj.innerHTML = current;
-        if (current == end) clearInterval(timer);
-      }, stepTime);
+    function showAddTopicModal() {
+      new bootstrap.Modal(document.getElementById('addTopicModal')).show();
     }
 
-    window.onload = loadData;
+    async function saveNewTopic() {
+      const name = document.getElementById('newTopicName').value;
+      const startDate = document.getElementById('newTopicStart').value;
+      const endDate = document.getElementById('newTopicEnd').value;
+      const endTime = document.getElementById('newTopicTime').value;
+      const cat = document.getElementById('newTopicCat').value;
+
+      if (!name || !startDate || !endDate || !endTime) return Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบถ้วนก่อนบันทึก', 'warning');
+
+      const payload = { name: name, startDate: startDate + " 00:00:00", endDate: endDate + " " + endTime + ":00", category: cat };
+      Swal.fire({ title: 'กำลังบันทึกข้อมูล...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+
+      try {
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'addTopic', payload: payload }) }).then(r => r.json());
+        if (res === 'Success') {
+          bootstrap.Modal.getInstance(document.getElementById('addTopicModal')).hide();
+          Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', text: 'ระบบได้เพิ่มหัวข้อข่าวเรียบร้อยแล้ว', timer: 2000, showConfirmButton: false });
+          document.getElementById('newTopicName').value = '';
+          loadStats();
+        }
+      } catch (error) { Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้', 'error'); }
+    }
+
+    // --- ส่วนที่เพิ่มใหม่: เปิดหน้าต่างแก้ไข พร้อมยัดข้อมูลเดิมใส่ฟอร์ม ---
+    function showEditTopicModal(name, cat, date, time) {
+      document.getElementById('editTopicOldName').value = name;
+      document.getElementById('editTopicName').value = name;
+      document.getElementById('editTopicEnd').value = date;
+      document.getElementById('editTopicTime').value = time;
+      document.getElementById('editTopicCat').value = cat;
+      new bootstrap.Modal(document.getElementById('editTopicModal')).show();
+    }
+
+    // --- ส่วนที่เพิ่มใหม่: บันทึกการแก้ไข ---
+    async function saveEditTopic() {
+      const oldName = document.getElementById('editTopicOldName').value;
+      const newName = document.getElementById('editTopicName').value;
+      const endDate = document.getElementById('editTopicEnd').value;
+      const endTime = document.getElementById('editTopicTime').value;
+      const cat = document.getElementById('editTopicCat').value;
+
+      if (!newName || !endDate || !endTime) return Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบถ้วน', 'warning');
+
+      const payload = { oldName: oldName, newName: newName, newEndDate: endDate + " " + endTime + ":00", newCategory: cat };
+      Swal.fire({ title: 'กำลังอัปเดตข้อมูล...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+
+      try {
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'editTopic', payload: payload }) }).then(r => r.json());
+        if (res === 'Success') {
+          bootstrap.Modal.getInstance(document.getElementById('editTopicModal')).hide();
+          Swal.fire({ icon: 'success', title: 'อัปเดตสำเร็จ', text: 'แก้ไขข้อมูลและขยายเวลาเรียบร้อยแล้ว', timer: 2000, showConfirmButton: false });
+          loadStats(); // รีเฟรชตารางแบบ Real-time
+        } else {
+          Swal.fire('ข้อผิดพลาด', 'ไม่พบข้อมูลที่ต้องการแก้ไข', 'error');
+        }
+      } catch (error) { Swal.fire('ข้อผิดพลาด', 'เชื่อมต่อล้มเหลว โปรดลองอีกครั้ง', 'error'); }
+    }
+
+    window.onload = loadStats;
   </script>
 </body>
 </html>
