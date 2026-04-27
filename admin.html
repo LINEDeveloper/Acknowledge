@@ -131,7 +131,7 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycby-pLn-ACbareuCdomxdkX2Oe1H9gVNseUDb2k-CENm3DX3YrQvbtoFYErSZvHQppU/exec"; 
 
     let globalTopicStats = {}; 
-    let topicCategoryMap = {}; // ตัวแปรเก็บประเภทของแต่ละหัวข้อข่าว
+    let topicCategoryMap = {}; 
     let chartInstances = {};   
 
     async function loadData() {
@@ -148,7 +148,6 @@
         selector.innerHTML = '<option value="" disabled selected>-- โปรดเลือกหัวข้อข่าวสาร --</option>';
         res.topics.forEach(t => {
           selector.innerHTML += `<option value="${t.name}">${t.name}</option>`;
-          // เก็บหมวดหมู่ของข่าวไว้ใช้งานตอนกรองกราฟ
           topicCategoryMap[t.name] = t.category;
         });
 
@@ -184,7 +183,6 @@
       }
     }
 
-    // ฟังก์ชันตรวจสอบกลุ่มช่องทางว่าเป็น Shop หรือไม่
     function isShopChannel(name) {
       const n = name.toLowerCase();
       return n.includes("shop") || n.includes("coco") || n.includes("hall");
@@ -199,19 +197,38 @@
       
       if (!stats) return;
 
-      // กรองช่องทางตามประเภทหัวข้อข่าว
       const isShopTopic = topicCat.includes("shop");
       const isNonShopTopic = topicCat === "non shop";
 
+      // --- สร้าง Array เพื่อใช้ในการจัดเรียง (Sorting) ---
+      let chartDataArray = [];
+
       for (let ch in stats) {
-        // --- ส่วนเงื่อนไขการกรองกราฟ ---
-        if (isShopTopic && !isShopChannel(ch)) continue; // ถ้าข่าวเป็น Shop แต่ช่องทางไม่ใช่ Shop ให้ข้าม
-        if (isNonShopTopic && isShopChannel(ch)) continue; // ถ้าข่าวเป็น Non Shop แต่ช่องทางเป็น Shop ให้ข้าม
-        // ---------------------------
+        if (isShopTopic && !isShopChannel(ch)) continue; 
+        if (isNonShopTopic && isShopChannel(ch)) continue; 
 
         const data = stats[ch];
         const notAcked = data.total - data.acked;
         const percent = data.total > 0 ? Math.round((data.acked / data.total) * 100) : 0;
+        
+        // เก็บข้อมูลแต่ละช่องทางลง Array เพื่อเตรียมจัดเรียง
+        chartDataArray.push({
+          channelName: ch,
+          data: data,
+          notAcked: notAcked,
+          percent: percent
+        });
+      }
+
+      // --- จัดเรียงลำดับจาก % มาก ไปหา % น้อย ---
+      chartDataArray.sort((a, b) => b.percent - a.percent);
+
+      // --- นำข้อมูลที่เรียงแล้วมาวาดเป็นกราฟวงกลม ---
+      chartDataArray.forEach(item => {
+        const ch = item.channelName;
+        const data = item.data;
+        const notAcked = item.notAcked;
+        const percent = item.percent;
 
         const col = document.createElement('div');
         col.className = 'col-md-4';
@@ -264,9 +281,8 @@
             responsive: true
           }
         });
-      }
+      });
 
-      // กรณีไม่พบข้อมูลที่ตรงเงื่อนไขกรอง
       if (container.innerHTML === '') {
         container.innerHTML = '<div class="col-12 text-center text-muted py-5"><p>ไม่มีกลุ่มเป้าหมายที่ตรงกับประเภทข่าวนี้</p></div>';
       }
