@@ -113,7 +113,7 @@
             <tr>
               <th class="text-start">หัวข้อข่าวสาร</th>
               <th>ประเภท</th>
-              <th>วันสิ้นสุด</th>
+              <th>วันเริ่ม</th>  <th>วันสิ้นสุด</th>
               <th>ยอดรับทราบ</th>
               <th>สถานะ</th>
               <th>จัดการ</th>
@@ -154,7 +154,7 @@
         const tbody = document.getElementById('table-body');
         tbody.innerHTML = '';
         if (res.topics.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">ยังไม่มีข้อมูล</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">ยังไม่มีข้อมูล</td></tr>';
         } else {
           res.topics.forEach(t => {
             const statusColor = t.status === "กำลังดำเนินการ" ? "text-success" : "text-secondary";
@@ -164,7 +164,7 @@
               <tr>
                 <td class="text-start fw-bold text-dark">${t.name}</td>
                 <td class="text-secondary">${t.category}</td>
-                <td>${t.endDate}</td>
+                <td>${t.startDate}</td> <td>${t.endDate}</td>
                 <td><h5 class="m-0 fw-bold text-danger">${t.count}</h5></td>
                 <td class="${statusColor} fw-bold"><i class="fas ${icon} me-1" style="font-size:10px;"></i> ${t.status}</td>
                 <td>
@@ -200,7 +200,6 @@
       const isShopTopic = topicCat.includes("shop");
       const isNonShopTopic = topicCat === "non shop";
 
-      // --- สร้าง Array เพื่อใช้ในการจัดเรียง (Sorting) ---
       let chartDataArray = [];
 
       for (let ch in stats) {
@@ -211,7 +210,6 @@
         const notAcked = data.total - data.acked;
         const percent = data.total > 0 ? Math.round((data.acked / data.total) * 100) : 0;
         
-        // เก็บข้อมูลแต่ละช่องทางลง Array เพื่อเตรียมจัดเรียง
         chartDataArray.push({
           channelName: ch,
           data: data,
@@ -220,10 +218,8 @@
         });
       }
 
-      // --- จัดเรียงลำดับจาก % มาก ไปหา % น้อย ---
       chartDataArray.sort((a, b) => b.percent - a.percent);
 
-      // --- นำข้อมูลที่เรียงแล้วมาวาดเป็นกราฟวงกลม ---
       chartDataArray.forEach(item => {
         const ch = item.channelName;
         const data = item.data;
