@@ -77,9 +77,24 @@
       </div>
     </div>
 
-    <h5 class="fw-bold mt-5 mb-3"><i class="fas fa-chart-donut text-danger me-2"></i> สัดส่วนพนักงานที่รับทราบข่าวสาร (แยกตามช่องทาง)</h5>
-    <div class="row g-4" id="chart-container">
+    <div class="table-container mb-4" style="background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h5 class="fw-bold m-0"><i class="fas fa-chart-donut text-danger me-2"></i> สัดส่วนการรับทราบรายหัวข้อแยกตามช่องทาง</h5>
+        <div class="d-flex align-items-center gap-2">
+          <label class="fw-bold text-muted m-0">เลือกวิเคราะห์ข่าว:</label>
+          <select id="topic-selector" class="form-select form-select-sm" style="width: 250px; border-radius: 10px;" onchange="updateCharts(this.value)">
+            <option value="" disabled selected>-- กำลังโหลดข้อมูล --</option>
+          </select>
+        </div>
       </div>
+      
+      <div class="row g-4" id="chart-container">
+        <div class="col-12 text-center text-muted py-5">
+          <i class="fas fa-chart-pie mb-2" style="font-size: 40px; opacity: 0.2;"></i>
+          <p class="m-0">โปรดเลือกหัวข้อข่าวสารด้านบนเพื่อดูสถิติ</p>
+        </div>
+      </div>
+    </div>
 
     <div class="table-container">
       <div class="d-flex justify-content-between align-items-center mb-4">
@@ -111,6 +126,9 @@
     // ⚠️ ใส่ GAS_URL ของคุณหลังจาก Deploy New Version
     const GAS_URL = "https://script.google.com/macros/s/AKfycby-pLn-ACbareuCdomxdkX2Oe1H9gVNseUDb2k-CENm3DX3YrQvbtoFYErSZvHQppU/exec"; 
 
+    let globalTopicStats = {}; // ตัวแปรเก็บข้อมูลกราฟทั้งหมด
+    let chartInstances = {};   // ตัวแปรเก็บประวัติกราฟเพื่อไว้ลบก่อนวาดใหม่
+
     async function loadData() {
       document.getElementById('loading-overlay').style.display = 'flex';
       try {
@@ -120,12 +138,19 @@
         animateValue("total-users", 0, res.totalUsers, 1000);
         animateValue("total-ack", 0, res.totalAck, 1000);
 
-        // สร้างกราฟวงกลม
-        renderCharts(res.channelStats);
+        // เก็บข้อมูลกราฟไว้ในตัวแปร Global
+        globalTopicStats = res.topicChannelStats;
 
+        // เติมข้อมูลลงใน Dropdown Selector
+        const selector = document.getElementById('topic-selector');
+        selector.innerHTML = '<option value="" disabled selected>-- โปรดเลือกหัวข้อข่าวสาร --</option>';
+        res.topics.forEach(t => {
+          selector.innerHTML += `<option value="${t.name}">${t.name}</option>`;
+        });
+
+        // สร้างตารางข้อมูลข่าวสารด้านล่าง
         const tbody = document.getElementById('table-body');
         tbody.innerHTML = '';
-        
         if (res.topics.length === 0) {
           tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">ยังไม่มีข้อมูลแคมเปญ</td></tr>';
         } else {
@@ -156,14 +181,17 @@
       }
     }
 
-    // ฟังก์ชันวาดกราฟวงกลม
-    function renderCharts(channelStats) {
+    // --- ฟังก์ชันอัปเดตและวาดกราฟเมื่อเลือก Dropdown ---
+    function updateCharts(topicName) {
       const container = document.getElementById('chart-container');
       container.innerHTML = ''; 
+      
+      const stats = globalTopicStats[topicName];
+      if (!stats) return;
 
-      for (let ch in channelStats) {
-        const stats = channelStats[ch];
-        const notAcked = stats.total - stats.acked;
+      for (let ch in stats) {
+        const data = stats[ch];
+        const notAcked = data.total - data.acked;
 
         const col = document.createElement('div');
         col.className = 'col-md-4';
@@ -176,7 +204,7 @@
             <div class="mt-3 small" style="background: #f8f9fa; padding: 10px; border-radius: 10px;">
               <div class="d-flex justify-content-between mb-1">
                 <span class="text-danger fw-bold"><i class="fas fa-circle me-1" style="font-size: 8px;"></i> รับทราบแล้ว</span>
-                <span class="fw-bold">${stats.acked}</span>
+                <span class="fw-bold">${data.acked}</span>
               </div>
               <div class="d-flex justify-content-between text-muted">
                 <span><i class="fas fa-circle me-1" style="font-size: 8px; color: #ddd;"></i> ยังไม่ได้รับทราบ</span>
@@ -184,20 +212,27 @@
               </div>
               <hr class="my-2" style="border-color: #ddd;">
               <div class="d-flex justify-content-between fw-bold">
-                <span>รวมทั้งหมด</span>
-                <span>${stats.total}</span>
+                <span>ประชากรรวม</span>
+                <span>${data.total}</span>
               </div>
             </div>
           </div>
         `;
         container.appendChild(col);
 
-        new Chart(document.getElementById(`chart-${ch}`), {
-          type: 'doughnut', // ใช้กราฟโดนัทเพื่อให้ดูพรีเมียมขึ้น
+        // ทำลายกราฟตัวเก่าทิ้งก่อน (ถ้ามี) เพื่อไม่ให้แสดงซ้อนกัน
+        if (chartInstances[ch]) {
+          chartInstances[ch].destroy();
+        }
+
+        // วาดกราฟวงกลมใหม่
+        const ctx = document.getElementById(`chart-${ch}`).getContext('2d');
+        chartInstances[ch] = new Chart(ctx, {
+          type: 'doughnut',
           data: {
             labels: ['รับทราบแล้ว', 'ยังไม่ได้รับทราบ'],
             datasets: [{
-              data: [stats.acked, notAcked],
+              data: [data.acked, notAcked],
               backgroundColor: ['#ff0000', '#eaeaea'],
               borderWidth: 0,
               hoverOffset: 4
