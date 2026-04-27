@@ -81,7 +81,7 @@
       <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
         <h5 class="fw-bold m-0"><i class="fas fa-chart-donut text-danger me-2"></i> สัดส่วนการรับทราบรายหัวข้อแยกตามช่องทาง</h5>
         <div class="d-flex align-items-center gap-2">
-          <label class="fw-bold text-muted m-0">เลือกหัวข้อข่าว:</label>
+          <label class="fw-bold text-muted m-0">เลือกวิเคราะห์ข่าว:</label>
           <select id="topic-selector" class="form-select form-select-sm" style="width: 250px; border-radius: 10px;" onchange="updateCharts(this.value)">
             <option value="" disabled selected>-- กำลังโหลดข้อมูล --</option>
           </select>
@@ -192,15 +192,26 @@
       for (let ch in stats) {
         const data = stats[ch];
         const notAcked = data.total - data.acked;
+        
+        // คำนวณเปอร์เซ็นต์ (ป้องกันการหารด้วย 0)
+        const percent = data.total > 0 ? Math.round((data.acked / data.total) * 100) : 0;
 
         const col = document.createElement('div');
         col.className = 'col-md-4';
         col.innerHTML = `
           <div class="chart-box">
             <h6 class="fw-bold mb-3 text-secondary">${ch}</h6>
-            <div style="width: 100%; max-width: 180px; margin: auto; position: relative;">
-              <canvas id="chart-${ch}"></canvas>
+            
+            <div style="width: 100%; max-width: 180px; margin: auto; position: relative; display: flex; justify-content: center; align-items: center;">
+              
+              <div style="position: absolute; text-align: center; z-index: 1;">
+                <div style="font-size: 28px; font-weight: 800; color: #ff0000; line-height: 1;">${percent}%</div>
+                <div style="font-size: 11px; color: #999; margin-top: 2px;">รับทราบแล้ว</div>
+              </div>
+              
+              <canvas id="chart-${ch}" style="position: relative; z-index: 2;"></canvas>
             </div>
+
             <div class="mt-3 small" style="background: #f8f9fa; padding: 10px; border-radius: 10px;">
               <div class="d-flex justify-content-between mb-1">
                 <span class="text-danger fw-bold"><i class="fas fa-circle me-1" style="font-size: 8px;"></i> รับทราบแล้ว</span>
@@ -239,7 +250,7 @@
             }]
           },
           options: {
-            cutout: '70%',
+            cutout: '75%', // ปรับขนาดช่องโหว่ตรงกลางให้กว้างขึ้น เพื่อโชว์ % ชัดๆ
             plugins: { legend: { display: false } },
             responsive: true
           }
@@ -256,7 +267,7 @@
           <select id="swal-cat" class="form-select mb-3">
             <option value="All">All (ทุกคน)</option>
             <option value="Shop">Shop (พนักงานสาขา)</option>
-            <option value="Non Shop">Non Shop (พนักงาน Geo)</option>
+            <option value="Non Shop">Non Shop (พนักงานออฟฟิศ)</option>
           </select>
           <div class="row">
             <div class="col-6">
@@ -299,7 +310,7 @@
           <select id="edit-cat" class="form-select mb-3">
             <option value="All" ${oldCat === 'All' ? 'selected' : ''}>All (ทุกคน)</option>
             <option value="Shop" ${oldCat === 'Shop' ? 'selected' : ''}>Shop (พนักงานสาขา)</option>
-            <option value="Non Shop" ${oldCat === 'Non Shop' ? 'selected' : ''}>Non Shop (พนักงาน Geo)</option>
+            <option value="Non Shop" ${oldCat === 'Non Shop' ? 'selected' : ''}>Non Shop (พนักงานออฟฟิศ)</option>
           </select>
 
           <div class="text-start mb-1 small fw-bold">วันสิ้นสุดแคมเปญ:</div>
