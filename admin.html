@@ -126,29 +126,25 @@
     // ⚠️ ใส่ GAS_URL ของคุณหลังจาก Deploy New Version
     const GAS_URL = "https://script.google.com/macros/s/AKfycby-pLn-ACbareuCdomxdkX2Oe1H9gVNseUDb2k-CENm3DX3YrQvbtoFYErSZvHQppU/exec"; 
 
-    let globalTopicStats = {}; // ตัวแปรเก็บข้อมูลกราฟทั้งหมด
-    let chartInstances = {};   // ตัวแปรเก็บประวัติกราฟเพื่อไว้ลบก่อนวาดใหม่
+    let globalTopicStats = {}; 
+    let chartInstances = {};   
 
     async function loadData() {
       document.getElementById('loading-overlay').style.display = 'flex';
       try {
         const res = await fetch(`${GAS_URL}?action=adminStats`).then(r => r.json());
         
-        // แอนิเมชันตัวเลข
         animateValue("total-users", 0, res.totalUsers, 1000);
         animateValue("total-ack", 0, res.totalAck, 1000);
 
-        // เก็บข้อมูลกราฟไว้ในตัวแปร Global
         globalTopicStats = res.topicChannelStats;
 
-        // เติมข้อมูลลงใน Dropdown Selector
         const selector = document.getElementById('topic-selector');
         selector.innerHTML = '<option value="" disabled selected>-- โปรดเลือกหัวข้อข่าวสาร --</option>';
         res.topics.forEach(t => {
           selector.innerHTML += `<option value="${t.name}">${t.name}</option>`;
         });
 
-        // สร้างตารางข้อมูลข่าวสารด้านล่าง
         const tbody = document.getElementById('table-body');
         tbody.innerHTML = '';
         if (res.topics.length === 0) {
@@ -181,7 +177,6 @@
       }
     }
 
-    // --- ฟังก์ชันอัปเดตและวาดกราฟเมื่อเลือก Dropdown ---
     function updateCharts(topicName) {
       const container = document.getElementById('chart-container');
       container.innerHTML = ''; 
@@ -193,7 +188,6 @@
         const data = stats[ch];
         const notAcked = data.total - data.acked;
         
-        // คำนวณเปอร์เซ็นต์ (ป้องกันการหารด้วย 0)
         const percent = data.total > 0 ? Math.round((data.acked / data.total) * 100) : 0;
 
         const col = document.createElement('div');
@@ -201,17 +195,13 @@
         col.innerHTML = `
           <div class="chart-box">
             <h6 class="fw-bold mb-3 text-secondary">${ch}</h6>
-            
             <div style="width: 100%; max-width: 180px; margin: auto; position: relative; display: flex; justify-content: center; align-items: center;">
-              
               <div style="position: absolute; text-align: center; z-index: 1;">
                 <div style="font-size: 28px; font-weight: 800; color: #ff0000; line-height: 1;">${percent}%</div>
                 <div style="font-size: 11px; color: #999; margin-top: 2px;">รับทราบแล้ว</div>
               </div>
-              
               <canvas id="chart-${ch}" style="position: relative; z-index: 2;"></canvas>
             </div>
-
             <div class="mt-3 small" style="background: #f8f9fa; padding: 10px; border-radius: 10px;">
               <div class="d-flex justify-content-between mb-1">
                 <span class="text-danger fw-bold"><i class="fas fa-circle me-1" style="font-size: 8px;"></i> รับทราบแล้ว</span>
@@ -231,12 +221,10 @@
         `;
         container.appendChild(col);
 
-        // ทำลายกราฟตัวเก่าทิ้งก่อน (ถ้ามี) เพื่อไม่ให้แสดงซ้อนกัน
         if (chartInstances[ch]) {
           chartInstances[ch].destroy();
         }
 
-        // วาดกราฟวงกลมใหม่
         const ctx = document.getElementById(`chart-${ch}`).getContext('2d');
         chartInstances[ch] = new Chart(ctx, {
           type: 'doughnut',
@@ -250,7 +238,7 @@
             }]
           },
           options: {
-            cutout: '75%', // ปรับขนาดช่องโหว่ตรงกลางให้กว้างขึ้น เพื่อโชว์ % ชัดๆ
+            cutout: '75%',
             plugins: { legend: { display: false } },
             responsive: true
           }
@@ -349,21 +337,62 @@
       });
     }
 
+    // --- ฟังก์ชันอัปเดตใหม่: ให้เลือกช่องทางก่อนดาวน์โหลด Excel ---
     async function downloadExcel() {
-      Swal.fire({ title: 'กำลังเตรียมไฟล์ Excel...', text: 'โปรดรอสักครู่ ระบบกำลังดึงข้อมูล', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
-      try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'downloadCleanExcel', payload: {} }) }).then(r => r.json());
-        Swal.close();
-        if(res && res.base64) {
-          const link = document.createElement('a');
-          link.href = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + res.base64;
-          link.download = res.fileName;
-          link.click();
-          Swal.fire('สำเร็จ!', 'ดาวน์โหลดไฟล์ Excel เรียบร้อยแล้ว', 'success');
+      // ดึงรายชื่อช่องทาง (Channel) ทั้งหมดที่มีในระบบจากตัวแปร globalTopicStats
+      let channels = new Set();
+      for (let topic in globalTopicStats) {
+         for (let ch in globalTopicStats[topic]) {
+            channels.add(ch);
+         }
+      }
+      
+      let optionsHtml = '<option value="All">ดึงข้อมูลทั้งหมด (ยกเว้น Back Office)</option>';
+      channels.forEach(ch => {
+         optionsHtml += `<option value="${ch}">เฉพาะกลุ่ม: ${ch}</option>`;
+      });
+
+      const { value: selectedChannel, isConfirmed } = await Swal.fire({
+        title: 'ดาวน์โหลดรายงาน Excel',
+        html: `
+          <div class="text-start mb-2 fw-bold text-muted" style="font-size: 14px;">เลือกระบุช่องทาง (Channel) ที่ต้องการสรุปข้อมูล:</div>
+          <select id="export-channel" class="form-select form-select-lg" style="border-radius: 12px;">
+            ${optionsHtml}
+          </select>
+        `,
+        showCancelButton: true,
+        confirmButtonText: '<i class="fas fa-file-excel me-1"></i> ดาวน์โหลด',
+        confirmButtonColor: '#28a745',
+        cancelButtonText: 'ยกเลิก',
+        preConfirm: () => {
+          return document.getElementById('export-channel').value;
         }
-      } catch (e) {
-        Swal.close();
-        Swal.fire('Error', 'ไม่สามารถดาวน์โหลดไฟล์ได้', 'error');
+      });
+
+      if (isConfirmed) {
+        Swal.fire({ title: 'กำลังเตรียมไฟล์ Excel...', text: 'โปรดรอสักครู่ ระบบกำลังจัดเตรียมข้อมูลตามกลุ่มที่คุณเลือก', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+        try {
+          const res = await fetch(GAS_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'downloadCleanExcel', payload: { channel: selectedChannel } }) 
+          }).then(r => r.json());
+          
+          Swal.close();
+          if(res && res.base64) {
+            const link = document.createElement('a');
+            link.href = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + res.base64;
+            
+            // เปลี่ยนชื่อไฟล์ตามกลุ่มที่เลือก เพื่อให้แอดมินแยกไฟล์ได้ง่าย
+            const safeChannelName = selectedChannel === "All" ? "All_Channels" : selectedChannel.replace(/\s+/g, '_');
+            link.download = res.fileName.replace('.xlsx', `_${safeChannelName}.xlsx`);
+            link.click();
+            
+            Swal.fire('สำเร็จ!', 'ดาวน์โหลดไฟล์ Excel เรียบร้อยแล้ว', 'success');
+          }
+        } catch (e) {
+          Swal.close();
+          Swal.fire('Error', 'ไม่สามารถดาวน์โหลดไฟล์ได้', 'error');
+        }
       }
     }
 
