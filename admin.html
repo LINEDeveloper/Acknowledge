@@ -84,7 +84,7 @@
 
     <div class="table-container mb-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <h5 class="fw-bold m-0"><i class="fas fa-list-alt text-danger me-2"></i> รายละเอียดข้อมูล</h5>
+        <h5 class="fw-bold m-0"><i class="fas fa-list-alt text-danger me-2"></i> หัวข้อข่าวสาร</h5>
         <button class="btn btn-true btn-sm px-4" onclick="addTopic()"><i class="fas fa-plus me-1"></i> เพิ่มหัวข้อใหม่</button>
       </div>
       
@@ -185,9 +185,15 @@
       }
     }
 
+    // 🚨 อัปเดตฟังก์ชันตรวจสอบช่องทาง: ให้ครอบคลุม Geo-Based แบบเป๊ะๆ
     function isShopChannel(name) {
       const n = name.toLowerCase();
       return n.includes("shop") || n.includes("coco") || n.includes("hall");
+    }
+
+    function isGeoBasedChannel(name) {
+      const n = name.toLowerCase();
+      return n.includes("geo-based") || n.includes("geo based") || n.includes("geo");
     }
 
     function updateCharts(topicName) {
@@ -195,25 +201,37 @@
       container.innerHTML = ''; 
       
       const stats = globalTopicStats[topicName];
-      const topicCat = (topicCategoryMap[topicName] || "").toLowerCase();
+      const topicCat = (topicCategoryMap[topicName] || "").toString().trim().toLowerCase(); // ทำความสะอาดข้อความและปรับเป็นตัวเล็ก
       
       if (!stats) return;
-
-      const isShopTopic = topicCat.includes("shop");
-      const isNonShopTopic = topicCat === "non shop";
 
       let chartDataArray = [];
 
       for (let ch in stats) {
-        if (isShopTopic && !isShopChannel(ch)) continue; 
-        if (isNonShopTopic && isShopChannel(ch)) continue; 
+        const cleanCh = ch.toString().trim(); // ทำความสะอาดชื่อช่องทาง
+
+        // 🚨 อัปเดตเงื่อนไขการกรองใหม่ให้ฉลาดและเป๊ะตามคำขอ
+        if (topicCat !== "all" && topicCat !== "-") {
+          // ถ้าเลือก Geo-Based -> ข้ามถ้าไม่ใช่กลุ่ม Geo-Based
+          if (topicCat.includes("geo-based") || topicCat.includes("geo") ) {
+             if (!isGeoBasedChannel(cleanCh)) continue;
+          }
+          // ถ้าเลือก Shop -> ข้ามถ้าไม่ใช่กลุ่ม Shop
+          else if (topicCat.includes("shop")) {
+             if (!isShopChannel(cleanCh)) continue;
+          }
+          // ถ้าเลือก Non Shop -> ข้ามถ้าเป็นกลุ่ม Shop
+          else if (topicCat === "non shop") {
+             if (isShopChannel(cleanCh)) continue;
+          }
+        }
 
         const data = stats[ch];
         const notAcked = data.total - data.acked;
         const percent = data.total > 0 ? Math.round((data.acked / data.total) * 100) : 0;
         
         chartDataArray.push({
-          channelName: ch,
+          channelName: cleanCh,
           data: data,
           notAcked: notAcked,
           percent: percent
@@ -295,6 +313,7 @@
           <select id="swal-cat" class="form-select mb-3">
             <option value="All">All (ทุกคน)</option>
             <option value="Shop">Shop (พนักงานสาขา)</option>
+            <option value="Geo-Based">Geo-Based</option> <!-- 🚨 เพิ่มตัวเลือกให้แอดมินสร้างข่าว Geo ได้ -->
             <option value="Non Shop">Non Shop (พนักงานออฟฟิศ)</option>
           </select>
           <div class="row">
@@ -338,6 +357,7 @@
           <select id="edit-cat" class="form-select mb-3">
             <option value="All" ${oldCat === 'All' ? 'selected' : ''}>All (ทุกคน)</option>
             <option value="Shop" ${oldCat === 'Shop' ? 'selected' : ''}>Shop (พนักงานสาขา)</option>
+            <option value="Geo-Based" ${oldCat === 'Geo-Based' ? 'selected' : ''}>Geo-Based</option>
             <option value="Non Shop" ${oldCat === 'Non Shop' ? 'selected' : ''}>Non Shop (พนักงานออฟฟิศ)</option>
           </select>
 
