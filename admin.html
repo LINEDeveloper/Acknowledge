@@ -97,6 +97,7 @@
               <th>วันเริ่ม</th>
               <th>วันสิ้นสุด</th>
               <th>ยอดรับทราบ</th>
+              <th>% รับทราบ</th> <!-- 🚨 เพิ่มคอลัมน์ % -->
               <th>สถานะ</th>
               <th>จัดการ</th>
             </tr>
@@ -155,7 +156,7 @@
         const tbody = document.getElementById('table-body');
         tbody.innerHTML = '';
         if (res.topics.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">ยังไม่มีข้อมูล</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">ยังไม่มีข้อมูล</td></tr>';
         } else {
           res.topics.forEach(t => {
             const statusColor = t.status === "กำลังดำเนินการ" ? "text-success" : "text-secondary";
@@ -168,6 +169,7 @@
                 <td>${t.startDate}</td>
                 <td>${t.endDate}</td>
                 <td><h5 class="m-0 fw-bold text-danger">${t.count}</h5></td>
+                <td><h5 class="m-0 fw-bold text-primary">${t.percentage}</h5></td> <!-- 🚨 แสดงตัวเลขเปอร์เซ็นต์ -->
                 <td class="${statusColor} fw-bold"><i class="fas ${icon} me-1" style="font-size:10px;"></i> ${t.status}</td>
                 <td>
                   <button class="btn btn-light btn-sm text-primary rounded-circle" onclick="editTopic('${t.name}', '${t.rawDate}', '${t.category}')" title="แก้ไข / ขยายเวลา">
@@ -185,7 +187,6 @@
       }
     }
 
-    // 🚨 อัปเดตฟังก์ชันตรวจสอบช่องทาง: ให้ครอบคลุม Geo-Based แบบเป๊ะๆ
     function isShopChannel(name) {
       const n = name.toLowerCase();
       return n.includes("shop") || n.includes("coco") || n.includes("hall");
@@ -201,26 +202,22 @@
       container.innerHTML = ''; 
       
       const stats = globalTopicStats[topicName];
-      const topicCat = (topicCategoryMap[topicName] || "").toString().trim().toLowerCase(); // ทำความสะอาดข้อความและปรับเป็นตัวเล็ก
+      const topicCat = (topicCategoryMap[topicName] || "").toString().trim().toLowerCase(); 
       
       if (!stats) return;
 
       let chartDataArray = [];
 
       for (let ch in stats) {
-        const cleanCh = ch.toString().trim(); // ทำความสะอาดชื่อช่องทาง
+        const cleanCh = ch.toString().trim(); 
 
-        // 🚨 อัปเดตเงื่อนไขการกรองใหม่ให้ฉลาดและเป๊ะตามคำขอ
         if (topicCat !== "all" && topicCat !== "-") {
-          // ถ้าเลือก Geo-Based -> ข้ามถ้าไม่ใช่กลุ่ม Geo-Based
           if (topicCat.includes("geo-based") || topicCat.includes("geo") ) {
              if (!isGeoBasedChannel(cleanCh)) continue;
           }
-          // ถ้าเลือก Shop -> ข้ามถ้าไม่ใช่กลุ่ม Shop
           else if (topicCat.includes("shop")) {
              if (!isShopChannel(cleanCh)) continue;
           }
-          // ถ้าเลือก Non Shop -> ข้ามถ้าเป็นกลุ่ม Shop
           else if (topicCat === "non shop") {
              if (isShopChannel(cleanCh)) continue;
           }
@@ -313,7 +310,7 @@
           <select id="swal-cat" class="form-select mb-3">
             <option value="All">All (ทุกคน)</option>
             <option value="Shop">Shop (พนักงานสาขา)</option>
-            <option value="Geo-Based">Geo-Based</option> <!-- 🚨 เพิ่มตัวเลือกให้แอดมินสร้างข่าว Geo ได้ -->
+            <option value="Geo-Based">Geo-Based</option>
             <option value="Non Shop">Non Shop (พนักงานออฟฟิศ)</option>
           </select>
           <div class="row">
