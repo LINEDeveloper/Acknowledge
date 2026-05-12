@@ -10,9 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    /* ปรับพื้นหลังเป็นสีขาว และให้พอดีเต็มจอ */
     body { font-family: 'Sarabun', sans-serif; background-color: #ffffff; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; min-height: 100vh; margin: 0; padding: 0; }
-    /* ปรับ main-card ให้ไม่มีขอบ ไม่มีเงา และกว้างเต็มจอ */
     .main-card { background: white; width: 100%; max-width: 100%; border-radius: 0; box-shadow: none; overflow: hidden; border: none; margin: 0; padding: 20px; min-height: 100vh; }
     
     .btn-true { background: linear-gradient(45deg, #ff0000, #ff4d4d); color: white; border: none; border-radius: 50px; padding: 12px 24px; font-weight: 700; width: 100%; box-shadow: 0 4px 15px rgba(255,0,0,0.25); transition: 0.3s; cursor: pointer; }
@@ -24,18 +22,18 @@
     .swal-true-popup { border-radius: 24px !important; padding: 20px !important; font-family: 'Sarabun', sans-serif !important; }
     .swal-true-popup .swal2-title { font-size: 20px !important; font-weight: 700 !important; color: #333 !important; }
     .swal-true-popup .swal2-html-container { font-size: 14px !important; color: #666 !important; }
-    .footer { text-align: center; font-size: 11px; color: #888; margin-top: 5px; line-height: 1.6; }
+    
+    /* อัปเดต CSS: ยึด Footer ไว้ด้านล่างจอพอดี */
+    .footer { text-align: center; font-size: 11px; color: #888; position: fixed; bottom: 15px; left: 0; width: 100%; line-height: 1.6; z-index: 10; }
     .footer a { color: #cc0000; text-decoration: none; font-weight: bold; transition: 0.2s; }
     .footer a:hover { text-decoration: underline; color: #ff0000; }
     
-    /* คลาสใหม่: สำหรับข้อความไล่สี แดง-น้ำเงิน และจัดกึ่งกลาง */
     .gradient-text { font-weight: 700; font-size: 1.2rem; text-align: center; background: linear-gradient(90deg, #ff0000, #002d72); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .full-center { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 90vh; }
   </style>
 </head>
 <body>
 
-  <!-- หน้าจอสีขาวเต็มจอ สำหรับตอนกดบันทึกข้อมูลรับทราบ -->
   <div id="save-overlay" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #ffffff; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center;">
     <div class="spinner-border text-danger" style="width: 3.5rem; height: 3.5rem; border-width: 4px; margin-bottom: 20px;" role="status"></div>
     <div class="gradient-text">กำลังตรวจสอบ เพื่อบันทึกข้อมูล<br>โปรดรอสักครู่น้า...</div>
@@ -43,7 +41,6 @@
 
   <div class="main-card">
     
-    <!-- ใส่ full-center เพื่อให้จัดกึ่งกลางเต็มจอ -->
     <div id="view-loading" class="p-5 text-center full-center">
       <div style="position: relative; display: inline-block; margin-bottom: 10px;">
         <img id="loading-pfp" src="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23e9ecef'/%3E%3Cpath d='M50 55c-15 0-25 10-25 25v5h50v-5c0-15-10-25-25-25zM50 45a15 15 0 1 0 0-30 15 15 0 0 0 0 30z' fill='%23adb5bd'/%3E%3C/svg%3E" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; z-index: 2;">
@@ -52,7 +49,7 @@
       <p class="mt-3 text-muted fw-bold">กำลังตรวจสอบข้อมูลยืนยันตัว<br>โปรดรอสักครู่...</p>
     </div>
 
-    <div id="view-register" class="p-4 hidden text-center">
+    <div id="view-register" class="p-4 hidden text-center" style="padding-bottom: 70px !important;">
       <img src="https://img1.pic.in.th/images/True--C.png" style="width:80px; margin-bottom: 15px;">
       <h5 class="fw-bold">ผูกบัญชีใช้งาน</h5>
       <p class="text-muted small mb-4">กรุณาระบุรหัสพนักงานเพื่อเชื่อมต่อ LINE</p>
@@ -82,7 +79,8 @@
       </div>
     </div>
 
-    <div id="view-acknowledge" class="p-4 hidden text-center">
+    <!-- อัปเดต HTML: ดันกรอบด้านล่างขึ้นเล็กน้อยกันปุ่มโดนทับ -->
+    <div id="view-acknowledge" class="p-4 hidden text-center" style="padding-bottom: 70px !important;">
       <img src="https://img1.pic.in.th/images/True--C.png" style="width:75px; margin-bottom: 10px;">
       
       <h5 class="fw-bold m-0" style="color: #000; letter-spacing: 0.5px;">Acknowledge</h5>
@@ -114,7 +112,8 @@
     </div>
   </div>
 
-  <div class="footer">
+  <!-- อัปเดต HTML: เพิ่ม id ไว้สำหรับสั่งซ่อน/โชว์ และใส่คลาส hidden เริ่มต้น -->
+  <div id="app-footer" class="footer hidden">
     บริษัท ทรู คอร์ปอเรชั่น จำกัด (มหาชน)<br>
     <a href="privacy.html" target="_blank">นโยบายความเป็นส่วนตัว (Privacy Policy)</a>
   </div>
@@ -154,7 +153,6 @@
           document.getElementById('user-pfp').src = p.pictureUrl;
           document.getElementById('user-name').innerText = "คุณ " + userObj.fullName;
           
-          // แก้ไขตรงนี้: เปลี่ยน ID เป็น รหัสพนักงาน
           document.getElementById('user-meta').innerText = "รหัสพนักงาน: " + userObj.empId + " | " + userObj.channel;
           
           const sel = document.getElementById('topicSelect');
@@ -173,9 +171,16 @@
       }
     }
 
+    // อัปเดต JS: สั่งให้ Footer ซ่อนตอนอยู่หน้า Loading และโชว์ตอนอยู่หน้าอื่นๆ
     function showView(v) { 
       document.querySelectorAll('.main-card > div').forEach(d => d.classList.add('hidden')); 
       document.getElementById('view-' + v).classList.remove('hidden'); 
+      
+      if (v === 'loading') {
+        document.getElementById('app-footer').classList.add('hidden');
+      } else {
+        document.getElementById('app-footer').classList.remove('hidden');
+      }
     }
 
     async function searchEmp(id) {
@@ -279,10 +284,9 @@
       }
     }
 
-    // ปรับปรุงฟังก์ชัน callApi ให้แสดงหน้าจอขาวเต็มจอเฉพาะตอนกดรับทราบ
     async function callApi(action, payload) {
       if (action === 'acknowledge') {
-        document.getElementById('save-overlay').classList.remove('hidden'); // โชว์หน้าขาวไล่สี
+        document.getElementById('save-overlay').classList.remove('hidden'); 
       } else {
         TrueSwal.fire({ title: 'กำลังตรวจสอบ โปรดรอสักครู่...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
       }
@@ -291,7 +295,7 @@
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action, payload }) }).then(r => r.json());
         
         if (action === 'acknowledge') {
-          document.getElementById('save-overlay').classList.add('hidden'); // ปิดหน้าขาวไล่สี
+          document.getElementById('save-overlay').classList.add('hidden'); 
         } else {
           Swal.close();
         }
