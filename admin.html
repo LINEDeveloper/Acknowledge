@@ -97,7 +97,7 @@
               <th>วันเริ่ม</th>
               <th>วันสิ้นสุด</th>
               <th>ยอดรับทราบ</th>
-              <th>% รับทราบ</th> <!-- 🚨 เพิ่มคอลัมน์ % -->
+              <th>% รับทราบ</th>
               <th>สถานะ</th>
               <th>จัดการ</th>
             </tr>
@@ -169,11 +169,14 @@
                 <td>${t.startDate}</td>
                 <td>${t.endDate}</td>
                 <td><h5 class="m-0 fw-bold text-danger">${t.count}</h5></td>
-                <td><h5 class="m-0 fw-bold text-primary">${t.percentage}</h5></td> <!-- 🚨 แสดงตัวเลขเปอร์เซ็นต์ -->
+                <td><h5 class="m-0 fw-bold text-primary">${t.percentage}</h5></td>
                 <td class="${statusColor} fw-bold"><i class="fas ${icon} me-1" style="font-size:10px;"></i> ${t.status}</td>
-                <td>
-                  <button class="btn btn-light btn-sm text-primary rounded-circle" onclick="editTopic('${t.name}', '${t.rawDate}', '${t.category}')" title="แก้ไข / ขยายเวลา">
+                <td style="white-space: nowrap;">
+                  <button class="btn btn-light btn-sm text-primary rounded-circle me-1" onclick="editTopic('${t.name}', '${t.rawStartDate}', '${t.rawDate}', '${t.category}')" title="แก้ไข">
                     <i class="fas fa-pen"></i>
+                  </button>
+                  <button class="btn btn-light btn-sm text-danger rounded-circle" onclick="deleteTopic('${t.name}')" title="ลบหัวข้อ">
+                    <i class="fas fa-trash"></i>
                   </button>
                 </td>
               </tr>
@@ -343,7 +346,8 @@
       }
     }
 
-    async function editTopic(oldName, oldEndDate, oldCat) {
+    // 🚨 อัปเดตฟังก์ชันแก้ไข: รับค่า oldStartDate และส่ง newStartDate
+    async function editTopic(oldName, oldStartDate, oldEndDate, oldCat) {
       const { value: formValues } = await Swal.fire({
         title: 'แก้ไขหัวข้อข่าว',
         html: `
@@ -358,8 +362,16 @@
             <option value="Non Shop" ${oldCat === 'Non Shop' ? 'selected' : ''}>Non Shop (พนักงานออฟฟิศ)</option>
           </select>
 
-          <div class="text-start mb-1 small fw-bold">วันสิ้นสุด:</div>
-          <input type="date" id="edit-end" class="form-control" value="${oldEndDate}">
+          <div class="row">
+            <div class="col-6">
+              <div class="text-start mb-1 small fw-bold">วันเริ่ม:</div>
+              <input type="date" id="edit-start" class="form-control" value="${oldStartDate}">
+            </div>
+            <div class="col-6">
+              <div class="text-start mb-1 small fw-bold">วันสิ้นสุด:</div>
+              <input type="date" id="edit-end" class="form-control" value="${oldEndDate}">
+            </div>
+          </div>
         `,
         showCancelButton: true,
         confirmButtonText: 'บันทึกการแก้ไข',
@@ -369,6 +381,7 @@
             oldName: oldName,
             newName: document.getElementById('edit-name').value,
             newCategory: document.getElementById('edit-cat').value,
+            newStartDate: document.getElementById('edit-start').value + " 00:00:00", // เซฟวันเริ่มใหม่
             newEndDate: document.getElementById('edit-end').value + " 23:59:59"
           }
         }
@@ -377,6 +390,24 @@
       if (formValues && formValues.newName) {
         callApi('editTopic', formValues, 'กำลังอัปเดตข้อมูล...');
       }
+    }
+
+    // 🚨 ฟังก์ชันใหม่: สำหรับลบหัวข้อข่าว
+    function deleteTopic(topicName) {
+      Swal.fire({
+        title: 'ยืนยันการลบ?',
+        text: `คุณแน่ใจหรือไม่ว่าต้องการลบหัวข้อ "${topicName}"? ข้อมูลนี้จะไม่สามารถกู้คืนได้`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#aaa',
+        confirmButtonText: 'ใช่, ลบเลย!',
+        cancelButtonText: 'ยกเลิก'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          callApi('deleteTopic', { name: topicName }, 'กำลังลบหัวข้อ...');
+        }
+      });
     }
 
     function exportReport() {
