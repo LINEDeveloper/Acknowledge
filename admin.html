@@ -285,7 +285,6 @@
       });
     }
 
-    // 🚨 อัปเดตตรรกะใหม่ให้ฉลาดขึ้น เพื่อรองรับข้อมูลของ Geo-Based ตามคอลัมน์ E (BKK, North ฯลฯ)
     function isShopChannel(name) {
       const n = name.toLowerCase();
       return n.includes("shop") || n.includes("coco") || n.includes("hall") || 
@@ -294,7 +293,6 @@
     }
 
     function isGeoBasedChannel(name) {
-      // 🚨 ถ้าไม่ใช่คำที่เกี่ยวกับ Shop เลย ให้ถือว่าเป็นข้อมูลสาขาย่อยของ Geo-Based ทั้งหมด
       return !isShopChannel(name);
     }
 
@@ -506,19 +504,32 @@
       });
     }
 
-    function exportReport() {
-      Swal.fire({
-        title: 'ยืนยันการส่งรายงาน?',
-        text: "ระบบจะสรุปยอดและส่งไฟล์ Excel เข้าอีเมลทันที",
+    // 🚨 อัปเดต: ฟังก์ชันส่งรายงานเข้าอีเมลแบบเลือกกลุ่มเป้าหมายได้
+    async function exportReport() {
+      const { value: selectedTarget, isConfirmed } = await Swal.fire({
+        title: 'ส่งรายงานเข้าอีเมล',
+        html: `
+          <div class="text-start mb-2 fw-bold text-muted" style="font-size: 14px;">เลือกกลุ่มที่ต้องการส่งรายงานไปให้:</div>
+          <select id="export-email-target" class="form-select form-select-lg" style="border-radius: 12px;">
+            <option value="All">ส่งภาพรวมทั้งหมด (เข้าส่วนกลาง)</option>
+            <option value="True Shop DB7">ส่งให้เฉพาะ True Shop DB7</option>
+            <option value="True Shop WW">ส่งให้เฉพาะ True Shop WW</option>
+            <option value="Geo-Based">ส่งให้เฉพาะ Geo-Based</option>
+          </select>
+        `,
         icon: 'info',
         showCancelButton: true,
+        confirmButtonText: '<i class="fas fa-paper-plane me-1"></i> ส่งอีเมลเลย!',
         confirmButtonColor: '#ff0000',
-        confirmButtonText: 'ใช่, ส่งอีเมลเลย!'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          callApi('exportReport', {}, 'กำลังสร้างและส่งอีเมล...');
+        cancelButtonText: 'ยกเลิก',
+        preConfirm: () => {
+          return document.getElementById('export-email-target').value;
         }
       });
+
+      if (isConfirmed) {
+        callApi('exportReport', { target: selectedTarget }, `กำลังส่งอีเมลหา ${selectedTarget}...`);
+      }
     }
 
     async function downloadExcel() {
