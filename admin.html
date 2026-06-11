@@ -17,7 +17,7 @@
     .stat-card { background: #fff; border-radius: 20px; padding: 25px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); border: 1px solid #f0f0f0; display: flex; align-items: center; gap: 20px; transition: 0.3s; height: 100%; }
     .stat-card:hover { transform: translateY(-5px); box-shadow: 0 12px 25px rgba(0,0,0,0.08); }
     .stat-icon { width: 65px; height: 65px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 26px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-    .bg-blue-light { background: linear-gradient(135deg, #eef5ff, #e6f0ff); color: #005ce6; }
+    .bg-blue-light { background: linear-gradient(135deg, #eef5ff, #e6f0ff); color: #002d72; } /* ปรับสีน้ำเงินให้พรีเมียมขึ้น */
     .bg-red-light { background: linear-gradient(135deg, #fff0f0, #ffe6e6); color: #e60000; }
     
     .table-container { background: #fff; border-radius: 20px; padding: 25px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); border: 1px solid #f0f0f0; margin-top: 30px; }
@@ -25,6 +25,15 @@
     .btn-true:hover { background: linear-gradient(45deg, #cc0000, #ff0000); color: white; transform: scale(1.05); }
     .btn-outline-true { border: 2px solid #ff0000; color: #ff0000; border-radius: 50px; padding: 8px 20px; font-weight: 600; transition: 0.2s; background: transparent; }
     .btn-outline-true:hover { background: #ff0000; color: white; }
+    
+    /* 🚨 เพิ่ม CSS สำหรับดีไซน์ Tabs แบบ Modern Minimalist */
+    .nav-tabs-true { border-bottom: 2px solid #eaeaea; margin-bottom: 20px; }
+    .nav-tabs-true .nav-link { border: none; color: #888; font-weight: 600; padding: 12px 25px; border-radius: 0; position: relative; transition: 0.3s; font-size: 15px; }
+    .nav-tabs-true .nav-link:hover { color: #ff0000; background: transparent; }
+    .nav-tabs-true .nav-link.active { color: #ff0000; background: transparent; border: none; }
+    .nav-tabs-true .nav-link.active::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 3px; background-color: #ff0000; border-radius: 3px 3px 0 0; }
+    
+    .badge-status { padding: 6px 12px; border-radius: 50px; font-weight: 600; font-size: 12px; letter-spacing: 0.5px; }
     
     .table thead th { background: #f8f9fa; color: #555; border-bottom: 2px solid #eee; padding: 15px; font-weight: 600; text-align: center; }
     .table tbody td { padding: 15px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f1f1f1; }
@@ -83,11 +92,30 @@
     </div>
 
     <div class="table-container mb-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="fw-bold m-0"><i class="fas fa-list-alt text-danger me-2"></i> หัวข้อข่าวสาร</h5>
         <button class="btn btn-true btn-sm px-4" onclick="addTopic()"><i class="fas fa-plus me-1"></i> เพิ่มหัวข้อใหม่</button>
       </div>
       
+      <!-- 🚨 ส่วนของ UI แท็บเมนู (Tabs) -->
+      <ul class="nav nav-tabs nav-tabs-true" id="topicTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="tab-active" onclick="filterTable('กำลังดำเนินการ')">
+            <i class="fas fa-circle-play me-1"></i> กำลังดำเนินการ
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="tab-expired" onclick="filterTable('สิ้นสุดแล้ว')">
+            <i class="fas fa-check-circle me-1"></i> สิ้นสุดแล้ว
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="tab-all" onclick="filterTable('All')">
+            <i class="fas fa-layer-group me-1"></i> ดูทั้งหมด
+          </button>
+        </li>
+      </ul>
+
       <div class="table-responsive">
         <table class="table table-hover align-middle">
           <thead>
@@ -103,6 +131,7 @@
             </tr>
           </thead>
           <tbody id="table-body">
+            <!-- ข้อมูลจะถูกดึงมาใส่ตรงนี้ผ่าน JS -->
           </tbody>
         </table>
       </div>
@@ -132,6 +161,7 @@
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycby-pLn-ACbareuCdomxdkX2Oe1H9gVNseUDb2k-CENm3DX3YrQvbtoFYErSZvHQppU/exec"; 
 
+    let globalTopics = []; // เก็บข้อมูลข่าวสารทั้งหมดไว้กรอง (Filter)
     let globalTopicStats = {}; 
     let topicCategoryMap = {}; 
     let chartInstances = {};   
@@ -145,6 +175,7 @@
         animateValue("total-ack", 0, res.totalAck, 1000);
 
         globalTopicStats = res.topicChannelStats;
+        globalTopics = res.topics; // เก็บข้อมูลเข้าตัวแปรส่วนกลาง
 
         const selector = document.getElementById('topic-selector');
         selector.innerHTML = '<option value="" disabled selected>-- โปรดเลือกหัวข้อข่าวสาร --</option>';
@@ -153,41 +184,62 @@
           topicCategoryMap[t.name] = t.category;
         });
 
-        const tbody = document.getElementById('table-body');
-        tbody.innerHTML = '';
-        if (res.topics.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">ยังไม่มีข้อมูล</td></tr>';
-        } else {
-          res.topics.forEach(t => {
-            const statusColor = t.status === "กำลังดำเนินการ" ? "text-success" : "text-secondary";
-            const icon = t.status === "กำลังดำเนินการ" ? "fa-circle-dot" : "fa-circle-stop";
-            
-            tbody.innerHTML += `
-              <tr>
-                <td class="text-start fw-bold text-dark">${t.name}</td>
-                <td class="text-secondary">${t.category}</td>
-                <td>${t.startDate}</td>
-                <td>${t.endDate}</td>
-                <td><h5 class="m-0 fw-bold text-danger">${t.count}</h5></td>
-                <td><h5 class="m-0 fw-bold text-primary">${t.percentage}</h5></td>
-                <td class="${statusColor} fw-bold"><i class="fas ${icon} me-1" style="font-size:10px;"></i> ${t.status}</td>
-                <td style="white-space: nowrap;">
-                  <button class="btn btn-light btn-sm text-primary rounded-circle me-1" onclick="editTopic('${t.name}', '${t.rawStartDate}', '${t.rawDate}', '${t.category}')" title="แก้ไข">
-                    <i class="fas fa-pen"></i>
-                  </button>
-                  <button class="btn btn-light btn-sm text-danger rounded-circle" onclick="deleteTopic('${t.name}')" title="ลบหัวข้อ">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </td>
-              </tr>
-            `;
-          });
-        }
+        // เรียกใช้งานฟังก์ชันกรองตาราง โดยตั้งค่าเริ่มต้นเป็น 'กำลังดำเนินการ'
+        filterTable('กำลังดำเนินการ');
+
       } catch (e) {
         Swal.fire('Error', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error');
       } finally {
         document.getElementById('loading-overlay').style.display = 'none';
       }
+    }
+
+    // 🚨 ฟังก์ชันใหม่: จัดการการสลับแท็บและกรองตาราง
+    function filterTable(statusFilter) {
+      // 1. จัดการปุ่มเปลี่ยนสีตอน Active
+      document.querySelectorAll('.nav-tabs-true .nav-link').forEach(el => el.classList.remove('active'));
+      if (statusFilter === 'กำลังดำเนินการ') document.getElementById('tab-active').classList.add('active');
+      else if (statusFilter === 'สิ้นสุดแล้ว') document.getElementById('tab-expired').classList.add('active');
+      else document.getElementById('tab-all').classList.add('active');
+
+      // 2. กรองข้อมูล
+      const filteredData = globalTopics.filter(t => statusFilter === 'All' || t.status === statusFilter);
+
+      // 3. วาดตารางใหม่
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = '';
+
+      if (filteredData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-5"><i class="fas fa-folder-open mb-2" style="font-size: 30px; opacity: 0.3;"></i><br>ไม่มีหัวข้อข่าวสารในหมวดหมู่นี้</td></tr>`;
+        return;
+      }
+
+      filteredData.forEach(t => {
+        // ใช้ Badge เพื่อความสวยงามพรีเมียม
+        const statusBadge = t.status === "กำลังดำเนินการ" 
+          ? `<span class="badge bg-success badge-status"><i class="fas fa-circle-dot me-1"></i> ${t.status}</span>` 
+          : `<span class="badge bg-secondary badge-status"><i class="fas fa-circle-stop me-1"></i> ${t.status}</span>`;
+        
+        tbody.innerHTML += `
+          <tr>
+            <td class="text-start fw-bold text-dark">${t.name}</td>
+            <td class="text-secondary">${t.category}</td>
+            <td>${t.startDate}</td>
+            <td>${t.endDate}</td>
+            <td><h5 class="m-0 fw-bold text-danger">${t.count}</h5></td>
+            <td><h5 class="m-0 fw-bold text-primary">${t.percentage}</h5></td>
+            <td>${statusBadge}</td>
+            <td style="white-space: nowrap;">
+              <button class="btn btn-light btn-sm text-primary rounded-circle me-1" onclick="editTopic('${t.name}', '${t.rawStartDate}', '${t.rawDate}', '${t.category}')" title="แก้ไข">
+                <i class="fas fa-pen"></i>
+              </button>
+              <button class="btn btn-light btn-sm text-danger rounded-circle" onclick="deleteTopic('${t.name}')" title="ลบหัวข้อ">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
     }
 
     function isShopChannel(name) {
@@ -346,7 +398,6 @@
       }
     }
 
-    // 🚨 อัปเดตฟังก์ชันแก้ไข: รับค่า oldStartDate และส่ง newStartDate
     async function editTopic(oldName, oldStartDate, oldEndDate, oldCat) {
       const { value: formValues } = await Swal.fire({
         title: 'แก้ไขหัวข้อข่าว',
@@ -381,7 +432,7 @@
             oldName: oldName,
             newName: document.getElementById('edit-name').value,
             newCategory: document.getElementById('edit-cat').value,
-            newStartDate: document.getElementById('edit-start').value + " 00:00:00", // เซฟวันเริ่มใหม่
+            newStartDate: document.getElementById('edit-start').value + " 00:00:00", 
             newEndDate: document.getElementById('edit-end').value + " 23:59:59"
           }
         }
@@ -392,7 +443,6 @@
       }
     }
 
-    // 🚨 ฟังก์ชันใหม่: สำหรับลบหัวข้อข่าว
     function deleteTopic(topicName) {
       Swal.fire({
         title: 'ยืนยันการลบ?',
