@@ -190,15 +190,13 @@
       }
     }
 
-    // 🚨 อัปเดตฟังก์ชันกรองข้อมูล: เพิ่มระบบให้เลือกเดือนก่อนแสดงผลเมื่อกดแท็บ "สิ้นสุดแล้ว"
     async function filterTable(statusFilter, selectedMonth) {
       
-      // ตรรกะใหม่: ถ้าเลือกแท็บสิ้นสุดแล้ว และยังไม่มีการส่งค่าเดือนมา ให้แสดง Dropdown เลือกเดือนก่อน
       if (statusFilter === 'สิ้นสุดแล้ว' && !selectedMonth) {
         let monthSet = new Set();
         globalTopics.forEach(t => {
           if (t.status === 'สิ้นสุดแล้ว' && t.rawDate) {
-            monthSet.add(t.rawDate.substring(0, 7)); // ดึงเฉพาะรูปแบบ yyyy-MM เช่น 2026-06
+            monthSet.add(t.rawDate.substring(0, 7)); 
           }
         });
 
@@ -207,7 +205,6 @@
           return;
         }
 
-        // เรียงลำดับเดือนจากล่าสุดลงไป
         let sortedMonths = Array.from(monthSet).sort().reverse();
         const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
         let optionsHtml = '';
@@ -234,20 +231,17 @@
           }
         });
 
-        // เมื่อผู้ดูแลเลือกเดือนและกดตกลง ให้เรียกฟังก์ชันตัวเองอีกครั้งพร้อมแนบค่าเดือนที่เลือกเข้าไป
         if (isConfirmed && monthPicked) {
           filterTable('สิ้นสุดแล้ว', monthPicked);
         }
         return;
       }
 
-      // 1. จัดการปุ่มเปลี่ยนสีไฮไลท์ของตัวแท็บ
       document.querySelectorAll('.nav-tabs-true .nav-link').forEach(el => el.classList.remove('active'));
       if (statusFilter === 'กำลังดำเนินการ') document.getElementById('tab-active').classList.add('active');
       else if (statusFilter === 'สิ้นสุดแล้ว') document.getElementById('tab-expired').classList.add('active');
       else document.getElementById('tab-all').classList.add('active');
 
-      // 2. กรองข้อมูลตามเงื่อนไขแท็บ (เพิ่มเงื่อนไขเช็คเดือนสำหรับแท็บสิ้นสุดแล้ว)
       const filteredData = globalTopics.filter(t => {
         if (statusFilter === 'All') return true;
         if (statusFilter === 'สิ้นสุดแล้ว' && selectedMonth) {
@@ -256,7 +250,6 @@
         return t.status === statusFilter;
       });
 
-      // 3. แสดงข้อมูลลงบนตารางตาราง
       const tbody = document.getElementById('table-body');
       tbody.innerHTML = '';
 
@@ -292,14 +285,17 @@
       });
     }
 
+    // 🚨 อัปเดตตรรกะใหม่ให้ฉลาดขึ้น เพื่อรองรับข้อมูลของ Geo-Based ตามคอลัมน์ E (BKK, North ฯลฯ)
     function isShopChannel(name) {
       const n = name.toLowerCase();
-      return n.includes("shop") || n.includes("coco") || n.includes("hall");
+      return n.includes("shop") || n.includes("coco") || n.includes("hall") || 
+             n.includes("db7") || n.includes("ww") || n.includes("partner") || 
+             n.includes("franchise") || n.includes("event");
     }
 
     function isGeoBasedChannel(name) {
-      const n = name.toLowerCase();
-      return n.includes("geo-based") || n.includes("geo based") || n.includes("geo");
+      // 🚨 ถ้าไม่ใช่คำที่เกี่ยวกับ Shop เลย ให้ถือว่าเป็นข้อมูลสาขาย่อยของ Geo-Based ทั้งหมด
+      return !isShopChannel(name);
     }
 
     function updateCharts(topicName) {
