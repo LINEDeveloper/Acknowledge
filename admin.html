@@ -285,6 +285,7 @@
       });
     }
 
+    // ระบบคัดกรอง Shop และ Geo-Based ให้รองรับชื่อย่อสาขาคอลัมน์ E ได้อย่างแม่นยำ
     function isShopChannel(name) {
       const n = name.toLowerCase();
       return n.includes("shop") || n.includes("coco") || n.includes("hall") || 
@@ -504,11 +505,29 @@
       });
     }
 
-    // 🚨 อัปเดต: ฟังก์ชันส่งรายงานเข้าอีเมลแบบเลือกกลุ่มเป้าหมายได้
+    // 🚨 อัปเดต: บังคับเลือกหัวข้อข่าวสารก่อนส่งอีเมลและส่งทั้ง Target/Topic ไปจัดอันดับ
     async function exportReport() {
+      const topicSelector = document.getElementById('topic-selector');
+      const selectedTopic = topicSelector.value;
+      
+      if (!selectedTopic) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'กรุณาเลือกหัวข้อข่าวสาร!',
+          text: 'โปรดเลือกหัวข้อข่าวจากกล่อง Dropdown ในส่วน "%รับทราบหัวข้อ แยกตามช่องทาง" ก่อนกดส่งอีเมลครับ',
+          confirmButtonColor: '#ff0000',
+          confirmButtonText: 'รับทราบ'
+        });
+        return;
+      }
+
       const { value: selectedTarget, isConfirmed } = await Swal.fire({
         title: 'ส่งรายงานเข้าอีเมล',
         html: `
+          <div class="text-start mb-3 p-2 rounded" style="background: #fff5f5; border: 1px dashed #ffb3b3;">
+            <div class="small text-muted mb-1">หัวข้อที่จะจัดอันดับในอีเมล:</div>
+            <div class="fw-bold text-danger" style="font-size: 16px;"><i class="fas fa-bullhorn me-1"></i> ${selectedTopic}</div>
+          </div>
           <div class="text-start mb-2 fw-bold text-muted" style="font-size: 14px;">เลือกกลุ่มที่ต้องการส่งรายงานไปให้:</div>
           <select id="export-email-target" class="form-select form-select-lg" style="border-radius: 12px;">
             <option value="All">ส่งภาพรวมทั้งหมด (เข้าส่วนกลาง)</option>
@@ -528,7 +547,7 @@
       });
 
       if (isConfirmed) {
-        callApi('exportReport', { target: selectedTarget }, `กำลังส่งอีเมลหา ${selectedTarget}...`);
+        callApi('exportReport', { target: selectedTarget, topic: selectedTopic }, `กำลังส่งอีเมลหา ${selectedTarget}...`);
       }
     }
 
