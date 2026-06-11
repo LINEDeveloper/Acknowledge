@@ -17,7 +17,7 @@
     .stat-card { background: #fff; border-radius: 20px; padding: 25px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); border: 1px solid #f0f0f0; display: flex; align-items: center; gap: 20px; transition: 0.3s; height: 100%; }
     .stat-card:hover { transform: translateY(-5px); box-shadow: 0 12px 25px rgba(0,0,0,0.08); }
     .stat-icon { width: 65px; height: 65px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 26px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-    .bg-blue-light { background: linear-gradient(135deg, #eef5ff, #e6f0ff); color: #002d72; } /* ปรับสีน้ำเงินให้พรีเมียมขึ้น */
+    .bg-blue-light { background: linear-gradient(135deg, #eef5ff, #e6f0ff); color: #002d72; }
     .bg-red-light { background: linear-gradient(135deg, #fff0f0, #ffe6e6); color: #e60000; }
     
     .table-container { background: #fff; border-radius: 20px; padding: 25px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); border: 1px solid #f0f0f0; margin-top: 30px; }
@@ -26,7 +26,6 @@
     .btn-outline-true { border: 2px solid #ff0000; color: #ff0000; border-radius: 50px; padding: 8px 20px; font-weight: 600; transition: 0.2s; background: transparent; }
     .btn-outline-true:hover { background: #ff0000; color: white; }
     
-    /* 🚨 เพิ่ม CSS สำหรับดีไซน์ Tabs แบบ Modern Minimalist */
     .nav-tabs-true { border-bottom: 2px solid #eaeaea; margin-bottom: 20px; }
     .nav-tabs-true .nav-link { border: none; color: #888; font-weight: 600; padding: 12px 25px; border-radius: 0; position: relative; transition: 0.3s; font-size: 15px; }
     .nav-tabs-true .nav-link:hover { color: #ff0000; background: transparent; }
@@ -97,7 +96,6 @@
         <button class="btn btn-true btn-sm px-4" onclick="addTopic()"><i class="fas fa-plus me-1"></i> เพิ่มหัวข้อใหม่</button>
       </div>
       
-      <!-- 🚨 ส่วนของ UI แท็บเมนู (Tabs) -->
       <ul class="nav nav-tabs nav-tabs-true" id="topicTabs" role="tablist">
         <li class="nav-item" role="presentation">
           <button class="nav-link active" id="tab-active" onclick="filterTable('กำลังดำเนินการ')">
@@ -131,7 +129,6 @@
             </tr>
           </thead>
           <tbody id="table-body">
-            <!-- ข้อมูลจะถูกดึงมาใส่ตรงนี้ผ่าน JS -->
           </tbody>
         </table>
       </div>
@@ -161,7 +158,7 @@
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycby-pLn-ACbareuCdomxdkX2Oe1H9gVNseUDb2k-CENm3DX3YrQvbtoFYErSZvHQppU/exec"; 
 
-    let globalTopics = []; // เก็บข้อมูลข่าวสารทั้งหมดไว้กรอง (Filter)
+    let globalTopics = []; 
     let globalTopicStats = {}; 
     let topicCategoryMap = {}; 
     let chartInstances = {};   
@@ -175,7 +172,7 @@
         animateValue("total-ack", 0, res.totalAck, 1000);
 
         globalTopicStats = res.topicChannelStats;
-        globalTopics = res.topics; // เก็บข้อมูลเข้าตัวแปรส่วนกลาง
+        globalTopics = res.topics; 
 
         const selector = document.getElementById('topic-selector');
         selector.innerHTML = '<option value="" disabled selected>-- โปรดเลือกหัวข้อข่าวสาร --</option>';
@@ -184,7 +181,6 @@
           topicCategoryMap[t.name] = t.category;
         });
 
-        // เรียกใช้งานฟังก์ชันกรองตาราง โดยตั้งค่าเริ่มต้นเป็น 'กำลังดำเนินการ'
         filterTable('กำลังดำเนินการ');
 
       } catch (e) {
@@ -194,18 +190,73 @@
       }
     }
 
-    // 🚨 ฟังก์ชันใหม่: จัดการการสลับแท็บและกรองตาราง
-    function filterTable(statusFilter) {
-      // 1. จัดการปุ่มเปลี่ยนสีตอน Active
+    // 🚨 อัปเดตฟังก์ชันกรองข้อมูล: เพิ่มระบบให้เลือกเดือนก่อนแสดงผลเมื่อกดแท็บ "สิ้นสุดแล้ว"
+    async function filterTable(statusFilter, selectedMonth) {
+      
+      // ตรรกะใหม่: ถ้าเลือกแท็บสิ้นสุดแล้ว และยังไม่มีการส่งค่าเดือนมา ให้แสดง Dropdown เลือกเดือนก่อน
+      if (statusFilter === 'สิ้นสุดแล้ว' && !selectedMonth) {
+        let monthSet = new Set();
+        globalTopics.forEach(t => {
+          if (t.status === 'สิ้นสุดแล้ว' && t.rawDate) {
+            monthSet.add(t.rawDate.substring(0, 7)); // ดึงเฉพาะรูปแบบ yyyy-MM เช่น 2026-06
+          }
+        });
+
+        if (monthSet.size === 0) {
+          Swal.fire('ข้อมูล', 'ยังไม่มีข้อมูลหัวข้อที่สิ้นสุดแล้วในระบบ', 'info');
+          return;
+        }
+
+        // เรียงลำดับเดือนจากล่าสุดลงไป
+        let sortedMonths = Array.from(monthSet).sort().reverse();
+        const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+        let optionsHtml = '';
+        sortedMonths.forEach(m => {
+          const parts = m.split('-');
+          const label = `${thaiMonths[parseInt(parts[1]) - 1]} ${parts[0]}`;
+          optionsHtml += `<option value="${m}">${label}</option>`;
+        });
+
+        const { value: monthPicked, isConfirmed } = await Swal.fire({
+          title: 'เลือกเดือนที่ต้องการดูข้อมูล',
+          html: `
+            <div class="text-start mb-2 fw-bold text-muted" style="font-size: 14px;">ระบุเดือนของรายงานข่าวสารที่สิ้นสุดแล้ว:</div>
+            <select id="select-expired-month" class="form-select form-select-lg" style="border-radius: 12px;">
+              ${optionsHtml}
+            </select>
+          `,
+          showCancelButton: true,
+          confirmButtonText: 'ตกลง',
+          confirmButtonColor: '#ff0000',
+          cancelButtonText: 'ยกเลิก',
+          preConfirm: () => {
+            return document.getElementById('select-expired-month').value;
+          }
+        });
+
+        // เมื่อผู้ดูแลเลือกเดือนและกดตกลง ให้เรียกฟังก์ชันตัวเองอีกครั้งพร้อมแนบค่าเดือนที่เลือกเข้าไป
+        if (isConfirmed && monthPicked) {
+          filterTable('สิ้นสุดแล้ว', monthPicked);
+        }
+        return;
+      }
+
+      // 1. จัดการปุ่มเปลี่ยนสีไฮไลท์ของตัวแท็บ
       document.querySelectorAll('.nav-tabs-true .nav-link').forEach(el => el.classList.remove('active'));
       if (statusFilter === 'กำลังดำเนินการ') document.getElementById('tab-active').classList.add('active');
       else if (statusFilter === 'สิ้นสุดแล้ว') document.getElementById('tab-expired').classList.add('active');
       else document.getElementById('tab-all').classList.add('active');
 
-      // 2. กรองข้อมูล
-      const filteredData = globalTopics.filter(t => statusFilter === 'All' || t.status === statusFilter);
+      // 2. กรองข้อมูลตามเงื่อนไขแท็บ (เพิ่มเงื่อนไขเช็คเดือนสำหรับแท็บสิ้นสุดแล้ว)
+      const filteredData = globalTopics.filter(t => {
+        if (statusFilter === 'All') return true;
+        if (statusFilter === 'สิ้นสุดแล้ว' && selectedMonth) {
+          return t.status === 'สิ้นสุดแล้ว' && t.rawDate && t.rawDate.startsWith(selectedMonth);
+        }
+        return t.status === statusFilter;
+      });
 
-      // 3. วาดตารางใหม่
+      // 3. แสดงข้อมูลลงบนตารางตาราง
       const tbody = document.getElementById('table-body');
       tbody.innerHTML = '';
 
@@ -215,7 +266,6 @@
       }
 
       filteredData.forEach(t => {
-        // ใช้ Badge เพื่อความสวยงามพรีเมียม
         const statusBadge = t.status === "กำลังดำเนินการ" 
           ? `<span class="badge bg-success badge-status"><i class="fas fa-circle-dot me-1"></i> ${t.status}</span>` 
           : `<span class="badge bg-secondary badge-status"><i class="fas fa-circle-stop me-1"></i> ${t.status}</span>`;
