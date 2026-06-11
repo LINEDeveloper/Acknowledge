@@ -174,10 +174,8 @@
         globalTopicStats = res.topicChannelStats;
         globalTopics = res.topics; 
 
-        const selector = document.getElementById('topic-selector');
-        selector.innerHTML = '<option value="" disabled selected>-- โปรดเลือกหัวข้อข่าวสาร --</option>';
+        // ดึงหมวดหมู่หัวข้อข่าวเก็บไว้ใช้สร้างกราฟ
         res.topics.forEach(t => {
-          selector.innerHTML += `<option value="${t.name}">${t.name}</option>`;
           topicCategoryMap[t.name] = t.category;
         });
 
@@ -250,6 +248,22 @@
         return t.status === statusFilter;
       });
 
+      // 🚨 อัปเดต: ปรับ Dropdown ให้แสดงเฉพาะข่าวที่อยู่ในตารางนี้เท่านั้น
+      const selector = document.getElementById('topic-selector');
+      selector.innerHTML = '<option value="" disabled selected>-- โปรดเลือกหัวข้อข่าวสาร --</option>';
+      filteredData.forEach(t => {
+        selector.innerHTML += `<option value="${t.name}">${t.name}</option>`;
+      });
+
+      // 🚨 อัปเดต: เคลียร์พื้นที่กราฟให้ว่างเปล่า ทุกครั้งที่กดเปลี่ยนแท็บ
+      const container = document.getElementById('chart-container');
+      container.innerHTML = `
+        <div class="col-12 text-center text-muted py-5">
+          <i class="fas fa-chart-pie mb-2" style="font-size: 40px; opacity: 0.2;"></i>
+          <p class="m-0">โปรดเลือกหัวข้อข่าวสารด้านบนเพื่อดู %รับทราบ</p>
+        </div>
+      `;
+
       const tbody = document.getElementById('table-body');
       tbody.innerHTML = '';
 
@@ -285,7 +299,6 @@
       });
     }
 
-    // ระบบคัดกรอง Shop และ Geo-Based ให้รองรับชื่อย่อสาขาคอลัมน์ E ได้อย่างแม่นยำ
     function isShopChannel(name) {
       const n = name.toLowerCase();
       return n.includes("shop") || n.includes("coco") || n.includes("hall") || 
@@ -505,7 +518,6 @@
       });
     }
 
-    // 🚨 อัปเดต: บังคับเลือกหัวข้อข่าวสารก่อนส่งอีเมลและส่งทั้ง Target/Topic ไปจัดอันดับ
     async function exportReport() {
       const topicSelector = document.getElementById('topic-selector');
       const selectedTopic = topicSelector.value;
