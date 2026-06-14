@@ -18,7 +18,8 @@
     .consent-box { background-color: #fff3cd; border: 1px solid #ffecb5; border-radius: 22px; padding: 18px 22px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; }
     .consent-box:active { transform: scale(0.98); }
     
-    .profile-card { padding: 20px; background: #ffffff; border-radius: 24px; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 18px; margin-bottom: 25px; border: 1px solid #f0f0f0; box-shadow: 0 12px 35px rgba(0,0,0,0.04); position: relative; overflow: hidden; width: 100%; }
+    /* 🚨 อัปเดต: ปรับระยะ Padding และ Gap ให้สัดส่วนดูลงตัว กระชับขึ้น */
+    .profile-card { padding: 22px 18px; background: #ffffff; border-radius: 24px; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 16px; margin-bottom: 25px; border: 1px solid #f0f0f0; box-shadow: 0 12px 35px rgba(0,0,0,0.04); position: relative; overflow: hidden; width: 100%; }
     
     .hidden { display: none !important; }
     .swal-true-popup { border-radius: 24px !important; padding: 20px !important; font-family: 'Sarabun', sans-serif !important; }
@@ -99,9 +100,9 @@
         </div>
         
         <div style="display: flex; flex-direction: column; align-items: flex-start; text-align: left; overflow: hidden; width: 100%;">
-          <div id="user-name" class="fw-bold mb-2" style="font-size: 18px; color: #1a1a1a; letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;"></div>
+          <div id="user-name" class="fw-bold" style="font-size: 18px; color: #1a1a1a; letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; margin-bottom: 6px;"></div>
           
-          <div id="user-meta" class="shadow-sm" style="display: inline-block; background: #f8f9fa; border: 1px solid #e9ecef; color: #555; font-size: 13px; font-weight: 400; padding: 8px 14px; border-radius: 12px; letter-spacing: 0.3px; line-height: 1.5; word-wrap: break-word; max-width: 100%;"></div>
+          <div id="user-meta" class="shadow-sm" style="display: inline-block; background: #f8f9fa; border: 1px solid #e9ecef; color: #555; font-size: 13px; font-weight: 400; padding: 6px 12px; border-radius: 10px; letter-spacing: 0.2px; line-height: 1.4; word-wrap: break-word; max-width: 100%;"></div>
         </div>
       </div>
       <label class="fw-bold mb-2 ps-2 text-dark text-start w-100" style="font-size: 14px;">เลือกหัวข้อข่าวสารที่ต้องการรับทราบ</label>
@@ -170,7 +171,6 @@
           
           document.getElementById('user-name').innerText = "คุณ" + userObj.fullName;
           
-          // 🚨 อัปเดต: เปลี่ยนเป็นการขึ้นบรรทัดใหม่ด้วย <br> ให้ช่องทาง (Channel) อยู่ด้านล่าง
           document.getElementById('user-meta').innerHTML = "ID : " + userObj.empId + "<br>" + userObj.channel;
           
           const sel = document.getElementById('topicSelect');
