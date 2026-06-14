@@ -84,17 +84,24 @@
       <h5 class="fw-bold m-0" style="color: #000; letter-spacing: 0.5px;">Acknowledge</h5>
       <p class="text-muted small mb-3">ยืนยันรับทราบข้อมูลข่าวสาร</p>
       
-      <div class="profile-card mx-auto" style="box-shadow: 0 12px 35px rgba(0,0,0,0.05); border: 1px solid rgba(255,0,0,0.05); background: #ffffff; position: relative; overflow: hidden; padding: 30px 20px;">
-        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #ff0000, #002d72);"></div>
+      <div class="profile-card mx-auto" style="box-shadow: 0 12px 35px rgba(0,0,0,0.04); border: 1px solid rgba(255,0,0,0.05); background: #ffffff; position: relative; overflow: hidden; padding: 25px 20px;">
         <div style="position: absolute; top: -40px; right: -40px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(255,0,0,0.03) 0%, rgba(255,255,255,0) 70%); border-radius: 50%;"></div>
         
-        <div style="padding: 3px; border-radius: 50%; background: linear-gradient(45deg, #ff0000, #002d72); display: inline-block; box-shadow: 0 8px 20px rgba(0,0,0,0.1);">
-          <img id="user-pfp" style="width: 85px; height: 85px; border-radius: 50%; border: 3px solid #ffffff; object-fit: cover; display: block;" src="">
+        <div style="position: relative; display: inline-block;">
+          <!-- กรอบรูปโทนสว่าง -->
+          <div style="padding: 3px; border-radius: 50%; background: #f0f2f5; display: inline-block; box-shadow: 0 8px 20px rgba(0,0,0,0.08);">
+            <img id="user-pfp" style="width: 85px; height: 85px; border-radius: 50%; border: 3px solid #ffffff; object-fit: cover; display: block;" src="">
+          </div>
+          <!-- 🚨 อัปเดต: เครื่องหมายติ๊กถูก (Verified) แบบกลมๆ ธรรมดา ดูคลีนและเป็นสากล -->
+          <div style="position: absolute; bottom: 2px; right: 2px; background-color: #ffffff; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+            <i class="fas fa-check-circle" style="color: #0084ff; font-size: 26px;"></i>
+          </div>
         </div>
         
         <div class="mt-3">
           <div id="user-name" class="fw-bold mb-2" style="font-size: 19px; color: #1a1a1a; letter-spacing: -0.2px;"></div>
-          <div id="user-meta" class="fw-semibold shadow-sm" style="display: inline-block; background: #f8f9fa; border: 1px solid #e9ecef; color: #555; font-size: 13px; padding: 6px 18px; border-radius: 50px; letter-spacing: 0.3px;"></div>
+          <!-- ป้ายข้อมูลแบบ Tag ทรงสี่เหลี่ยมขอบมน -->
+          <div id="user-meta" class="fw-bold shadow-sm" style="display: inline-block; background: #f8f9fa; border: 1px solid #e9ecef; color: #555; font-size: 13px; padding: 6px 16px; border-radius: 12px; letter-spacing: 0.3px;"></div>
         </div>
       </div>
 
@@ -286,7 +293,6 @@
       
       const res = await callApi('acknowledge', payload);
       if (res === "Success") {
-        // 🚨 อัปเดต: ดึงชื่อหัวข้อข่าวไปโชว์ในหน้า Success
         document.getElementById('success-topic-name').innerText = t;
         showView('success');
       } else { 
