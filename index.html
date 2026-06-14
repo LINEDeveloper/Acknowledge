@@ -84,27 +84,19 @@
       <h5 class="fw-bold m-0" style="color: #000; letter-spacing: 0.5px;">Acknowledge</h5>
       <p class="text-muted small mb-3">ยืนยันรับทราบข้อมูลข่าวสาร</p>
       
-      <!-- 🚨 อัปเดตใหม่: การ์ดโปรไฟล์พนักงานแบบ Premium Minimalist -->
       <div class="profile-card mx-auto" style="box-shadow: 0 12px 35px rgba(0,0,0,0.05); border: 1px solid rgba(255,0,0,0.05); background: #ffffff; position: relative; overflow: hidden; padding: 30px 20px;">
-        
-        <!-- เส้นคาดสีด้านบนเพิ่มความพรีเมียม (Top Accent Line) -->
         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #ff0000, #002d72);"></div>
-        <!-- ลายน้ำแสงตกกระทบจางๆ (Subtle glow) -->
         <div style="position: absolute; top: -40px; right: -40px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(255,0,0,0.03) 0%, rgba(255,255,255,0) 70%); border-radius: 50%;"></div>
         
-        <!-- รูปโปรไฟล์พร้อมกรอบสี Gradient หรูๆ -->
         <div style="padding: 3px; border-radius: 50%; background: linear-gradient(45deg, #ff0000, #002d72); display: inline-block; box-shadow: 0 8px 20px rgba(0,0,0,0.1);">
           <img id="user-pfp" style="width: 85px; height: 85px; border-radius: 50%; border: 3px solid #ffffff; object-fit: cover; display: block;" src="">
         </div>
         
         <div class="mt-3">
-          <!-- ชื่อ สกุล พนักงาน -->
           <div id="user-name" class="fw-bold mb-2" style="font-size: 19px; color: #1a1a1a; letter-spacing: -0.2px;"></div>
-          <!-- ป้ายรหัสพนักงานแบบคลีนๆ สีสบายตา -->
           <div id="user-meta" class="fw-semibold shadow-sm" style="display: inline-block; background: #f8f9fa; border: 1px solid #e9ecef; color: #555; font-size: 13px; padding: 6px 18px; border-radius: 50px; letter-spacing: 0.3px;"></div>
         </div>
       </div>
-      <!-- 🚨 สิ้นสุดการ์ดโปรไฟล์ -->
 
       <label class="fw-bold mb-2 ps-2 text-dark text-start w-100" style="font-size: 14px;">เลือกหัวข้อข่าวสารที่ต้องการรับทราบ</label>
       
@@ -116,11 +108,18 @@
       </div>
     </div>
 
-    <div id="view-success" class="p-5 text-center hidden full-center">
-      <i class="fas fa-check-circle text-success" style="font-size: 80px; margin-bottom: 20px;"></i>
-      <h4 class="fw-bold">บันทึกสำเร็จ</h4>
-      <p class="text-muted small mb-4">ข้อมูลของท่านถูกบันทึกเข้าระบบเรียบร้อย</p>
-      <button class="btn-true" onclick="liff.closeWindow()">ปิดหน้าต่าง</button>
+    <div id="view-success" class="p-4 text-center hidden full-center">
+      <i class="fas fa-check-circle text-success" style="font-size: 80px; margin-bottom: 15px; text-shadow: 0 5px 15px rgba(40,167,69,0.2);"></i>
+      <h3 class="fw-bold text-success mb-2">บันทึกสำเร็จ</h3>
+      <p class="text-muted small mb-4">ข้อมูลของท่านถูกบันทึกเข้าระบบเรียบร้อยแล้ว</p>
+      
+      <div class="p-3 mb-4 w-100 rounded-4" style="background: linear-gradient(135deg, #fffcfc 0%, #ffffff 100%); border: 1px solid #ffe6e6; box-shadow: 0 8px 25px rgba(255,0,0,0.04); position: relative; overflow: hidden; text-align: left;">
+        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, #ff0000, #cc0000);"></div>
+        <div class="small text-muted mb-1 fw-bold"><i class="fas fa-bullhorn me-1 text-danger"></i> หัวข้อที่ท่านรับทราบ:</div>
+        <div id="success-topic-name" class="fw-bold text-dark" style="font-size: 16px; line-height: 1.5; padding-left: 5px;"></div>
+      </div>
+
+      <button class="btn-true shadow-sm" onclick="liff.closeWindow()">ปิดหน้าต่าง</button>
     </div>
   </div>
 
@@ -287,6 +286,8 @@
       
       const res = await callApi('acknowledge', payload);
       if (res === "Success") {
+        // 🚨 อัปเดต: ดึงชื่อหัวข้อข่าวไปโชว์ในหน้า Success
+        document.getElementById('success-topic-name').innerText = t;
         showView('success');
       } else { 
         TrueSwal.fire({ icon: 'info', title: 'ข้อมูลซ้ำ', text: 'ท่านได้รับทราบข่าวนี้ไปแล้ว' }); 
