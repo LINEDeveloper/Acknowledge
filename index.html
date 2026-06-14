@@ -170,8 +170,8 @@
           
           document.getElementById('user-name').innerText = "คุณ" + userObj.fullName;
           
-          // 🚨 อัปเดต: เปลี่ยนกลับเป็น ID : และเชื่อมต่อข้อมูลด้วย | ให้อยู่บรรทัดเดียวกัน
-          document.getElementById('user-meta').innerHTML = "ID : " + userObj.empId + " | " + userObj.channel;
+          // 🚨 อัปเดต: เปลี่ยนเป็นการขึ้นบรรทัดใหม่ด้วย <br> ให้ช่องทาง (Channel) อยู่ด้านล่าง
+          document.getElementById('user-meta').innerHTML = "ID : " + userObj.empId + "<br>" + userObj.channel;
           
           const sel = document.getElementById('topicSelect');
           sel.innerHTML = res.topics.length ? '<option value="" disabled selected>-- เลือกหัวข้อข่าว --</option>' : '<option disabled>-- ไม่มีข่าว --</option>';
