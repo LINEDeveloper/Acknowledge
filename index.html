@@ -193,13 +193,13 @@
             container.innerHTML = `
               <div class="p-4 text-center rounded-4 shadow-sm" style="background: linear-gradient(135deg, #f0fdf4 0%, #e8f5e9 100%); border: 1px solid #c8e6c9;">
                 <i class="fas fa-check-circle mb-2 text-success" style="font-size: 32px;"></i>
-                <h6 class="fw-bold text-success m-0">เยี่ยมมาก! ไม่มีงานค้าง</h6>
+                <h6 class="fw-bold text-success m-0">เยี่ยมมาก! </h6>
                 <p class="small text-muted m-0 mt-1">คุณได้รับทราบข้อมูลครบทุกหัวข้อแล้ว</p>
               </div>`;
             document.querySelector('.consent-box').classList.add('hidden'); // ซ่อนปุ่มกดยอมรับไปเลยเพราะไม่มีงาน
           } else {
             // กรณีมีข่าวค้าง ให้สร้างการ์ดลิสต์
-            let listHtml = `<div class="topic-list-header"><i class="fas fa-clipboard-list me-2 text-danger"></i> งานรอดำเนินการ (${res.topics.length} หัวข้อ)</div>`;
+            let listHtml = `<div class="topic-list-header"><i class="fas fa-clipboard-list me-2 text-danger"></i> หัวข้อยังไม่ได้กดรับทราบ (${res.topics.length} หัวข้อ)</div>`;
             res.topics.forEach(t => {
               listHtml += `
                 <div class="topic-item" onclick="selectTopic('${t.name}', this)">
