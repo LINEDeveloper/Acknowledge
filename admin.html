@@ -11,7 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: 'Sarabun', sans-serif; background-color: #f4f6f9; color: #333; }
-    .navbar-true { background: linear-gradient(90deg, #ff0000, #cc0000); padding: 15px 20px; box-shadow: 0 4px 10px rgba(255,0,0,0.15); }
+    .navbar-true { background: linear-gradient(90deg, #ff0000, #002d72); padding: 15px 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
     .navbar-true .navbar-brand { color: white; font-weight: 700; font-size: 24px; letter-spacing: 0.5px; }
     
     .stat-card { background: #fff; border-radius: 20px; padding: 25px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); border: 1px solid #f0f0f0; display: flex; align-items: center; gap: 20px; transition: 0.3s; height: 100%; }
@@ -32,6 +32,10 @@
     .nav-tabs-true .nav-link.active { color: #ff0000; background: transparent; border: none; }
     .nav-tabs-true .nav-link.active::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 3px; background-color: #ff0000; border-radius: 3px 3px 0 0; }
     
+    /* 🚨 อัปเดตแท็บเทรนด์ให้เป็นธีมไล่สี Premium */
+    .nav-tabs-true .nav-link.tab-trend-active { color: #002d72; background: transparent; border: none; }
+    .nav-tabs-true .nav-link.tab-trend-active::after { background: linear-gradient(90deg, #ff0000, #002d72); }
+
     .badge-status { padding: 6px 12px; border-radius: 50px; font-weight: 600; font-size: 12px; letter-spacing: 0.5px; }
     
     .table thead th { background: #f8f9fa; color: #555; border-bottom: 2px solid #eee; padding: 15px; font-weight: 600; text-align: center; }
@@ -44,6 +48,10 @@
     .swal2-input, .swal2-select { border-radius: 12px !important; }
     .swal2-confirm { border-radius: 50px !important; padding: 10px 25px !important; font-weight: 600 !important; }
     .swal2-cancel { border-radius: 50px !important; padding: 10px 25px !important; font-weight: 600 !important; }
+    
+    .trend-mini-card { background: #fff; border: 1px solid #eaeaea; border-radius: 16px; padding: 15px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); border-left: 5px solid #002d72; }
+    .trend-mini-title { font-size: 13px; color: #888; font-weight: 600; margin-bottom: 5px; }
+    .trend-mini-value { font-size: 24px; font-weight: 700; color: #333; margin: 0; line-height: 1; }
   </style>
 </head>
 <body>
@@ -112,29 +120,76 @@
             <i class="fas fa-layer-group me-1"></i> ดูทั้งหมด
           </button>
         </li>
+        <li class="nav-item ms-md-auto" role="presentation">
+          <button class="nav-link" id="tab-trend" onclick="filterTable('Trend')">
+            <i class="fas fa-chart-line me-1" style="color:#002d72;"></i> 📈 สรุปเทรนด์ (Analytics)
+          </button>
+        </li>
       </ul>
 
-      <div class="table-responsive">
-        <table class="table table-hover align-middle">
-          <thead>
-            <tr>
-              <th class="text-start">หัวข้อข่าวสาร</th>
-              <th>ประเภท</th>
-              <th>วันเริ่ม</th>
-              <th>วันสิ้นสุด</th>
-              <th>ยอดรับทราบ</th>
-              <th>% รับทราบ</th>
-              <th>สถานะ</th>
-              <th>จัดการ</th>
-            </tr>
-          </thead>
-          <tbody id="table-body">
-          </tbody>
-        </table>
+      <div id="standard-table-view">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th class="text-start">หัวข้อข่าวสาร</th>
+                <th>ประเภท</th>
+                <th>วันเริ่ม</th>
+                <th>วันสิ้นสุด</th>
+                <th>ยอดรับทราบ</th>
+                <th>% รับทราบ</th>
+                <th>สถานะ</th>
+                <th>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="table-body">
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
-    <div class="table-container" style="background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);">
+      <div id="trend-view" class="d-none">
+        
+        <div class="row g-3 mb-4 mt-1">
+          <div class="col-md-4">
+            <div class="trend-mini-card" style="border-left-color: #ff0000;">
+              <div class="trend-mini-title">ความเร็วรับทราบแคมเปญล่าสุด</div>
+              <div class="trend-mini-value" id="trend-last-percent">0%</div>
+              <div class="small mt-2" id="trend-diff">กำลังคำนวณ...</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="trend-mini-card" style="border-left-color: #002d72;">
+              <div class="trend-mini-title">ค่าเฉลี่ย Shop (แคมเปญล่าสุด)</div>
+              <div class="trend-mini-value" id="trend-shop-avg" style="color: #002d72;">0%</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="trend-mini-card" style="border-left-color: #ff4d4d;">
+              <div class="trend-mini-title">ค่าเฉลี่ย Geo (แคมเปญล่าสุด)</div>
+              <div class="trend-mini-value" id="trend-geo-avg" style="color: #ff4d4d;">0%</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-12">
+            <div style="border: 1px solid #f0f0f0; border-radius: 20px; padding: 20px;">
+              <h6 class="fw-bold mb-3" style="color:#002d72;"><i class="fas fa-wave-square me-2"></i> เทรนด์การรับทราบภาพรวม (15 แคมเปญล่าสุด)</h6>
+              <canvas id="trendLineChart" height="80"></canvas>
+            </div>
+          </div>
+          <div class="col-12">
+            <div style="border: 1px solid #f0f0f0; border-radius: 20px; padding: 20px;">
+              <h6 class="fw-bold mb-3" style="color:#ff0000;"><i class="fas fa-chart-column me-2"></i> เปรียบเทียบความตื่นตัว: Shop vs Geo-Based</h6>
+              <canvas id="trendBarChart" height="100"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+
+    <div class="table-container" id="doughnut-section" style="background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);">
       <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
         <h5 class="fw-bold m-0"><i class="fas fa-chart-donut text-danger me-2"></i> %รับทราบหัวข้อ แยกตามช่องทาง</h5>
         <div class="d-flex align-items-center gap-2">
@@ -163,6 +218,10 @@
     let topicCategoryMap = {}; 
     let chartInstances = {};   
 
+    // ตัวแปรเก็บกราฟใหม่
+    let trendLineChartInstance = null;
+    let trendBarChartInstance = null;
+
     async function loadData() {
       document.getElementById('loading-overlay').style.display = 'flex';
       try {
@@ -174,7 +233,6 @@
         globalTopicStats = res.topicChannelStats;
         globalTopics = res.topics; 
 
-        // ดึงหมวดหมู่หัวข้อข่าวเก็บไว้ใช้สร้างกราฟ
         res.topics.forEach(t => {
           topicCategoryMap[t.name] = t.category;
         });
@@ -190,6 +248,29 @@
 
     async function filterTable(statusFilter, selectedMonth) {
       
+      // 🚨 การประมวลผลสำหรับแท็บกราฟเทรนด์
+      if (statusFilter === 'Trend') {
+        document.querySelectorAll('.nav-tabs-true .nav-link').forEach(el => {
+          el.classList.remove('active');
+          el.classList.remove('tab-trend-active');
+        });
+        document.getElementById('tab-trend').classList.add('tab-trend-active');
+        
+        document.getElementById('standard-table-view').classList.add('d-none');
+        document.getElementById('doughnut-section').classList.add('d-none');
+        document.getElementById('trend-view').classList.remove('d-none');
+        
+        renderTrendCharts();
+        return;
+      }
+
+      // ----------------------------------------------------
+      // ถ้าไม่ใช่หน้า Trend ให้โชว์ตารางปกติและซ่อน Trend
+      // ----------------------------------------------------
+      document.getElementById('standard-table-view').classList.remove('d-none');
+      document.getElementById('doughnut-section').classList.remove('d-none');
+      document.getElementById('trend-view').classList.add('d-none');
+
       if (statusFilter === 'สิ้นสุดแล้ว' && !selectedMonth) {
         let monthSet = new Set();
         globalTopics.forEach(t => {
@@ -235,7 +316,11 @@
         return;
       }
 
-      document.querySelectorAll('.nav-tabs-true .nav-link').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-tabs-true .nav-link').forEach(el => {
+          el.classList.remove('active');
+          el.classList.remove('tab-trend-active');
+      });
+
       if (statusFilter === 'กำลังดำเนินการ') document.getElementById('tab-active').classList.add('active');
       else if (statusFilter === 'สิ้นสุดแล้ว') document.getElementById('tab-expired').classList.add('active');
       else document.getElementById('tab-all').classList.add('active');
@@ -248,14 +333,12 @@
         return t.status === statusFilter;
       });
 
-      // 🚨 อัปเดต: ปรับ Dropdown ให้แสดงเฉพาะข่าวที่อยู่ในตารางนี้เท่านั้น
       const selector = document.getElementById('topic-selector');
       selector.innerHTML = '<option value="" disabled selected>-- โปรดเลือกหัวข้อข่าวสาร --</option>';
       filteredData.forEach(t => {
         selector.innerHTML += `<option value="${t.name}">${t.name}</option>`;
       });
 
-      // 🚨 อัปเดต: เคลียร์พื้นที่กราฟให้ว่างเปล่า ทุกครั้งที่กดเปลี่ยนแท็บ
       const container = document.getElementById('chart-container');
       container.innerHTML = `
         <div class="col-12 text-center text-muted py-5">
@@ -308,6 +391,137 @@
 
     function isGeoBasedChannel(name) {
       return !isShopChannel(name);
+    }
+
+    // 🚨 ฟังก์ชันประมวลผลและวาดกราฟหน้า Analytics
+    function renderTrendCharts() {
+      // 1. เรียงข้อมูลหัวข้อตามวันที่จากเก่าไปใหม่
+      let sortedTopics = [...globalTopics].sort((a, b) => new Date(a.rawStartDate) - new Date(b.rawStartDate));
+      
+      // ดึงมาแสดงเฉพาะ 15 แคมเปญล่าสุด เพื่อไม่ให้กราฟรกเกินไป
+      let recentTopics = sortedTopics.slice(-15);
+      
+      if(recentTopics.length === 0) return;
+
+      let labels = recentTopics.map(t => {
+        let n = t.name;
+        return n.length > 20 ? n.substring(0,20)+"..." : n;
+      });
+      let lineData = recentTopics.map(t => parseFloat(t.percentage));
+
+      // คำนวณข้อมูล Bar Chart แยก Shop / Geo
+      let shopData = [];
+      let geoData = [];
+      let lastShopPercent = 0;
+      let lastGeoPercent = 0;
+
+      recentTopics.forEach((t, index) => {
+        let stats = globalTopicStats[t.name];
+        let shopTotal = 0, shopAck = 0;
+        let geoTotal = 0, geoAck = 0;
+        
+        if(stats) {
+          for(let ch in stats) {
+            if(isShopChannel(ch)) {
+              shopTotal += stats[ch].total;
+              shopAck += stats[ch].acked;
+            } else {
+              geoTotal += stats[ch].total;
+              geoAck += stats[ch].acked;
+            }
+          }
+        }
+        
+        let sP = shopTotal > 0 ? Math.round((shopAck/shopTotal)*100) : 0;
+        let gP = geoTotal > 0 ? Math.round((geoAck/geoTotal)*100) : 0;
+        shopData.push(sP);
+        geoData.push(gP);
+
+        if(index === recentTopics.length - 1) {
+            lastShopPercent = sP;
+            lastGeoPercent = gP;
+        }
+      });
+
+      // 2. อัปเดตตัวเลข Pulse Card ด้านบน
+      let currentWeekAvg = lineData[lineData.length - 1] || 0;
+      let prevWeekAvg = lineData.length > 1 ? lineData[lineData.length - 2] : 0;
+      let diff = currentWeekAvg - prevWeekAvg;
+      
+      let diffHtml = "";
+      if(diff > 0) diffHtml = `<span class="text-success"><i class="fas fa-caret-up"></i> +${diff.toFixed(1)}%</span>`;
+      else if(diff < 0) diffHtml = `<span class="text-danger"><i class="fas fa-caret-down"></i> ${diff.toFixed(1)}%</span>`;
+      else diffHtml = `<span class="text-secondary"><i class="fas fa-minus"></i> คงที่</span>`;
+
+      document.getElementById('trend-last-percent').innerHTML = currentWeekAvg + '%';
+      document.getElementById('trend-diff').innerHTML = diffHtml + ' เทียบกับแคมเปญก่อนหน้า';
+      document.getElementById('trend-shop-avg').innerHTML = lastShopPercent + '%';
+      document.getElementById('trend-geo-avg').innerHTML = lastGeoPercent + '%';
+
+      // 3. วาดกราฟเส้น Line Chart (ภาพรวม)
+      const ctxLine = document.getElementById('trendLineChart').getContext('2d');
+      if(trendLineChartInstance) trendLineChartInstance.destroy();
+      
+      let gradient = ctxLine.createLinearGradient(0, 0, 0, 400);
+      gradient.addColorStop(0, 'rgba(255, 0, 0, 0.25)');
+      gradient.addColorStop(1, 'rgba(0, 45, 114, 0.0)');
+
+      trendLineChartInstance = new Chart(ctxLine, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '% การรับทราบภาพรวม',
+            data: lineData,
+            borderColor: '#ff0000',
+            backgroundColor: gradient,
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#002d72',
+            pointBorderColor: '#fff',
+            pointRadius: 4,
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, max: 100 } }
+        }
+      });
+
+      // 4. วาดกราฟแท่ง Bar Chart (เปรียบเทียบ Shop vs Geo)
+      const ctxBar = document.getElementById('trendBarChart').getContext('2d');
+      if(trendBarChartInstance) trendBarChartInstance.destroy();
+      
+      trendBarChartInstance = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'กลุ่ม Shop (%)',
+              data: shopData,
+              backgroundColor: '#002d72',
+              borderRadius: 4
+            },
+            {
+              label: 'กลุ่ม Geo-Based (%)',
+              data: geoData,
+              backgroundColor: '#ff0000',
+              borderRadius: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' }
+          },
+          scales: { y: { beginAtZero: true, max: 100 } }
+        }
+      });
     }
 
     function updateCharts(topicName) {
