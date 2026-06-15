@@ -199,7 +199,7 @@
             document.querySelector('.consent-box').classList.add('hidden'); // ซ่อนปุ่มกดยอมรับไปเลยเพราะไม่มีงาน
           } else {
             // กรณีมีข่าวค้าง ให้สร้างการ์ดลิสต์
-            let listHtml = `<div class="topic-list-header"><i class="fas fa-clipboard-list me-2 text-danger"></i> หัวข้อยังไม่ได้กดรับทราบ (${res.topics.length} หัวข้อ)</div>`;
+            let listHtml = `<div class="topic-list-header"><i class="fas fa-clipboard-list me-2 text-danger"></i> รายการ : ยังไม่ได้กดรับทราบ (${res.topics.length} หัวข้อ)</div>`;
             res.topics.forEach(t => {
               listHtml += `
                 <div class="topic-item" onclick="selectTopic('${t.name}', this)">
