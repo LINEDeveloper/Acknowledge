@@ -179,7 +179,6 @@
           <div class="col-12">
             <div style="border: 1px solid #f0f0f0; border-radius: 20px; padding: 25px; background: #fff; position: relative;">
               
-              <!-- Dropdown ตัวกรองแยกประเภทชัดเจน (เพิ่ม Morning Brief) -->
               <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
                 <div>
                   <h5 class="fw-bold m-0" style="color:#333;"><i class="fas fa-wave-square me-2" style="color:#002d72;"></i> เทรนด์การรับทราบภาพรวม (15 แคมเปญล่าสุด)</h5>
@@ -189,6 +188,7 @@
                   <label class="fw-bold text-muted m-0" style="font-size:14px; white-space:nowrap;">ประเภทข่าว:</label>
                   <select id="trend-category-filter" class="form-select form-select-sm" style="width:230px; border-radius:8px; font-weight:600;" onchange="renderTrendCharts()">
                     <option value="All">ดูทั้งหมด (ผสมทุกประเภท)</option>
+                    <!-- ตัวเลือก Morning Brief ตัวรับตรรกะใหม่ -->
                     <option value="Morning-Brief">☕ เฉพาะข่าว Morning Brief</option>
                     <option value="Category-All">เฉพาะประเภท All (ทุกคน)</option>
                     <option value="Shop">เฉพาะประเภท Shop</option>
@@ -458,11 +458,12 @@
       });
     }
 
-    // 🚨 อัปเดตตรรกะให้กรอง Morning Brief ได้ทันที
+    // 🚨 อัปเดต: ตรรกะคัดกรองกราฟที่กำหนดให้ Morning Brief โชว์เฉพาะกลุ่ม Shop เท่านั้น
     function renderTrendCharts() {
       const filterCat = document.getElementById('trend-category-filter') ? document.getElementById('trend-category-filter').value : 'All';
 
-      if (filterCat === 'Shop') {
+      // 🚨 การ์ดชีพจรด้านบนแปรผันตาม (โหมด Morning Brief จะโชว์แค่ของกล่อง Shop และซ่อนกล่อง Geo)
+      if (filterCat === 'Shop' || filterCat === 'Morning-Brief') {
           document.getElementById('card-trend-shop').classList.remove('d-none');
           document.getElementById('card-trend-geo').classList.add('d-none');
       } else if (filterCat === 'Geo-Based') {
@@ -473,12 +474,13 @@
           document.getElementById('card-trend-geo').classList.remove('d-none');
       }
 
+      // กรองหัวข้อข่าวสารย้อนหลังตามประเภท
       let filteredTopics = globalTopics.filter(t => {
         let topicNameLower = (t.name || "").toString().toLowerCase();
         let cat = (t.category || "").toString().trim();
 
         if (filterCat === 'All') return true;
-        if (filterCat === 'Morning-Brief') return topicNameLower.includes('morning brief');
+        if (filterCat === 'Morning-Brief') return topicNameLower.includes('morning brief'); // สแกนคัดเฉพาะข่าว Morning Brief
         if (filterCat === 'Category-All') return cat === 'All' || cat === '-';
         if (filterCat === 'Shop') return cat === 'Shop';
         if (filterCat === 'Geo-Based') return cat === 'Geo-Based';
@@ -557,7 +559,7 @@
       
       let datasets = [];
 
-      // ถ้าเลือก All, Morning Brief, Category-All หรือ Shop ให้โชว์เส้น Shop
+      // เส้นกราฟของกลุ่ม Shop (จะถูกวาดในโหมด All, Morning-Brief, Category-All และ Shop)
       if (filterCat === 'All' || filterCat === 'Morning-Brief' || filterCat === 'Category-All' || filterCat === 'Shop') {
         datasets.push({
           label: '% กลุ่ม Shop',
@@ -569,7 +571,7 @@
           pointRadius: 5,
           pointHoverRadius: 8,
           datalabels: {
-            align: filterCat === 'All' || filterCat === 'Morning-Brief' || filterCat === 'Category-All' ? 'top' : 'end',
+            align: 'top',
             color: '#002d72',
             font: { weight: 'bold', size: 11, family: 'Sarabun' },
             formatter: function(value) { return value + '%'; }
@@ -577,8 +579,8 @@
         });
       }
 
-      // ถ้าเลือก All, Morning Brief, Category-All หรือ Geo-Based ให้โชว์เส้น Geo-Based
-      if (filterCat === 'All' || filterCat === 'Morning-Brief' || filterCat === 'Category-All' || filterCat === 'Geo-Based') {
+      // 🚨 จุดสำคัญ: เส้นกราฟกลุ่ม Geo-Based จะแสดงก็ต่อเมื่อ "ไม่ใช่โหมด Morning-Brief" เท่านั้น
+      if (filterCat !== 'Morning-Brief' && (filterCat === 'All' || filterCat === 'Category-All' || filterCat === 'Geo-Based')) {
         datasets.push({
           label: '% กลุ่ม Geo-Based',
           data: geoData,
@@ -589,7 +591,7 @@
           pointRadius: 5,
           pointHoverRadius: 8,
           datalabels: {
-            align: filterCat === 'All' || filterCat === 'Morning-Brief' || filterCat === 'Category-All' ? 'bottom' : 'end',
+            align: 'bottom',
             color: '#ff0000',
             font: { weight: 'bold', size: 11, family: 'Sarabun' },
             formatter: function(value) { return value + '%'; }
