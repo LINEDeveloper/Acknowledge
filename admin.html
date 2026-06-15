@@ -120,7 +120,7 @@
             <i class="fas fa-layer-group me-1"></i> ดูทั้งหมด
           </button>
         </li>
-        <!-- 🚨 อัปเดต: เอาไอคอนออก เหลือแต่ตัวหนังสือ -->
+        <!-- นำไอคอนออก เหลือแต่ตัวหนังสือ -->
         <li class="nav-item ms-md-auto" role="presentation">
           <button class="nav-link" id="tab-trend" onclick="filterTable('Trend')">
             สรุปเทรนด์ (Analytics)
@@ -179,7 +179,8 @@
         <div class="row g-4">
           <div class="col-12">
             <div style="border: 1px solid #f0f0f0; border-radius: 20px; padding: 25px; background: #fff; position: relative;">
-              <!-- 🚨 อัปเดต: เพิ่ม Filter กรองตามประเภทข่าวสาร -->
+              
+              <!-- 🚨 Dropdown ตัวกรองแยกประเภทชัดเจน (เพิ่ม Category-All) -->
               <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
                 <div>
                   <h5 class="fw-bold m-0" style="color:#333;"><i class="fas fa-wave-square me-2" style="color:#002d72;"></i> เทรนด์การรับทราบภาพรวม (15 แคมเปญล่าสุด)</h5>
@@ -187,13 +188,15 @@
                 </div>
                 <div class="d-flex align-items-center gap-2 bg-light p-2 rounded-3 border">
                   <label class="fw-bold text-muted m-0" style="font-size:14px; white-space:nowrap;">ประเภทข่าว:</label>
-                  <select id="trend-category-filter" class="form-select form-select-sm" style="width:160px; border-radius:8px; font-weight:600;" onchange="renderTrendCharts()">
-                    <option value="All">ดูทั้งหมด</option>
-                    <option value="Shop">เฉพาะข่าว Shop</option>
-                    <option value="Geo-Based">เฉพาะข่าว Geo</option>
+                  <select id="trend-category-filter" class="form-select form-select-sm" style="width:210px; border-radius:8px; font-weight:600;" onchange="renderTrendCharts()">
+                    <option value="All">ดูทั้งหมด (ผสมทุกประเภท)</option>
+                    <option value="Category-All">เฉพาะประเภท All (ทุกคน)</option>
+                    <option value="Shop">เฉพาะประเภท Shop</option>
+                    <option value="Geo-Based">เฉพาะประเภท Geo-Based</option>
                   </select>
                 </div>
               </div>
+
               <canvas id="dualTrendChart" height="100"></canvas>
             </div>
           </div>
@@ -404,32 +407,51 @@
       return !isShopChannel(name);
     }
 
+    // 🚨 อัปเดต: ระบบ Popup ที่ซ่อนและขยายตามประเภทของหัวข้อแบบฉลาด
     function showDrillDown(data) {
+      let cat = (data.category || "").toString().trim();
+      
+      let shopHtml = `
+        <div class="col-${cat === 'Shop' ? '12' : '6'}">
+          <div class="p-3 border rounded-3 h-100" style="background-color: #f4f8ff; border-color: #d1e3ff !important;">
+            <div class="fw-bold mb-2" style="color: #002d72;"><i class="fas fa-store me-1"></i> กลุ่ม Shop</div>
+            <div class="small text-muted mb-1">เป้าหมายรวม: <b>${data.shopTotal}</b></div>
+            <div class="small text-success mb-1">อ่านแล้ว: <b>${data.shopAck}</b></div>
+            <div class="small text-danger fw-bold mt-2" style="border-top: 1px dashed #ccc; padding-top: 5px;">ยังไม่อ่าน: <b>${data.shopUnread}</b></div>
+          </div>
+        </div>
+      `;
+      
+      let geoHtml = `
+        <div class="col-${cat === 'Geo-Based' ? '12' : '6'}">
+          <div class="p-3 border rounded-3 h-100" style="background-color: #fff5f5; border-color: #ffd1d1 !important;">
+            <div class="fw-bold mb-2" style="color: #ff0000;"><i class="fas fa-map-marker-alt me-1"></i> กลุ่ม Geo</div>
+            <div class="small text-muted mb-1">เป้าหมายรวม: <b>${data.geoTotal}</b></div>
+            <div class="small text-success mb-1">อ่านแล้ว: <b>${data.geoAck}</b></div>
+            <div class="small text-danger fw-bold mt-2" style="border-top: 1px dashed #ccc; padding-top: 5px;">ยังไม่อ่าน: <b>${data.geoUnread}</b></div>
+          </div>
+        </div>
+      `;
+
+      let cardsHtml = '';
+      if (cat === 'Shop') {
+          cardsHtml = shopHtml; // โชว์เฉพาะ Shop เท่านั้น และขยายเต็มกล่อง
+      } else if (cat === 'Geo-Based') {
+          cardsHtml = geoHtml;  // โชว์เฉพาะ Geo เท่านั้น และขยายเต็มกล่อง
+      } else {
+          cardsHtml = shopHtml + geoHtml; // โชว์คู่กัน
+      }
+
       Swal.fire({
         title: '📊 สรุปข้อมูลแคมเปญ',
         html: `
           <div class="text-start mb-3 p-3 rounded-3" style="background: #fcfcfc; border-left: 4px solid #ff0000; box-shadow: inset 0 0 5px rgba(0,0,0,0.02);">
             <div class="small text-muted mb-1">หัวข้อข่าว:</div>
             <h6 class="fw-bold m-0" style="color: #333; line-height: 1.4;">${data.name}</h6>
+            <div class="small text-danger mt-1 fw-bold">หมวดหมู่เป้าหมาย: ${cat}</div>
           </div>
-          
           <div class="row g-2 text-center mb-2">
-            <div class="col-6">
-              <div class="p-3 border rounded-3 h-100" style="background-color: #f4f8ff; border-color: #d1e3ff !important;">
-                <div class="fw-bold mb-2" style="color: #002d72;"><i class="fas fa-store me-1"></i> กลุ่ม Shop</div>
-                <div class="small text-muted mb-1">เป้าหมายรวม: <b>${data.shopTotal}</b></div>
-                <div class="small text-success mb-1">อ่านแล้ว: <b>${data.shopAck}</b></div>
-                <div class="small text-danger fw-bold mt-2" style="border-top: 1px dashed #ccc; padding-top: 5px;">ยังไม่อ่าน: <b>${data.shopUnread}</b></div>
-              </div>
-            </div>
-            <div class="col-6">
-              <div class="p-3 border rounded-3 h-100" style="background-color: #fff5f5; border-color: #ffd1d1 !important;">
-                <div class="fw-bold mb-2" style="color: #ff0000;"><i class="fas fa-map-marker-alt me-1"></i> กลุ่ม Geo</div>
-                <div class="small text-muted mb-1">เป้าหมายรวม: <b>${data.geoTotal}</b></div>
-                <div class="small text-success mb-1">อ่านแล้ว: <b>${data.geoAck}</b></div>
-                <div class="small text-danger fw-bold mt-2" style="border-top: 1px dashed #ccc; padding-top: 5px;">ยังไม่อ่าน: <b>${data.geoUnread}</b></div>
-              </div>
-            </div>
+            ${cardsHtml}
           </div>
         `,
         confirmButtonText: 'ปิดหน้าต่าง',
@@ -437,25 +459,39 @@
       });
     }
 
-    // 🚨 อัปเดต: ตรรกะคัดกรองกราฟตาม Category
     function renderTrendCharts() {
-      // ดึงค่าจาก Dropdown
+      // 1. ดึงค่าจาก Dropdown
       const filterCat = document.getElementById('trend-category-filter') ? document.getElementById('trend-category-filter').value : 'All';
 
-      // 1. กรองหัวข้อข่าวสารตาม Category ที่เลือก
+      // 2. ซ่อน/โชว์ การ์ดชีพจรด้านบนให้สัมพันธ์กับโหมดที่เลือก
+      if (filterCat === 'Shop') {
+          document.getElementById('card-trend-shop').classList.remove('d-none');
+          document.getElementById('card-trend-geo').classList.add('d-none');
+      } else if (filterCat === 'Geo-Based') {
+          document.getElementById('card-trend-shop').classList.add('d-none');
+          document.getElementById('card-trend-geo').classList.remove('d-none');
+      } else {
+          document.getElementById('card-trend-shop').classList.remove('d-none');
+          document.getElementById('card-trend-geo').classList.remove('d-none');
+      }
+
+      // 3. กรองหัวข้อข่าวสารตามที่เลือกเป๊ะๆ (Strict match)
       let filteredTopics = globalTopics.filter(t => {
         if (filterCat === 'All') return true;
         let cat = (t.category || "").toString().trim();
-        if (filterCat === 'Shop') return cat === 'Shop' || cat === 'All';
-        if (filterCat === 'Geo-Based') return cat === 'Geo-Based' || cat === 'All';
+        if (filterCat === 'Category-All') return cat === 'All' || cat === '-';
+        if (filterCat === 'Shop') return cat === 'Shop';
+        if (filterCat === 'Geo-Based') return cat === 'Geo-Based';
         return true;
       });
 
-      // 2. เรียงวันที่และดึง 15 แคมเปญล่าสุด
       let sortedTopics = [...filteredTopics].sort((a, b) => new Date(a.rawStartDate) - new Date(b.rawStartDate));
       let recentTopics = sortedTopics.slice(-15);
       
-      if(recentTopics.length === 0) return;
+      if(recentTopics.length === 0) {
+        if(dualTrendChartInstance) dualTrendChartInstance.destroy();
+        return;
+      }
 
       let labels = [];
       let shopData = [];
@@ -494,6 +530,7 @@
 
         rawTrendDataList.push({
           name: t.name,
+          category: t.category, // บันทึก Category ไว้ให้ Pop-up รู้จัก
           shopTotal: shopTotal, shopAck: shopAck, shopUnread: shopTotal - shopAck,
           geoTotal: geoTotal, geoAck: geoAck, geoUnread: geoTotal - geoAck
         });
@@ -515,15 +552,13 @@
 
       document.getElementById('trend-last-percent').innerHTML = currentWeekAvg + '%';
       document.getElementById('trend-diff').innerHTML = diffHtml + ' เทียบกับแคมเปญก่อนหน้า';
-      
-      // อัปเดตการแสดงผลการ์ดด้านบนตามหมวดหมู่ที่เลือก
       document.getElementById('trend-shop-avg').innerHTML = lastShopPercent + '%';
       document.getElementById('trend-geo-avg').innerHTML = lastGeoPercent + '%';
       
-      // 3. จัดเตรียมเส้นกราฟ (ถ้าเลือกเฉพาะกลุ่ม ให้แสดงแค่เส้นกลุ่มนั้น)
+      // 4. จัดเตรียมเส้นกราฟ (ถ้าเลือกประเภทเจาะจง ให้ซ่อนอีกเส้นไปเลย)
       let datasets = [];
 
-      if (filterCat === 'All' || filterCat === 'Shop') {
+      if (filterCat === 'All' || filterCat === 'Category-All' || filterCat === 'Shop') {
         datasets.push({
           label: '% กลุ่ม Shop',
           data: shopData,
@@ -534,7 +569,7 @@
           pointRadius: 5,
           pointHoverRadius: 8,
           datalabels: {
-            align: filterCat === 'All' ? 'top' : 'end',
+            align: filterCat === 'All' || filterCat === 'Category-All' ? 'top' : 'end',
             color: '#002d72',
             font: { weight: 'bold', size: 11, family: 'Sarabun' },
             formatter: function(value) { return value + '%'; }
@@ -542,7 +577,7 @@
         });
       }
 
-      if (filterCat === 'All' || filterCat === 'Geo-Based') {
+      if (filterCat === 'All' || filterCat === 'Category-All' || filterCat === 'Geo-Based') {
         datasets.push({
           label: '% กลุ่ม Geo-Based',
           data: geoData,
@@ -553,7 +588,7 @@
           pointRadius: 5,
           pointHoverRadius: 8,
           datalabels: {
-            align: filterCat === 'All' ? 'bottom' : 'end',
+            align: filterCat === 'All' || filterCat === 'Category-All' ? 'bottom' : 'end',
             color: '#ff0000',
             font: { weight: 'bold', size: 11, family: 'Sarabun' },
             formatter: function(value) { return value + '%'; }
@@ -582,7 +617,7 @@
             }
           },
           scales: { 
-            y: { beginAtZero: true, max: 110, ticks: { callback: function(value) { return value + "%" } } },
+            y: { beginAtZero: true, max: 115, ticks: { callback: function(value) { return value + "%" } } },
             x: { ticks: { font: { family: 'Sarabun', size: 11 } } }
           },
           onClick: (e, activeEls) => {
