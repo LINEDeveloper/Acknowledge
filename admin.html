@@ -229,7 +229,7 @@
 
     let dualTrendChartInstance = null;
     let rawTrendDataList = []; 
-    let globalGeoPositions = []; // 🚨 ตัวแปรเก็บรายชื่อตำแหน่ง Geo
+    let globalGeoPositions = []; 
 
     function toggleSubTarget(source) {
       let catValue = "";
@@ -242,18 +242,26 @@
             container.style.display = 'block';
          } else {
             container.style.display = 'none';
-            document.getElementById('swal-subtarget').value = ''; 
+            // เคลียร์ค่าที่ติ๊กไว้
+            document.querySelectorAll('.geo-pos-cb').forEach(cb => cb.checked = false);
          }
       }
     }
 
-    // 🚨 อัปเดต: ฟังก์ชันสร้างตัวเลือก Dropdown สำหรับตำแหน่งย่อย (Auto-Sync)
-    function buildPositionOptions(selectedValue = "") {
-        let html = `<option value="">-- ไม่ระบุ (ส่งให้ Geo-Based ทุกคน) --</option>`;
+    // 🚨 อัปเดต: สร้าง Checkbox ให้ติ๊กเลือกตำแหน่งได้มากกว่า 1 ข้อ
+    function buildPositionCheckboxes(selectedStr = "") {
+        let selectedArr = selectedStr.split(',').map(s => s.trim());
+        let html = '';
         globalGeoPositions.forEach(pos => {
-            let selected = (pos === selectedValue) ? "selected" : "";
-            html += `<option value="${pos}" ${selected}>เฉพาะตำแหน่ง: ${pos}</option>`;
+            let checked = selectedArr.includes(pos) ? "checked" : "";
+            let safeId = pos.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+            html += `
+            <div class="form-check text-start mb-2 ms-1">
+              <input class="form-check-input geo-pos-cb" type="checkbox" value="${pos}" id="cb-${safeId}" ${checked} style="cursor: pointer; border-color: #002d72;">
+              <label class="form-check-label fw-bold" for="cb-${safeId}" style="font-size:14px; cursor: pointer; color: #333;">${pos}</label>
+            </div>`;
         });
+        if(html === '') html = '<div class="text-muted small text-center p-2">ไม่พบข้อมูลตำแหน่งในระบบ</div>';
         return html;
     }
 
@@ -267,7 +275,7 @@
 
         globalTopicStats = res.topicChannelStats;
         globalTopics = res.topics; 
-        globalGeoPositions = res.geoPositions || []; // 🚨 รับข้อมูลตำแหน่งที่ดึงมาจาก Google Sheets
+        globalGeoPositions = res.geoPositions || []; 
 
         res.topics.forEach(t => {
           topicCategoryMap[t.name] = t.category;
@@ -383,7 +391,8 @@
         
         let categoryDisplay = t.category;
         if (t.category === 'Geo-Based' && t.subTarget && t.subTarget.trim() !== '') {
-            categoryDisplay += ` <span class="badge bg-info text-dark rounded-pill ms-1 border" style="font-size:10px;">${t.subTarget}</span>`;
+            let limitSub = t.subTarget.length > 15 ? t.subTarget.substring(0,15) + "..." : t.subTarget;
+            categoryDisplay += ` <span class="badge bg-info text-dark rounded-pill ms-1 border" style="font-size:10px;" title="${t.subTarget}">${limitSub}</span>`;
         }
 
         tbody.innerHTML += `
@@ -580,17 +589,16 @@
       });
     }
 
+    // 🚨 อัปเดต: ให้กราฟโดนัทอ่านค่า Array ตำแหน่งที่คั่นด้วยลูกน้ำได้ถูกต้อง
     function updateCharts(topicName) {
       const container = document.getElementById('chart-container');
       container.innerHTML = ''; 
       
       const stats = globalTopicStats[topicName];
+      const topicObj = globalTopics.find(t => t.name === topicName);
+      const subTargetStr = topicObj ? (topicObj.subTarget || "").toString().trim() : "";
       const topicCat = (topicCategoryMap[topicName] || "").toString().trim().toLowerCase(); 
       
-      // 🚨 ดึงข้อมูลตำแหน่งย่อย (Sub-Target) ของแคมเปญนี้มาตรวจสอบ
-      const topicObj = globalTopics.find(t => t.name === topicName);
-      const subTarget = topicObj ? (topicObj.subTarget || "").toString().trim() : "";
-
       if (!stats) return;
 
       let chartDataArray = [];
@@ -599,43 +607,29 @@
         const cleanCh = ch.toString().trim(); 
 
         if (topicCat !== "all" && topicCat !== "-") {
-          if (topicCat.includes("geo-based") || topicCat.includes("geo") ) {
-             if (!isGeoBasedChannel(cleanCh)) continue;
-             // 🚨 ดักจับ! ถ้ามีการระบุตำแหน่ง ต้องข้ามกราฟของตำแหน่งที่ไม่ตรงไปเลย
-             if (subTarget !== "" && cleanCh !== subTarget) continue;
+          if (topicCat.includes("geo-based") || topicCat.includes("geo") ) { 
+             if (!isGeoBasedChannel(cleanCh)) continue; 
+             // แตก Array มาเช็คว่าอยู่ในตำแหน่งที่เลือกไหม
+             if (subTargetStr !== "") {
+                 let targetArr = subTargetStr.split(',').map(s => s.trim());
+                 if (!targetArr.includes(cleanCh)) continue;
+             }
           }
-          else if (topicCat.includes("shop")) {
-             if (!isShopChannel(cleanCh)) continue;
-          }
-          else if (topicCat === "non shop") {
-             if (isShopChannel(cleanCh)) continue;
-          }
+          else if (topicCat.includes("shop")) { if (!isShopChannel(cleanCh)) continue; }
+          else if (topicCat === "non shop") { if (isShopChannel(cleanCh)) continue; }
         }
-
-        const data = stats[ch];
         
-        // 🚨 อัปเดต: ถ้าช่องทางนั้นไม่มีพนักงานเลย (Total = 0) ให้ข้ามไป ไม่ต้องวาดกราฟโดนัทให้รก
-        if (data.total === 0) continue;
-
+        const data = stats[ch];
+        if (data.total === 0) continue; // ถ้าคนเป็น 0 ไม่ต้องวาดโดนัท
+        
         const notAcked = data.total - data.acked;
         const percent = data.total > 0 ? Math.round((data.acked / data.total) * 100) : 0;
-        
-        chartDataArray.push({
-          channelName: cleanCh,
-          data: data,
-          notAcked: notAcked,
-          percent: percent
-        });
+        chartDataArray.push({ channelName: cleanCh, data: data, notAcked: notAcked, percent: percent });
       }
 
       chartDataArray.sort((a, b) => b.percent - a.percent);
-
       chartDataArray.forEach(item => {
-        const ch = item.channelName;
-        const data = item.data;
-        const notAcked = item.notAcked;
-        const percent = item.percent;
-
+        const ch = item.channelName, data = item.data, notAcked = item.notAcked, percent = item.percent;
         const col = document.createElement('div');
         col.className = 'col-md-4';
         col.innerHTML = `
@@ -649,54 +643,24 @@
               <canvas id="chart-${ch}" style="position: relative; z-index: 2;"></canvas>
             </div>
             <div class="mt-3 small" style="background: #f8f9fa; padding: 10px; border-radius: 10px;">
-              <div class="d-flex justify-content-between mb-1">
-                <span class="text-danger fw-bold"><i class="fas fa-circle me-1" style="font-size: 8px;"></i> รับทราบแล้ว</span>
-                <span class="fw-bold">${data.acked}</span>
-              </div>
-              <div class="d-flex justify-content-between text-muted">
-                <span><i class="fas fa-circle me-1" style="font-size: 8px; color: #ddd;"></i> ยังไม่ได้รับทราบ</span>
-                <span>${notAcked}</span>
-              </div>
-              <hr class="my-2" style="border-color: #ddd;">
-              <div class="d-flex justify-content-between fw-bold">
-                <span>จำนวนพนักงานทั้งหมด</span>
-                <span>${data.total}</span>
-              </div>
+              <div class="d-flex justify-content-between mb-1"><span class="text-danger fw-bold"><i class="fas fa-circle me-1" style="font-size: 8px;"></i> รับทราบแล้ว</span><span class="fw-bold">${data.acked}</span></div>
+              <div class="d-flex justify-content-between text-muted"><span><i class="fas fa-circle me-1" style="font-size: 8px; color: #ddd;"></i> ยังไม่ได้รับทราบ</span><span>${notAcked}</span></div>
+              <hr class="my-2" style="border-color: #ddd;"><div class="d-flex justify-content-between fw-bold"><span>จำนวนพนักงานทั้งหมด</span><span>${data.total}</span></div>
             </div>
           </div>
         `;
         container.appendChild(col);
-
         if (chartInstances[ch]) chartInstances[ch].destroy();
-
         const ctx = document.getElementById(`chart-${ch}`).getContext('2d');
         chartInstances[ch] = new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-            labels: ['รับทราบแล้ว', 'ยังไม่ได้รับทราบ'],
-            datasets: [{
-              data: [data.acked, notAcked],
-              backgroundColor: ['#ff0000', '#eaeaea'],
-              borderWidth: 0,
-              hoverOffset: 4
-            }]
-          },
-          options: {
-            cutout: '75%',
-            plugins: { 
-              legend: { display: false },
-              datalabels: { display: false } 
-            },
-            responsive: true
-          }
+          type: 'doughnut', data: { labels: ['รับทราบแล้ว', 'ยังไม่ได้รับทราบ'], datasets: [{ data: [data.acked, notAcked], backgroundColor: ['#ff0000', '#eaeaea'], borderWidth: 0 }] },
+          options: { cutout: '75%', plugins: { legend: { display: false }, datalabels: { display: false } }, responsive: true }
         });
       });
-
-      if (container.innerHTML === '') {
-        container.innerHTML = '<div class="col-12 text-center text-muted py-5"><p>ไม่มีกลุ่มเป้าหมายที่ตรงกับประเภทข่าวนี้</p></div>';
-      }
+      if (container.innerHTML === '') container.innerHTML = '<div class="col-12 text-center text-muted py-5"><p>ไม่มีกลุ่มเป้าหมายที่ตรงกับประเภทข่าวนี้</p></div>';
     }
 
+    // 🚨 อัปเดต: ให้แอดมินติ๊กเลือกตำแหน่งได้มากกว่า 1 ข้อ
     async function addTopic() {
       const { value: formValues } = await Swal.fire({
         title: 'เพิ่มหัวข้อข่าวใหม่',
@@ -709,12 +673,12 @@
             <option value="Geo-Based">Geo-Based</option>
             <option value="Non Shop">Non Shop (พนักงานออฟฟิศ)</option>
           </select>
-          <!-- 🚨 อัปเดต: เปลี่ยนเป็น Dropdown ค้นหาอัตโนมัติ -->
           <div id="sub-target-container" style="display: none; background: #eef5ff; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #002d72;">
-             <div class="text-start mb-1 small fw-bold" style="color: #002d72;">ระบุตำแหน่งเฉพาะ (ตัวเลือกเสริม):</div>
-             <select id="swal-subtarget" class="form-select form-select-sm" style="border-radius: 8px;">
-                ${buildPositionOptions()}
-             </select>
+             <div class="text-start mb-1 small fw-bold" style="color: #002d72;">เลือกตำแหน่งเฉพาะ (เลือกได้มากกว่า 1):</div>
+             <div class="small text-muted text-start mb-2" style="font-size: 11px;">* หากไม่ติ๊กเลย ระบบจะส่งหา Geo-Based ทุกตำแหน่ง</div>
+             <div id="swal-subtarget-list" style="max-height: 130px; overflow-y: auto; background: #fff; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                ${buildPositionCheckboxes()}
+             </div>
           </div>
           <div class="row">
             <div class="col-6"><div class="text-start mb-1 small fw-bold">วันเริ่ม:</div><input type="date" id="swal-start" class="form-control"></div>
@@ -724,16 +688,23 @@
         focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึกข้อมูล', confirmButtonColor: '#ff0000',
         didOpen: () => { toggleSubTarget('add'); }, 
         preConfirm: () => {
+          // ดึงค่าของ Checkbox ทุกอันที่ถูกติ๊ก เอามารวมกันด้วยลูกน้ำ
+          let checkedCbs = document.querySelectorAll('.geo-pos-cb:checked');
+          let subTargetVals = Array.from(checkedCbs).map(cb => cb.value).join(', ');
+
           return {
             name: document.getElementById('swal-name').value,
             category: document.getElementById('swal-cat').value,
-            subTarget: document.getElementById('swal-subtarget') ? document.getElementById('swal-subtarget').value : "",
+            subTarget: subTargetVals,
             startDate: document.getElementById('swal-start').value,
             endDate: document.getElementById('swal-end').value + " 23:59:59"
           }
         }
       });
-      if (formValues && formValues.name && formValues.startDate) callApi('addTopic', formValues, 'กำลังเพิ่มหัวข้อ...');
+
+      if (formValues && formValues.name && formValues.startDate) {
+        callApi('addTopic', formValues, 'กำลังเพิ่มหัวข้อ...');
+      }
     }
 
     async function editTopic(oldName, oldStartDate, oldEndDate, oldCat, oldSubTarget) {
@@ -749,12 +720,12 @@
             <option value="Geo-Based" ${oldCat === 'Geo-Based' ? 'selected' : ''}>Geo-Based</option>
             <option value="Non Shop" ${oldCat === 'Non Shop' ? 'selected' : ''}>Non Shop (พนักงานออฟฟิศ)</option>
           </select>
-          <!-- 🚨 อัปเดต: เปลี่ยนเป็น Dropdown และดึงค่าเก่ามาแสดงเป็น Default -->
           <div id="sub-target-container" style="display: none; background: #eef5ff; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #002d72;">
-             <div class="text-start mb-1 small fw-bold" style="color: #002d72;">ระบุตำแหน่งเฉพาะ (ตัวเลือกเสริม):</div>
-             <select id="swal-subtarget" class="form-select form-select-sm" style="border-radius: 8px;">
-                ${buildPositionOptions(oldSubTarget)}
-             </select>
+             <div class="text-start mb-1 small fw-bold" style="color: #002d72;">เลือกตำแหน่งเฉพาะ (เลือกได้มากกว่า 1):</div>
+             <div class="small text-muted text-start mb-2" style="font-size: 11px;">* หากไม่ติ๊กเลย ระบบจะส่งหา Geo-Based ทุกตำแหน่ง</div>
+             <div id="swal-subtarget-list" style="max-height: 130px; overflow-y: auto; background: #fff; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                ${buildPositionCheckboxes(oldSubTarget)}
+             </div>
           </div>
           <div class="row">
             <div class="col-6"><div class="text-start mb-1 small fw-bold">วันเริ่ม:</div><input type="date" id="edit-start" class="form-control" value="${oldStartDate}"></div>
@@ -764,17 +735,23 @@
         showCancelButton: true, confirmButtonText: 'บันทึกการแก้ไข', confirmButtonColor: '#ff0000',
         didOpen: () => { toggleSubTarget('edit'); },
         preConfirm: () => {
+          let checkedCbs = document.querySelectorAll('.geo-pos-cb:checked');
+          let subTargetVals = Array.from(checkedCbs).map(cb => cb.value).join(', ');
+
           return {
             oldName: oldName,
             newName: document.getElementById('edit-name').value,
             newCategory: document.getElementById('edit-cat').value,
-            newSubTarget: document.getElementById('swal-subtarget') ? document.getElementById('swal-subtarget').value : "",
+            newSubTarget: subTargetVals,
             newStartDate: document.getElementById('edit-start').value + " 00:00:00", 
             newEndDate: document.getElementById('edit-end').value + " 23:59:59"
           }
         }
       });
-      if (formValues && formValues.newName) callApi('editTopic', formValues, 'กำลังอัปเดตข้อมูล...');
+
+      if (formValues && formValues.newName) {
+        callApi('editTopic', formValues, 'กำลังอัปเดตข้อมูล...');
+      }
     }
 
     function deleteTopic(topicName) {
