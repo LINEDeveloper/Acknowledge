@@ -127,7 +127,6 @@
         </li>
       </ul>
 
-      <!-- โซนที่ 1: ตารางแสดงผลปกติ -->
       <div id="standard-table-view">
         <div class="table-responsive">
           <table class="table table-hover align-middle">
@@ -149,10 +148,7 @@
         </div>
       </div>
 
-      <!-- โซนที่ 2: หน้ากราฟเทรนด์ Analytics (ซ่อนไว้เป็นค่าเริ่มต้น) -->
       <div id="trend-view" class="d-none">
-        
-        <!-- การ์ดตัวเลข Pulse Check -->
         <div class="row g-3 mb-4 mt-1">
           <div class="col-md-4">
             <div class="trend-mini-card" style="border-left-color: #ff0000;">
@@ -178,7 +174,6 @@
         <div class="row g-4">
           <div class="col-12">
             <div style="border: 1px solid #f0f0f0; border-radius: 20px; padding: 25px; background: #fff; position: relative;">
-              
               <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
                 <div>
                   <h5 class="fw-bold m-0" style="color:#333;"><i class="fas fa-wave-square me-2" style="color:#002d72;"></i> เทรนด์การรับทราบภาพรวม (15 แคมเปญล่าสุด)</h5>
@@ -188,7 +183,6 @@
                   <label class="fw-bold text-muted m-0" style="font-size:14px; white-space:nowrap;">ประเภทข่าว:</label>
                   <select id="trend-category-filter" class="form-select form-select-sm" style="width:230px; border-radius:8px; font-weight:600;" onchange="renderTrendCharts()">
                     <option value="All">ดูทั้งหมด (ผสมทุกประเภท)</option>
-                    <!-- ตัวเลือก Morning Brief ตัวรับตรรกะใหม่ -->
                     <option value="Morning-Brief">☕ เฉพาะข่าว Morning Brief</option>
                     <option value="Category-All">เฉพาะประเภท All (ทุกคน)</option>
                     <option value="Shop">เฉพาะประเภท Shop</option>
@@ -196,17 +190,14 @@
                   </select>
                 </div>
               </div>
-
               <canvas id="dualTrendChart" height="100"></canvas>
             </div>
           </div>
         </div>
       </div>
-      <!-- จบโซน Analytics -->
 
     </div>
 
-    <!-- โซนเปอร์เซ็นต์โดนัท -->
     <div class="table-container" id="doughnut-section" style="background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);">
       <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
         <h5 class="fw-bold m-0"><i class="fas fa-chart-donut text-danger me-2"></i> %รับทราบหัวข้อ แยกตามช่องทาง</h5>
@@ -225,12 +216,10 @@
         </div>
       </div>
     </div>
-
   </div>
 
   <script>
     Chart.register(ChartDataLabels);
-
     const GAS_URL = "https://script.google.com/macros/s/AKfycby-pLn-ACbareuCdomxdkX2Oe1H9gVNseUDb2k-CENm3DX3YrQvbtoFYErSZvHQppU/exec"; 
 
     let globalTopics = []; 
@@ -240,6 +229,33 @@
 
     let dualTrendChartInstance = null;
     let rawTrendDataList = []; 
+    let globalGeoPositions = []; // 🚨 ตัวแปรเก็บรายชื่อตำแหน่ง Geo
+
+    function toggleSubTarget(source) {
+      let catValue = "";
+      if(source === 'add') catValue = document.getElementById('swal-cat').value;
+      if(source === 'edit') catValue = document.getElementById('edit-cat').value;
+      
+      const container = document.getElementById('sub-target-container');
+      if (container) {
+         if (catValue === 'Geo-Based') {
+            container.style.display = 'block';
+         } else {
+            container.style.display = 'none';
+            document.getElementById('swal-subtarget').value = ''; 
+         }
+      }
+    }
+
+    // 🚨 อัปเดต: ฟังก์ชันสร้างตัวเลือก Dropdown สำหรับตำแหน่งย่อย (Auto-Sync)
+    function buildPositionOptions(selectedValue = "") {
+        let html = `<option value="">-- ไม่ระบุ (ส่งให้ Geo-Based ทุกคน) --</option>`;
+        globalGeoPositions.forEach(pos => {
+            let selected = (pos === selectedValue) ? "selected" : "";
+            html += `<option value="${pos}" ${selected}>เฉพาะตำแหน่ง: ${pos}</option>`;
+        });
+        return html;
+    }
 
     async function loadData() {
       document.getElementById('loading-overlay').style.display = 'flex';
@@ -251,6 +267,7 @@
 
         globalTopicStats = res.topicChannelStats;
         globalTopics = res.topics; 
+        globalGeoPositions = res.geoPositions || []; // 🚨 รับข้อมูลตำแหน่งที่ดึงมาจาก Google Sheets
 
         res.topics.forEach(t => {
           topicCategoryMap[t.name] = t.category;
@@ -272,11 +289,9 @@
           el.classList.remove('tab-trend-active');
         });
         document.getElementById('tab-trend').classList.add('tab-trend-active');
-        
         document.getElementById('standard-table-view').classList.add('d-none');
         document.getElementById('doughnut-section').classList.add('d-none');
         document.getElementById('trend-view').classList.remove('d-none');
-        
         renderTrendCharts();
         return;
       }
@@ -319,14 +334,10 @@
           confirmButtonText: 'ตกลง',
           confirmButtonColor: '#ff0000',
           cancelButtonText: 'ยกเลิก',
-          preConfirm: () => {
-            return document.getElementById('select-expired-month').value;
-          }
+          preConfirm: () => document.getElementById('select-expired-month').value
         });
 
-        if (isConfirmed && monthPicked) {
-          filterTable('สิ้นสุดแล้ว', monthPicked);
-        }
+        if (isConfirmed && monthPicked) filterTable('สิ้นสุดแล้ว', monthPicked);
         return;
       }
 
@@ -341,17 +352,13 @@
 
       const filteredData = globalTopics.filter(t => {
         if (statusFilter === 'All') return true;
-        if (statusFilter === 'สิ้นสุดแล้ว' && selectedMonth) {
-          return t.status === 'สิ้นสุดแล้ว' && t.rawDate && t.rawDate.startsWith(selectedMonth);
-        }
+        if (statusFilter === 'สิ้นสุดแล้ว' && selectedMonth) return t.status === 'สิ้นสุดแล้ว' && t.rawDate && t.rawDate.startsWith(selectedMonth);
         return t.status === statusFilter;
       });
 
       const selector = document.getElementById('topic-selector');
       selector.innerHTML = '<option value="" disabled selected>-- โปรดเลือกหัวข้อข่าวสาร --</option>';
-      filteredData.forEach(t => {
-        selector.innerHTML += `<option value="${t.name}">${t.name}</option>`;
-      });
+      filteredData.forEach(t => selector.innerHTML += `<option value="${t.name}">${t.name}</option>`);
 
       const container = document.getElementById('chart-container');
       container.innerHTML = `
@@ -374,17 +381,22 @@
           ? `<span class="badge bg-success badge-status"><i class="fas fa-circle-dot me-1"></i> ${t.status}</span>` 
           : `<span class="badge bg-secondary badge-status"><i class="fas fa-circle-stop me-1"></i> ${t.status}</span>`;
         
+        let categoryDisplay = t.category;
+        if (t.category === 'Geo-Based' && t.subTarget && t.subTarget.trim() !== '') {
+            categoryDisplay += ` <span class="badge bg-info text-dark rounded-pill ms-1 border" style="font-size:10px;">${t.subTarget}</span>`;
+        }
+
         tbody.innerHTML += `
           <tr>
             <td class="text-start fw-bold text-dark">${t.name}</td>
-            <td class="text-secondary">${t.category}</td>
+            <td class="text-secondary">${categoryDisplay}</td>
             <td>${t.startDate}</td>
             <td>${t.endDate}</td>
             <td><h5 class="m-0 fw-bold text-danger">${t.count}</h5></td>
             <td><h5 class="m-0 fw-bold text-primary">${t.percentage}</h5></td>
             <td>${statusBadge}</td>
             <td style="white-space: nowrap;">
-              <button class="btn btn-light btn-sm text-primary rounded-circle me-1" onclick="editTopic('${t.name}', '${t.rawStartDate}', '${t.rawDate}', '${t.category}')" title="แก้ไข">
+              <button class="btn btn-light btn-sm text-primary rounded-circle me-1" onclick="editTopic('${t.name}', '${t.rawStartDate}', '${t.rawDate}', '${t.category}', '${t.subTarget || ''}')" title="แก้ไข">
                 <i class="fas fa-pen"></i>
               </button>
               <button class="btn btn-light btn-sm text-danger rounded-circle" onclick="deleteTopic('${t.name}')" title="ลบหัวข้อ">
@@ -403,13 +415,14 @@
              n.includes("franchise") || n.includes("event");
     }
 
-    function isGeoBasedChannel(name) {
-      return !isShopChannel(name);
-    }
+    function isGeoBasedChannel(name) { return !isShopChannel(name); }
 
     function showDrillDown(data) {
       let cat = (data.category || "").toString().trim();
-      
+      let sub = (data.subTarget || "").toString().trim();
+      let catTitle = cat;
+      if (cat === 'Geo-Based' && sub !== '') catTitle += ` (เฉพาะตำแหน่ง: ${sub})`;
+
       let shopHtml = `
         <div class="col-${cat === 'Shop' ? '12' : '6'}">
           <div class="p-3 border rounded-3 h-100" style="background-color: #f4f8ff; border-color: #d1e3ff !important;">
@@ -420,7 +433,6 @@
           </div>
         </div>
       `;
-      
       let geoHtml = `
         <div class="col-${cat === 'Geo-Based' ? '12' : '6'}">
           <div class="p-3 border rounded-3 h-100" style="background-color: #fff5f5; border-color: #ffd1d1 !important;">
@@ -433,13 +445,9 @@
       `;
 
       let cardsHtml = '';
-      if (cat === 'Shop') {
-          cardsHtml = shopHtml; 
-      } else if (cat === 'Geo-Based') {
-          cardsHtml = geoHtml;  
-      } else {
-          cardsHtml = shopHtml + geoHtml; 
-      }
+      if (cat === 'Shop') cardsHtml = shopHtml; 
+      else if (cat === 'Geo-Based') cardsHtml = geoHtml;  
+      else cardsHtml = shopHtml + geoHtml; 
 
       Swal.fire({
         title: '📊 สรุปข้อมูลแคมเปญ',
@@ -447,7 +455,7 @@
           <div class="text-start mb-3 p-3 rounded-3" style="background: #fcfcfc; border-left: 4px solid #ff0000; box-shadow: inset 0 0 5px rgba(0,0,0,0.02);">
             <div class="small text-muted mb-1">หัวข้อข่าว:</div>
             <h6 class="fw-bold m-0" style="color: #333; line-height: 1.4;">${data.name}</h6>
-            <div class="small text-danger mt-1 fw-bold">หมวดหมู่เป้าหมาย: ${cat}</div>
+            <div class="small text-danger mt-1 fw-bold">เป้าหมาย: ${catTitle}</div>
           </div>
           <div class="row g-2 text-center mb-2">
             ${cardsHtml}
@@ -458,11 +466,9 @@
       });
     }
 
-    // 🚨 อัปเดต: ตรรกะคัดกรองกราฟที่กำหนดให้ Morning Brief โชว์เฉพาะกลุ่ม Shop เท่านั้น
     function renderTrendCharts() {
       const filterCat = document.getElementById('trend-category-filter') ? document.getElementById('trend-category-filter').value : 'All';
 
-      // 🚨 การ์ดชีพจรด้านบนแปรผันตาม (โหมด Morning Brief จะโชว์แค่ของกล่อง Shop และซ่อนกล่อง Geo)
       if (filterCat === 'Shop' || filterCat === 'Morning-Brief') {
           document.getElementById('card-trend-shop').classList.remove('d-none');
           document.getElementById('card-trend-geo').classList.add('d-none');
@@ -474,13 +480,12 @@
           document.getElementById('card-trend-geo').classList.remove('d-none');
       }
 
-      // กรองหัวข้อข่าวสารย้อนหลังตามประเภท
       let filteredTopics = globalTopics.filter(t => {
         let topicNameLower = (t.name || "").toString().toLowerCase();
         let cat = (t.category || "").toString().trim();
 
         if (filterCat === 'All') return true;
-        if (filterCat === 'Morning-Brief') return topicNameLower.includes('morning brief'); // สแกนคัดเฉพาะข่าว Morning Brief
+        if (filterCat === 'Morning-Brief') return topicNameLower.includes('morning brief');
         if (filterCat === 'Category-All') return cat === 'All' || cat === '-';
         if (filterCat === 'Shop') return cat === 'Shop';
         if (filterCat === 'Geo-Based') return cat === 'Geo-Based';
@@ -495,29 +500,18 @@
         return;
       }
 
-      let labels = [];
-      let shopData = [];
-      let geoData = [];
-      let allAvgData = []; 
+      let labels = [], shopData = [], geoData = [], allAvgData = []; 
       rawTrendDataList = []; 
-
-      let lastShopPercent = 0;
-      let lastGeoPercent = 0;
+      let lastShopPercent = 0, lastGeoPercent = 0;
 
       recentTopics.forEach((t, index) => {
         let stats = globalTopicStats[t.name];
-        let shopTotal = 0, shopAck = 0;
-        let geoTotal = 0, geoAck = 0;
+        let shopTotal = 0, shopAck = 0, geoTotal = 0, geoAck = 0;
         
         if(stats) {
           for(let ch in stats) {
-            if(isShopChannel(ch)) {
-              shopTotal += stats[ch].total;
-              shopAck += stats[ch].acked;
-            } else {
-              geoTotal += stats[ch].total;
-              geoAck += stats[ch].acked;
-            }
+            if(isShopChannel(ch)) { shopTotal += stats[ch].total; shopAck += stats[ch].acked; } 
+            else { geoTotal += stats[ch].total; geoAck += stats[ch].acked; }
           }
         }
         
@@ -531,16 +525,12 @@
         allAvgData.push(avgP);
 
         rawTrendDataList.push({
-          name: t.name,
-          category: t.category,
+          name: t.name, category: t.category, subTarget: t.subTarget,
           shopTotal: shopTotal, shopAck: shopAck, shopUnread: shopTotal - shopAck,
           geoTotal: geoTotal, geoAck: geoAck, geoUnread: geoTotal - geoAck
         });
 
-        if(index === recentTopics.length - 1) {
-            lastShopPercent = sP;
-            lastGeoPercent = gP;
-        }
+        if(index === recentTopics.length - 1) { lastShopPercent = sP; lastGeoPercent = gP; }
       });
 
       let currentWeekAvg = allAvgData[allAvgData.length - 1] || 0;
@@ -559,43 +549,19 @@
       
       let datasets = [];
 
-      // เส้นกราฟของกลุ่ม Shop (จะถูกวาดในโหมด All, Morning-Brief, Category-All และ Shop)
       if (filterCat === 'All' || filterCat === 'Morning-Brief' || filterCat === 'Category-All' || filterCat === 'Shop') {
         datasets.push({
-          label: '% กลุ่ม Shop',
-          data: shopData,
-          borderColor: '#002d72',
-          backgroundColor: '#002d72',
-          borderWidth: 3,
-          tension: 0.3,
-          pointRadius: 5,
-          pointHoverRadius: 8,
-          datalabels: {
-            align: 'top',
-            color: '#002d72',
-            font: { weight: 'bold', size: 11, family: 'Sarabun' },
-            formatter: function(value) { return value + '%'; }
-          }
+          label: '% กลุ่ม Shop', data: shopData, borderColor: '#002d72', backgroundColor: '#002d72',
+          borderWidth: 3, tension: 0.3, pointRadius: 5, pointHoverRadius: 8,
+          datalabels: { align: filterCat === 'All' || filterCat === 'Category-All' ? 'top' : 'end', color: '#002d72', font: { weight: 'bold', size: 11, family: 'Sarabun' }, formatter: function(value) { return value + '%'; } }
         });
       }
 
-      // 🚨 จุดสำคัญ: เส้นกราฟกลุ่ม Geo-Based จะแสดงก็ต่อเมื่อ "ไม่ใช่โหมด Morning-Brief" เท่านั้น
       if (filterCat !== 'Morning-Brief' && (filterCat === 'All' || filterCat === 'Category-All' || filterCat === 'Geo-Based')) {
         datasets.push({
-          label: '% กลุ่ม Geo-Based',
-          data: geoData,
-          borderColor: '#ff0000',
-          backgroundColor: '#ff0000',
-          borderWidth: 3,
-          tension: 0.3,
-          pointRadius: 5,
-          pointHoverRadius: 8,
-          datalabels: {
-            align: 'bottom',
-            color: '#ff0000',
-            font: { weight: 'bold', size: 11, family: 'Sarabun' },
-            formatter: function(value) { return value + '%'; }
-          }
+          label: '% กลุ่ม Geo-Based', data: geoData, borderColor: '#ff0000', backgroundColor: '#ff0000',
+          borderWidth: 3, tension: 0.3, pointRadius: 5, pointHoverRadius: 8,
+          datalabels: { align: filterCat === 'All' || filterCat === 'Category-All' ? 'bottom' : 'end', color: '#ff0000', font: { weight: 'bold', size: 11, family: 'Sarabun' }, formatter: function(value) { return value + '%'; } }
         });
       }
 
@@ -603,35 +569,13 @@
       if(dualTrendChartInstance) dualTrendChartInstance.destroy();
 
       dualTrendChartInstance = new Chart(ctxLine, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: datasets
-        },
+        type: 'line', data: { labels: labels, datasets: datasets },
         options: {
           responsive: true,
-          plugins: { 
-            legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 13 } } },
-            datalabels: {
-              display: true,
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              borderRadius: 4,
-              padding: 2
-            }
-          },
-          scales: { 
-            y: { beginAtZero: true, max: 115, ticks: { callback: function(value) { return value + "%" } } },
-            x: { ticks: { font: { family: 'Sarabun', size: 11 } } }
-          },
-          onClick: (e, activeEls) => {
-            if (activeEls.length > 0) {
-              const dataIndex = activeEls[0].index;
-              showDrillDown(rawTrendDataList[dataIndex]); 
-            }
-          },
-          onHover: (e, activeEls) => {
-            e.native.target.style.cursor = activeEls.length > 0 ? 'pointer' : 'default';
-          }
+          plugins: { legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 13 } } }, datalabels: { display: true, backgroundColor: 'rgba(255, 255, 255, 0.8)', borderRadius: 4, padding: 2 } },
+          scales: { y: { beginAtZero: true, max: 115, ticks: { callback: function(value) { return value + "%" } } }, x: { ticks: { font: { family: 'Sarabun', size: 11 } } } },
+          onClick: (e, activeEls) => { if (activeEls.length > 0) { showDrillDown(rawTrendDataList[activeEls[0].index]); } },
+          onHover: (e, activeEls) => { e.native.target.style.cursor = activeEls.length > 0 ? 'pointer' : 'default'; }
         }
       });
     }
@@ -639,49 +583,27 @@
     function updateCharts(topicName) {
       const container = document.getElementById('chart-container');
       container.innerHTML = ''; 
-      
       const stats = globalTopicStats[topicName];
       const topicCat = (topicCategoryMap[topicName] || "").toString().trim().toLowerCase(); 
-      
       if (!stats) return;
 
       let chartDataArray = [];
-
       for (let ch in stats) {
         const cleanCh = ch.toString().trim(); 
-
         if (topicCat !== "all" && topicCat !== "-") {
-          if (topicCat.includes("geo-based") || topicCat.includes("geo") ) {
-             if (!isGeoBasedChannel(cleanCh)) continue;
-          }
-          else if (topicCat.includes("shop")) {
-             if (!isShopChannel(cleanCh)) continue;
-          }
-          else if (topicCat === "non shop") {
-             if (isShopChannel(cleanCh)) continue;
-          }
+          if (topicCat.includes("geo-based") || topicCat.includes("geo") ) { if (!isGeoBasedChannel(cleanCh)) continue; }
+          else if (topicCat.includes("shop")) { if (!isShopChannel(cleanCh)) continue; }
+          else if (topicCat === "non shop") { if (isShopChannel(cleanCh)) continue; }
         }
-
         const data = stats[ch];
         const notAcked = data.total - data.acked;
         const percent = data.total > 0 ? Math.round((data.acked / data.total) * 100) : 0;
-        
-        chartDataArray.push({
-          channelName: cleanCh,
-          data: data,
-          notAcked: notAcked,
-          percent: percent
-        });
+        chartDataArray.push({ channelName: cleanCh, data: data, notAcked: notAcked, percent: percent });
       }
 
       chartDataArray.sort((a, b) => b.percent - a.percent);
-
       chartDataArray.forEach(item => {
-        const ch = item.channelName;
-        const data = item.data;
-        const notAcked = item.notAcked;
-        const percent = item.percent;
-
+        const ch = item.channelName, data = item.data, notAcked = item.notAcked, percent = item.percent;
         const col = document.createElement('div');
         col.className = 'col-md-4';
         col.innerHTML = `
@@ -695,52 +617,21 @@
               <canvas id="chart-${ch}" style="position: relative; z-index: 2;"></canvas>
             </div>
             <div class="mt-3 small" style="background: #f8f9fa; padding: 10px; border-radius: 10px;">
-              <div class="d-flex justify-content-between mb-1">
-                <span class="text-danger fw-bold"><i class="fas fa-circle me-1" style="font-size: 8px;"></i> รับทราบแล้ว</span>
-                <span class="fw-bold">${data.acked}</span>
-              </div>
-              <div class="d-flex justify-content-between text-muted">
-                <span><i class="fas fa-circle me-1" style="font-size: 8px; color: #ddd;"></i> ยังไม่ได้รับทราบ</span>
-                <span>${notAcked}</span>
-              </div>
-              <hr class="my-2" style="border-color: #ddd;">
-              <div class="d-flex justify-content-between fw-bold">
-                <span>จำนวนพนักงานทั้งหมด</span>
-                <span>${data.total}</span>
-              </div>
+              <div class="d-flex justify-content-between mb-1"><span class="text-danger fw-bold"><i class="fas fa-circle me-1" style="font-size: 8px;"></i> รับทราบแล้ว</span><span class="fw-bold">${data.acked}</span></div>
+              <div class="d-flex justify-content-between text-muted"><span><i class="fas fa-circle me-1" style="font-size: 8px; color: #ddd;"></i> ยังไม่ได้รับทราบ</span><span>${notAcked}</span></div>
+              <hr class="my-2" style="border-color: #ddd;"><div class="d-flex justify-content-between fw-bold"><span>จำนวนพนักงานทั้งหมด</span><span>${data.total}</span></div>
             </div>
           </div>
         `;
         container.appendChild(col);
-
         if (chartInstances[ch]) chartInstances[ch].destroy();
-
         const ctx = document.getElementById(`chart-${ch}`).getContext('2d');
         chartInstances[ch] = new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-            labels: ['รับทราบแล้ว', 'ยังไม่ได้รับทราบ'],
-            datasets: [{
-              data: [data.acked, notAcked],
-              backgroundColor: ['#ff0000', '#eaeaea'],
-              borderWidth: 0,
-              hoverOffset: 4
-            }]
-          },
-          options: {
-            cutout: '75%',
-            plugins: { 
-              legend: { display: false },
-              datalabels: { display: false } 
-            },
-            responsive: true
-          }
+          type: 'doughnut', data: { labels: ['รับทราบแล้ว', 'ยังไม่ได้รับทราบ'], datasets: [{ data: [data.acked, notAcked], backgroundColor: ['#ff0000', '#eaeaea'], borderWidth: 0 }] },
+          options: { cutout: '75%', plugins: { legend: { display: false }, datalabels: { display: false } }, responsive: true }
         });
       });
-
-      if (container.innerHTML === '') {
-        container.innerHTML = '<div class="col-12 text-center text-muted py-5"><p>ไม่มีกลุ่มเป้าหมายที่ตรงกับประเภทข่าวนี้</p></div>';
-      }
+      if (container.innerHTML === '') container.innerHTML = '<div class="col-12 text-center text-muted py-5"><p>ไม่มีกลุ่มเป้าหมายที่ตรงกับประเภทข่าวนี้</p></div>';
     }
 
     async function addTopic() {
@@ -749,200 +640,127 @@
         html: `
           <input id="swal-name" class="form-control mb-3" placeholder="ชื่อหัวข้อ (เช่น แคมเปญ 7000 ก้าว)">
           <div class="text-start mb-1 small fw-bold">กลุ่มเป้าหมาย:</div>
-          <select id="swal-cat" class="form-select mb-3">
+          <select id="swal-cat" class="form-select mb-3" onchange="toggleSubTarget('add')">
             <option value="All">All (ทุกคน)</option>
             <option value="Shop">Shop (พนักงานสาขา)</option>
             <option value="Geo-Based">Geo-Based</option>
             <option value="Non Shop">Non Shop (พนักงานออฟฟิศ)</option>
           </select>
+          <!-- 🚨 อัปเดต: เปลี่ยนเป็น Dropdown ค้นหาอัตโนมัติ -->
+          <div id="sub-target-container" style="display: none; background: #eef5ff; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #002d72;">
+             <div class="text-start mb-1 small fw-bold" style="color: #002d72;">ระบุตำแหน่งเฉพาะ (ตัวเลือกเสริม):</div>
+             <select id="swal-subtarget" class="form-select form-select-sm" style="border-radius: 8px;">
+                ${buildPositionOptions()}
+             </select>
+          </div>
           <div class="row">
-            <div class="col-6">
-              <div class="text-start mb-1 small fw-bold">วันเริ่ม:</div>
-              <input type="date" id="swal-start" class="form-control">
-            </div>
-            <div class="col-6">
-              <div class="text-start mb-1 small fw-bold">วันสิ้นสุด:</div>
-              <input type="date" id="swal-end" class="form-control">
-            </div>
+            <div class="col-6"><div class="text-start mb-1 small fw-bold">วันเริ่ม:</div><input type="date" id="swal-start" class="form-control"></div>
+            <div class="col-6"><div class="text-start mb-1 small fw-bold">วันสิ้นสุด:</div><input type="date" id="swal-end" class="form-control"></div>
           </div>
         `,
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonText: 'บันทึกข้อมูล',
-        confirmButtonColor: '#ff0000',
+        focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึกข้อมูล', confirmButtonColor: '#ff0000',
+        didOpen: () => { toggleSubTarget('add'); }, 
         preConfirm: () => {
           return {
             name: document.getElementById('swal-name').value,
             category: document.getElementById('swal-cat').value,
+            subTarget: document.getElementById('swal-subtarget') ? document.getElementById('swal-subtarget').value : "",
             startDate: document.getElementById('swal-start').value,
             endDate: document.getElementById('swal-end').value + " 23:59:59"
           }
         }
       });
-
-      if (formValues && formValues.name && formValues.startDate) {
-        callApi('addTopic', formValues, 'กำลังเพิ่มหัวข้อ...');
-      }
+      if (formValues && formValues.name && formValues.startDate) callApi('addTopic', formValues, 'กำลังเพิ่มหัวข้อ...');
     }
 
-    async function editTopic(oldName, oldStartDate, oldEndDate, oldCat) {
+    async function editTopic(oldName, oldStartDate, oldEndDate, oldCat, oldSubTarget) {
       const { value: formValues } = await Swal.fire({
         title: 'แก้ไขหัวข้อข่าว',
         html: `
           <div class="text-start mb-1 small fw-bold text-danger">ชื่อหัวข้อเดิม: ${oldName}</div>
           <input id="edit-name" class="form-control mb-3" value="${oldName}" placeholder="แก้ไขชื่อหัวข้อ">
-          
           <div class="text-start mb-1 small fw-bold">กลุ่มเป้าหมาย:</div>
-          <select id="edit-cat" class="form-select mb-3">
+          <select id="edit-cat" class="form-select mb-3" onchange="toggleSubTarget('edit')">
             <option value="All" ${oldCat === 'All' ? 'selected' : ''}>All (ทุกคน)</option>
             <option value="Shop" ${oldCat === 'Shop' ? 'selected' : ''}>Shop (พนักงานสาขา)</option>
             <option value="Geo-Based" ${oldCat === 'Geo-Based' ? 'selected' : ''}>Geo-Based</option>
             <option value="Non Shop" ${oldCat === 'Non Shop' ? 'selected' : ''}>Non Shop (พนักงานออฟฟิศ)</option>
           </select>
-
+          <!-- 🚨 อัปเดต: เปลี่ยนเป็น Dropdown และดึงค่าเก่ามาแสดงเป็น Default -->
+          <div id="sub-target-container" style="display: none; background: #eef5ff; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #002d72;">
+             <div class="text-start mb-1 small fw-bold" style="color: #002d72;">ระบุตำแหน่งเฉพาะ (ตัวเลือกเสริม):</div>
+             <select id="swal-subtarget" class="form-select form-select-sm" style="border-radius: 8px;">
+                ${buildPositionOptions(oldSubTarget)}
+             </select>
+          </div>
           <div class="row">
-            <div class="col-6">
-              <div class="text-start mb-1 small fw-bold">วันเริ่ม:</div>
-              <input type="date" id="edit-start" class="form-control" value="${oldStartDate}">
-            </div>
-            <div class="col-6">
-              <div class="text-start mb-1 small fw-bold">วันสิ้นสุด:</div>
-              <input type="date" id="edit-end" class="form-control" value="${oldEndDate}">
-            </div>
+            <div class="col-6"><div class="text-start mb-1 small fw-bold">วันเริ่ม:</div><input type="date" id="edit-start" class="form-control" value="${oldStartDate}"></div>
+            <div class="col-6"><div class="text-start mb-1 small fw-bold">วันสิ้นสุด:</div><input type="date" id="edit-end" class="form-control" value="${oldEndDate}"></div>
           </div>
         `,
-        showCancelButton: true,
-        confirmButtonText: 'บันทึกการแก้ไข',
-        confirmButtonColor: '#ff0000',
+        showCancelButton: true, confirmButtonText: 'บันทึกการแก้ไข', confirmButtonColor: '#ff0000',
+        didOpen: () => { toggleSubTarget('edit'); },
         preConfirm: () => {
           return {
             oldName: oldName,
             newName: document.getElementById('edit-name').value,
             newCategory: document.getElementById('edit-cat').value,
+            newSubTarget: document.getElementById('swal-subtarget') ? document.getElementById('swal-subtarget').value : "",
             newStartDate: document.getElementById('edit-start').value + " 00:00:00", 
             newEndDate: document.getElementById('edit-end').value + " 23:59:59"
           }
         }
       });
-
-      if (formValues && formValues.newName) {
-        callApi('editTopic', formValues, 'กำลังอัปเดตข้อมูล...');
-      }
+      if (formValues && formValues.newName) callApi('editTopic', formValues, 'กำลังอัปเดตข้อมูล...');
     }
 
     function deleteTopic(topicName) {
-      Swal.fire({
-        title: 'ยืนยันการลบ?',
-        text: `คุณแน่ใจหรือไม่ว่าต้องการลบหัวข้อ "${topicName}"? ข้อมูลนี้จะไม่สามารถกู้คืนได้`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#aaa',
-        confirmButtonText: 'ใช่, ลบเลย!',
-        cancelButtonText: 'ยกเลิก'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          callApi('deleteTopic', { name: topicName }, 'กำลังลบหัวข้อ...');
-        }
-      });
+      Swal.fire({ title: 'ยืนยันการลบ?', text: `ลบหัวข้อ "${topicName}"? ข้อมูลนี้ไม่สามารถกู้คืนได้`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#aaa', confirmButtonText: 'ใช่, ลบเลย!', cancelButtonText: 'ยกเลิก' })
+      .then((result) => { if (result.isConfirmed) callApi('deleteTopic', { name: topicName }, 'กำลังลบหัวข้อ...'); });
     }
 
     async function exportReport() {
       const topicSelector = document.getElementById('topic-selector');
       const selectedTopic = topicSelector.value;
-      
-      if (!selectedTopic) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'กรุณาเลือกหัวข้อข่าวสาร!',
-          text: 'โปรดเลือกหัวข้อข่าวจากกล่อง Dropdown ในส่วน "%รับทราบหัวข้อ แยกตามช่องทาง" ก่อนกดส่งอีเมลครับ',
-          confirmButtonColor: '#ff0000',
-          confirmButtonText: 'รับทราบ'
-        });
-        return;
-      }
-
+      if (!selectedTopic) { Swal.fire({ icon: 'warning', title: 'กรุณาเลือกหัวข้อข่าวสาร!', text: 'โปรดเลือกหัวข้อข่าวก่อนส่งอีเมลครับ', confirmButtonColor: '#ff0000' }); return; }
       const { value: selectedTarget, isConfirmed } = await Swal.fire({
         title: 'ส่งรายงานเข้าอีเมล',
         html: `
           <div class="text-start mb-3 p-2 rounded" style="background: #fff5f5; border: 1px dashed #ffb3b3;">
-            <div class="small text-muted mb-1">หัวข้อที่จะจัดอันดับในอีเมล:</div>
-            <div class="fw-bold text-danger" style="font-size: 16px;"><i class="fas fa-bullhorn me-1"></i> ${selectedTopic}</div>
+            <div class="small text-muted mb-1">หัวข้อที่จะจัดอันดับในอีเมล:</div><div class="fw-bold text-danger" style="font-size: 16px;"><i class="fas fa-bullhorn me-1"></i> ${selectedTopic}</div>
           </div>
           <div class="text-start mb-2 fw-bold text-muted" style="font-size: 14px;">เลือกกลุ่มที่ต้องการส่งรายงานไปให้:</div>
           <select id="export-email-target" class="form-select form-select-lg" style="border-radius: 12px;">
-            <option value="All">ส่งภาพรวมทั้งหมด (เข้าส่วนกลาง)</option>
-            <option value="True Shop DB7">ส่งให้เฉพาะ True Shop DB7</option>
-            <option value="True Shop WW">ส่งให้เฉพาะ True Shop WW</option>
-            <option value="Geo-Based">ส่งให้เฉพาะ Geo-Based</option>
+            <option value="All">ส่งภาพรวมทั้งหมด (เข้าส่วนกลาง)</option><option value="True Shop DB7">ส่งให้เฉพาะ True Shop DB7</option>
+            <option value="True Shop WW">ส่งให้เฉพาะ True Shop WW</option><option value="Geo-Based">ส่งให้เฉพาะ Geo-Based</option>
           </select>
         `,
-        icon: 'info',
-        showCancelButton: true,
-        confirmButtonText: '<i class="fas fa-paper-plane me-1"></i> ส่งอีเมลเลย!',
-        confirmButtonColor: '#ff0000',
-        cancelButtonText: 'ยกเลิก',
-        preConfirm: () => {
-          return document.getElementById('export-email-target').value;
-        }
+        icon: 'info', showCancelButton: true, confirmButtonText: '<i class="fas fa-paper-plane me-1"></i> ส่งอีเมลเลย!', confirmButtonColor: '#ff0000', preConfirm: () => document.getElementById('export-email-target').value
       });
-
-      if (isConfirmed) {
-        callApi('exportReport', { target: selectedTarget, topic: selectedTopic }, `กำลังส่งอีเมลหา ${selectedTarget}...`);
-      }
+      if (isConfirmed) callApi('exportReport', { target: selectedTarget, topic: selectedTopic }, `กำลังส่งอีเมลหา ${selectedTarget}...`);
     }
 
     async function downloadExcel() {
       let channels = new Set();
-      for (let topic in globalTopicStats) {
-         for (let ch in globalTopicStats[topic]) {
-            channels.add(ch);
-         }
-      }
-      
+      for (let topic in globalTopicStats) { for (let ch in globalTopicStats[topic]) channels.add(ch); }
       let optionsHtml = '<option value="All">ดึงข้อมูลทั้งหมด (ยกเว้น Back Office)</option>';
-      channels.forEach(ch => {
-         optionsHtml += `<option value="${ch}">เฉพาะกลุ่ม: ${ch}</option>`;
-      });
-
+      channels.forEach(ch => { optionsHtml += `<option value="${ch}">เฉพาะกลุ่ม: ${ch}</option>`; });
       const { value: selectedChannel, isConfirmed } = await Swal.fire({
         title: 'ดาวน์โหลดรายงาน Excel',
-        html: `
-          <div class="text-start mb-2 fw-bold text-muted" style="font-size: 14px;">ระบุช่องทาง (Channel) ที่ต้องการสรุปข้อมูล:</div>
-          <select id="export-channel" class="form-select form-select-lg" style="border-radius: 12px;">
-            ${optionsHtml}
-          </select>
-        `,
-        showCancelButton: true,
-        confirmButtonText: '<i class="fas fa-file-excel me-1"></i> ดาวน์โหลด',
-        confirmButtonColor: '#28a745',
-        cancelButtonText: 'ยกเลิก',
-        preConfirm: () => {
-          return document.getElementById('export-channel').value;
-        }
+        html: `<div class="text-start mb-2 fw-bold text-muted" style="font-size: 14px;">ระบุช่องทาง (Channel):</div><select id="export-channel" class="form-select form-select-lg" style="border-radius: 12px;">${optionsHtml}</select>`,
+        showCancelButton: true, confirmButtonText: '<i class="fas fa-file-excel me-1"></i> ดาวน์โหลด', confirmButtonColor: '#28a745', preConfirm: () => document.getElementById('export-channel').value
       });
-
       if (isConfirmed) {
         Swal.fire({ title: 'กำลังเตรียมไฟล์ Excel...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
         try {
-          const res = await fetch(GAS_URL, { 
-            method: 'POST', 
-            body: JSON.stringify({ action: 'downloadCleanExcel', payload: { channel: selectedChannel } }) 
-          }).then(r => r.json());
-          
+          const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'downloadCleanExcel', payload: { channel: selectedChannel } }) }).then(r => r.json());
           Swal.close();
           if(res && res.base64) {
-            const link = document.createElement('a');
-            link.href = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + res.base64;
-            const safeChannelName = selectedChannel === "All" ? "All_Channels" : selectedChannel.replace(/\s+/g, '_');
-            link.download = res.fileName.replace('.xlsx', `_${safeChannelName}.xlsx`);
-            link.click();
+            const link = document.createElement('a'); link.href = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + res.base64;
+            link.download = res.fileName.replace('.xlsx', `_${selectedChannel === "All" ? "All_Channels" : selectedChannel.replace(/\s+/g, '_')}.xlsx`); link.click();
             Swal.fire('สำเร็จ!', 'ดาวน์โหลดไฟล์ Excel เรียบร้อยแล้ว', 'success');
           }
-        } catch (e) {
-          Swal.close();
-          Swal.fire('Error', 'ไม่สามารถดาวน์โหลดไฟล์ได้', 'error');
-        }
+        } catch (e) { Swal.close(); Swal.fire('Error', 'ไม่สามารถดาวน์โหลดไฟล์ได้', 'error'); }
       }
     }
 
@@ -951,29 +769,16 @@
       try {
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action, payload }) }).then(r => r.json());
         Swal.close();
-        if (res === "Success") {
-          Swal.fire({ icon: 'success', title: 'สำเร็จ', timer: 1500, showConfirmButton: false }).then(() => loadData());
-        } else {
-          Swal.fire('Error', 'เกิดข้อผิดพลาดในการบันทึก', 'error');
-        }
-      } catch (e) {
-        Swal.close();
-        Swal.fire('Error', 'ไม่สามารถเชื่อมต่อระบบได้', 'error');
-      }
+        if (res === "Success") Swal.fire({ icon: 'success', title: 'สำเร็จ', timer: 1500, showConfirmButton: false }).then(() => loadData());
+        else Swal.fire('Error', 'เกิดข้อผิดพลาดในการบันทึก', 'error');
+      } catch (e) { Swal.close(); Swal.fire('Error', 'ไม่สามารถเชื่อมต่อระบบได้', 'error'); }
     }
 
     function animateValue(id, start, end, duration) {
       if (start === end) { document.getElementById(id).innerHTML = end; return; }
-      let current = start;
-      const range = end - start;
-      const increment = end > start ? 1 : -1;
-      const stepTime = Math.abs(Math.floor(duration / range));
-      const obj = document.getElementById(id);
-      const timer = setInterval(() => {
-        current += increment;
-        obj.innerHTML = current;
-        if (current == end) clearInterval(timer);
-      }, stepTime);
+      let current = start; const range = end - start; const increment = end > start ? 1 : -1;
+      const stepTime = Math.abs(Math.floor(duration / range)); const obj = document.getElementById(id);
+      const timer = setInterval(() => { current += increment; obj.innerHTML = current; if (current == end) clearInterval(timer); }, stepTime);
     }
 
     window.onload = loadData;
