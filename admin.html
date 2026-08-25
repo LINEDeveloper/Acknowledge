@@ -785,15 +785,38 @@
       for (let topic in globalTopicStats) { for (let ch in globalTopicStats[topic]) channels.add(ch); }
       let optionsHtml = '<option value="All">ดึงข้อมูลทั้งหมด (ยกเว้น Back Office)</option>';
       channels.forEach(ch => { optionsHtml += `<option value="${ch}">เฉพาะกลุ่ม: ${ch}</option>`; });
+      
+      // 🚨 ดึงชื่อหัวข้อข่าวที่คุณกำลังเลือกดูอยู่ในกล่อง Dropdown โซนโดนัท
+      const topicSelector = document.getElementById('topic-selector');
+      const selectedTopic = topicSelector && topicSelector.value ? topicSelector.value : "";
+      
+      // 🚨 เพิ่มข้อความแจ้งเตือนให้แอดมินรู้ว่า ระบบจะเพิ่มชีทพิเศษให้
+      let topicNote = selectedTopic 
+          ? `<div class="mt-3 p-2 rounded" style="background: #eef5ff; border-left: 4px solid #002d72; font-size: 13px;">
+               <i class="fas fa-info-circle text-primary"></i> <b>โบนัส:</b> ระบบจะสร้างชีทสรุปเฉพาะแคมเปญ <span class="text-danger">"${selectedTopic}"</span> แนบไปในไฟล์ให้ด้วย
+             </div>` 
+          : '';
+
       const { value: selectedChannel, isConfirmed } = await Swal.fire({
         title: 'ดาวน์โหลดรายงาน Excel',
-        html: `<div class="text-start mb-2 fw-bold text-muted" style="font-size: 14px;">ระบุช่องทาง (Channel):</div><select id="export-channel" class="form-select form-select-lg" style="border-radius: 12px;">${optionsHtml}</select>`,
+        html: `<div class="text-start mb-2 fw-bold text-muted" style="font-size: 14px;">ระบุช่องทาง (Channel):</div>
+               <select id="export-channel" class="form-select form-select-lg" style="border-radius: 12px;">${optionsHtml}</select>
+               ${topicNote}`,
         showCancelButton: true, confirmButtonText: '<i class="fas fa-file-excel me-1"></i> ดาวน์โหลด', confirmButtonColor: '#28a745', preConfirm: () => document.getElementById('export-channel').value
       });
+
       if (isConfirmed) {
         Swal.fire({ title: 'กำลังเตรียมไฟล์ Excel...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
         try {
-          const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'downloadCleanExcel', payload: { channel: selectedChannel } }) }).then(r => r.json());
+          // 🚨 ส่งชื่อข่าวที่เลือกไปให้ระบบหลังบ้านจัดการ
+          const res = await fetch(GAS_URL, { 
+             method: 'POST', 
+             body: JSON.stringify({ 
+                action: 'downloadCleanExcel', 
+                payload: { channel: selectedChannel, topic: selectedTopic } 
+             }) 
+          }).then(r => r.json());
+          
           Swal.close();
           if(res && res.base64) {
             const link = document.createElement('a'); link.href = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + res.base64;
@@ -802,16 +825,6 @@
           }
         } catch (e) { Swal.close(); Swal.fire('Error', 'ไม่สามารถดาวน์โหลดไฟล์ได้', 'error'); }
       }
-    }
-
-    async function callApi(action, payload, loadingText) {
-      Swal.fire({ title: loadingText, didOpen: () => Swal.showLoading(), allowOutsideClick: false });
-      try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action, payload }) }).then(r => r.json());
-        Swal.close();
-        if (res === "Success") Swal.fire({ icon: 'success', title: 'สำเร็จ', timer: 1500, showConfirmButton: false }).then(() => loadData());
-        else Swal.fire('Error', 'เกิดข้อผิดพลาดในการบันทึก', 'error');
-      } catch (e) { Swal.close(); Swal.fire('Error', 'ไม่สามารถเชื่อมต่อระบบได้', 'error'); }
     }
 
     function animateValue(id, start, end, duration) {
