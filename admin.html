@@ -10,6 +10,8 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+  <!-- 📥 ไลบรารี SheetJS สำหรับสร้างไฟล์ Excel (.xlsx) แท้ -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     body { font-family: 'Sarabun', sans-serif; background-color: #f4f6f9; color: #333; }
     .navbar-true { background: linear-gradient(90deg, #ff0000, #002d72); padding: 15px 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
@@ -284,17 +286,23 @@
           </div>
         </div>
 
-        <!-- ส่วนที่ 4: ตารางวินิจฉัย (สลับอัตโนมัติระหว่าง Campaign Matrix กับ Shop Channel Heatmap) -->
+        <!-- ส่วนที่ 4: ตารางวินิจฉัย + ปุ่ม Export Excel (.xlsx) -->
         <div class="bi-card-box">
           <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
             <div>
               <h6 class="fw-bold m-0" style="color:#222;" id="matrix-main-title"><i class="fas fa-microscope me-2 text-danger"></i> ตารางวิเคราะห์ผลงานรายแคมเปญ (Diagnostic Matrix)</h6>
               <small class="text-muted" id="matrix-subtitle">แสดงข้อมูลตามช่วงเวลาและช่องทางที่เลือกด้านบน</small>
             </div>
-            <div id="heatmap-legend" class="d-none small">
-              <span class="hm-pill hm-green me-1">ดีเยี่ยม (≥80%)</span>
-              <span class="hm-pill hm-orange me-1">ปานกลาง (50-79%)</span>
-              <span class="hm-pill hm-red">ต้องเร่งติดตาม (&lt;50%)</span>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <div id="heatmap-legend" class="d-none small me-2">
+                <span class="hm-pill hm-green me-1">ดีเยี่ยม (≥80%)</span>
+                <span class="hm-pill hm-orange me-1">ปานกลาง (50-79%)</span>
+                <span class="hm-pill hm-red">ต้องเร่งติดตาม (&lt;50%)</span>
+              </div>
+              <!-- 📥 ปุ่มดาวน์โหลดตารางนี้เป็นไฟล์ Excel (.xlsx) -->
+              <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold shadow-sm" onclick="exportAnalyticsMatrixExcel()">
+                <i class="fas fa-file-excel me-1"></i> Export ตารางนี้ (Excel)
+              </button>
             </div>
           </div>
           <div class="table-responsive">
@@ -507,7 +515,6 @@
       }
     }
 
-    // สร้างรายการหัวข้อข่าวใน Dropdown ช่องที่ 4 (กรองเฉพาะข่าวที่เกี่ยวกับ Shop และอยู่ในช่วงเวลาที่เลือก)
     function populateFocusTopicDropdown() {
       const focusSelect = document.getElementById('trend-topic-focus');
       if (!focusSelect) return;
@@ -519,7 +526,6 @@
       let eligibleTopics = globalTopics.filter(t => {
         let cat = (t.category || "").toString().trim();
         let topicNameLower = (t.name || "").toString().toLowerCase();
-        // ตัดข่าวที่เป็นของ Geo-Based หรือ Non Shop ล้วนออก เพราะโหมดนี้เน้นเจาะลึกช่องทางภายใต้ Shop
         if (cat === 'Geo-Based' || cat === 'Non Shop') return false;
         if (filterCat === 'Morning-Brief' && !topicNameLower.includes('morning brief')) return false;
         if (filterCat === 'Category-All' && !(cat === 'All' || cat === '-')) return false;
@@ -532,7 +538,6 @@
         return true;
       });
 
-      // เรียงจากแคมเปญใหม่สุดขึ้นก่อน
       eligibleTopics.sort((a, b) => new Date(b.rawStartDate) - new Date(a.rawStartDate));
 
       focusSelect.innerHTML = `<option value="">-- ดูเทรนด์รวมตามช่วงเวลา (ไม่เจาะจงข่าว) --</option>`;
@@ -749,16 +754,13 @@
     // 🎯 โหมดพิเศษ (ตัวเลือก A): ผ่าตัดทุกช่องทางภายใต้ Shop เมื่อเลือกหัวข้อข่าว
     // =========================================================================
     function renderShopTopicDeepDive(selectedTopicName, contextTopics) {
-      const topicObj = globalTopics.find(t => t.name === selectedTopicName);
       const statsForSelected = globalTopicStats[selectedTopicName] || {};
 
-      // ใช้แคมเปญที่เกี่ยวข้องกับ Shop มาคำนวณค่าเฉลี่ยปกติ (Historical Baseline) ของแต่ละช่องทาง
       let baselinePool = contextTopics.filter(t => t.category !== 'Geo-Based' && t.category !== 'Non Shop');
       if (baselinePool.length === 0) {
         baselinePool = globalTopics.filter(t => t.category !== 'Geo-Based' && t.category !== 'Non Shop');
       }
 
-      // เก็บ 5 แคมเปญล่าสุดของ Shop สำหรับสร้างคอลัมน์ Heatmap
       let sortedShopTopics = [...baselinePool].sort((a, b) => new Date(a.rawStartDate) - new Date(b.rawStartDate));
       let recent5Topics = sortedShopTopics.slice(-5);
 
@@ -778,7 +780,6 @@
         totalShopTarget += curTotal;
         totalShopAck += curAck;
 
-        // คำนวณค่าเฉลี่ยปกติสะสม (Baseline) ของช่องทางนี้
         let chHistTotal = 0, chHistAck = 0;
         baselinePool.forEach(bt => {
           let bStats = globalTopicStats[bt.name];
@@ -791,7 +792,6 @@
         histTotalSum += chHistTotal;
         histAckSum += chHistAck;
 
-        // เก็บ % ของ 5 แคมเปญล่าสุดสำหรับตาราง Heatmap
         let recent5Percents = recent5Topics.map(rt => {
           let rStats = globalTopicStats[rt.name];
           if (rStats && rStats[ch] && rStats[ch].total > 0) {
@@ -812,14 +812,12 @@
         });
       }
 
-      // เรียงช่องทางใน Shop จาก % ข่าวที่เลือกมากไปน้อย
       shopChannelList.sort((a, b) => b.percent - a.percent || b.acked - a.acked);
 
       let overallTopicShopPct = totalShopTarget > 0 ? Math.round((totalShopAck / totalShopTarget) * 100) : 0;
       let overallHistShopPct = histTotalSum > 0 ? Math.round((histAckSum / histTotalSum) * 100) : 0;
       let overallDiff = overallTopicShopPct - overallHistShopPct;
 
-      // อัปเดตป้ายหัวข้อและ 4 KPI Cards สำหรับโหมดเจาะลึกข่าว Shop
       document.getElementById('trend-active-filter-badge').innerText = `🎯 โหมดเจาะลึกข่าวกลุ่ม Shop`;
       document.getElementById('kpi-title-1').innerText = `% รับทราบข่าวนี้ (รวมทุก Shop)`;
       document.getElementById('kpi-period-avg').innerText = `${overallTopicShopPct}%`;
@@ -847,7 +845,6 @@
         document.getElementById('kpi-low-sub').innerHTML = `ได้ <b>${lowCh.percent}%</b> (ค้างอ่าน <b>${lowCh.unread.toLocaleString()}</b> คน)`;
       }
 
-      // วาดกราฟที่ 1: Combo Bar (% ข่าวนี้) + Line (% ค่าเฉลี่ยปกติของแต่ละช่องทางภายใต้ Shop)
       document.getElementById('line-chart-title').innerHTML = `<i class="fas fa-store me-2 text-danger"></i> เปรียบเทียบช่องทางภายใต้ Shop: ข่าวนี้ vs ค่าเฉลี่ยปกติ`;
       document.getElementById('line-chart-subtitle').innerHTML = `หัวข้อ: <b class="text-dark">${selectedTopicName}</b> (แท่ง = % ข่าวนี้ | เส้นประ = % ค่าเฉลี่ยปกติของช่องทางนั้น)`;
 
@@ -915,7 +912,6 @@
         }
       });
 
-      // วาดกราฟที่ 2: Horizontal Ranking Bar เฉพาะช่องทางใน Shop ของข่าวนี้
       document.getElementById('bar-chart-title').innerHTML = `<i class="fas fa-ranking-star me-2 text-danger"></i> อันดับช่องทาง Shop ในข่าวนี้`;
       document.getElementById('bar-chart-subtitle').innerText = `เรียงตาม % การรับทราบจากสูงสุดไปต่ำสุด`;
 
@@ -957,16 +953,15 @@
         }
       });
 
-      // วาดตารางส่วนที่ 4: Shop Channel Performance & Heatmap Matrix
       document.getElementById('matrix-main-title').innerHTML = `<i class="fas fa-table-cells me-2 text-danger"></i> ตารางผ่าตัดช่องทางภายใต้กลุ่ม Shop & Heatmap เทียบ 5 แคมเปญล่าสุด`;
       document.getElementById('matrix-subtitle').innerHTML = `เปรียบเทียบผลงานรายช่องทางในหัวข้อ <b>"${selectedTopicName}"</b> คู่กับเทรนด์ย้อนหลัง`;
       document.getElementById('heatmap-legend').classList.remove('d-none');
 
-      let recentHeadersHtml = recent5Topics.map((rt, i) => {
+      let recentHeadersHtml = recent5Topics.map(rt => {
         let shortName = rt.name.length > 14 ? rt.name.substring(0, 14) + '...' : rt.name;
         let isFocused = rt.name === selectedTopicName;
         return `<th title="${escapeHtmlAttr(rt.name)} (${rt.startDate})" style="font-size: 12px; ${isFocused ? 'background:#fff0f0; color:#cc0000;' : ''}">
-          ${isFocused ? '🎯 ' : ''}${shortName}<br><span class="text-muted fw-normal" style="font-size:10px;">${rt.startDate}</span>
+          ${isFocused ? '🎯 ' : ''}${shortName}<br><span class="text-muted fw-normal" style="font-size:10px;">(${rt.startDate})</span>
         </th>`;
       }).join('');
 
@@ -1022,7 +1017,6 @@
       const filterCat = document.getElementById('trend-category-filter') ? document.getElementById('trend-category-filter').value : 'All';
       const focusedTopicName = document.getElementById('trend-topic-focus') ? document.getElementById('trend-topic-focus').value : '';
 
-      // 1. กรองหัวข้อข่าวตามประเภท, ช่องทางที่เลือก, และช่วงเดือน
       let filteredTopics = globalTopics.filter(t => {
         let topicNameLower = (t.name || "").toString().toLowerCase();
         let cat = (t.category || "").toString().trim();
@@ -1051,13 +1045,11 @@
       let sortedTopics = [...filteredTopics].sort((a, b) => new Date(a.rawStartDate) - new Date(b.rawStartDate));
       let activeTopicsForTrend = (monthFilter === 'LAST_15') ? sortedTopics.slice(-15) : sortedTopics;
 
-      // 🎯 หากผู้ใช้เลือก "หัวข้อข่าว" ในช่องที่ 4 ให้สลับเข้าโหมดเจาะลึกทุกช่องทางภายใต้ Shop ทันที
       if (focusedTopicName) {
         renderShopTopicDeepDive(focusedTopicName, activeTopicsForTrend);
         return;
       }
 
-      // คืนค่าหัวข้อกลับสู่โหมดเทรนด์รวมตามปกติ
       document.getElementById('kpi-title-1').innerText = 'อัตราการรับทราบเฉลี่ย';
       document.getElementById('kpi-title-2').innerText = 'แคมเปญล่าสุด vs ค่าเฉลี่ย';
       document.getElementById('kpi-title-3').innerText = 'แชมป์ช่องทาง (Top Performer)';
@@ -1101,7 +1093,6 @@
         return;
       }
 
-      // 2. คำนวณสถิติรายแคมเปญและสะสมรายช่องทางย่อย
       let labels = [], shopData = [], geoData = [], allAvgData = [], specificChData = [];
       rawTrendDataList = [];
       let channelAggregates = {};
@@ -1180,7 +1171,6 @@
         });
       });
 
-      // 3. อัปเดต 4 Executive KPI Cards
       let focusSeries = rawTrendDataList.map(d => d.focusPercent);
       let periodAvg = focusSeries.length > 0 ? Math.round(focusSeries.reduce((a, b) => a + b, 0) / focusSeries.length) : 0;
       let latestVal = focusSeries[focusSeries.length - 1] || 0;
@@ -1219,7 +1209,6 @@
         document.getElementById('kpi-low-sub').innerText = '-';
       }
 
-      // 4. วาดกราฟที่ 1: Line Progression Chart
       let datasets = [];
       if (isSingleChannel) {
         datasets.push({
@@ -1324,7 +1313,6 @@
         }
       });
 
-      // 5. วาดกราฟที่ 2: Channel Ranking Horizontal Bar Chart
       const ctxBar = document.getElementById('channelRankBarChart').getContext('2d');
       if (channelRankBarInstance) channelRankBarInstance.destroy();
 
@@ -1369,7 +1357,6 @@
         }
       });
 
-      // 6. สร้างตารางส่วนที่ 4: Campaign Diagnostic Matrix
       const matrixBody = document.getElementById('analytics-matrix-body');
       matrixBody.innerHTML = '';
       let reversedMatrix = [...rawTrendDataList].reverse();
@@ -1403,6 +1390,73 @@
           </tr>
         `;
       });
+    }
+
+    // 📥 ฟังก์ชันดาวน์โหลดตาราง Analytics / Heatmap เป็นไฟล์ Excel แท้ (.xlsx)
+    function exportAnalyticsMatrixExcel() {
+      const thead = document.getElementById('analytics-matrix-thead');
+      const tbody = document.getElementById('analytics-matrix-body');
+      if (!thead || !tbody) return;
+
+      const bodyRows = tbody.querySelectorAll('tr');
+      if (bodyRows.length === 0 || (bodyRows.length === 1 && bodyRows[0].cells.length === 1)) {
+        Swal.fire('ไม่มีข้อมูล', 'ไม่พบข้อมูลในตารางสำหรับดาวน์โหลด', 'warning');
+        return;
+      }
+
+      const sheetData = [];
+
+      // 1. ดึงหัวตาราง (ใช้ชื่อเต็มจาก title ถ้ามี เพื่อให้หัวคอลัมน์ใน Excel ชัดเจนไม่ถูกตัดคำว่า ...)
+      const headerCells = thead.querySelectorAll('tr th');
+      const headerRow = [];
+      headerCells.forEach(th => {
+        let titleAttr = th.getAttribute('title');
+        let text = titleAttr ? titleAttr : th.innerText.replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim();
+        headerRow.push(text);
+      });
+      sheetData.push(headerRow);
+
+      // 2. ดึงข้อมูลทุกแถว (แปลงค่าตัวเลขให้เป็น Number แท้ เพื่อให้คำนวณต่อใน Excel ได้)
+      bodyRows.forEach(tr => {
+        const rowData = [];
+        tr.querySelectorAll('td').forEach(td => {
+          let text = td.innerText.replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim();
+          // หากเป็นตัวเลขล้วนที่มีลูกน้ำคั่น (เช่น 1,250) ให้แปลงเป็น Number
+          if (/^-?\d{1,3}(,\d{3})*$/.test(text)) {
+            rowData.push(parseInt(text.replace(/,/g, ''), 10));
+          } else {
+            rowData.push(text);
+          }
+        });
+        sheetData.push(rowData);
+      });
+
+      // 3. สร้าง Workbook และปรับความกว้างคอลัมน์อัตโนมัติด้วย SheetJS (XLSX)
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+      const colWidths = headerRow.map((h, colIdx) => {
+        let maxLen = h ? h.toString().length : 12;
+        sheetData.forEach(r => {
+          let cellVal = r[colIdx] !== undefined && r[colIdx] !== null ? r[colIdx].toString() : '';
+          if (cellVal.length > maxLen) maxLen = cellVal.length;
+        });
+        return { wch: Math.min(Math.max(maxLen + 5, 14), 48) };
+      });
+      ws['!cols'] = colWidths;
+
+      const focusedTopic = document.getElementById('trend-topic-focus') ? document.getElementById('trend-topic-focus').value : '';
+      const monthFilter = document.getElementById('trend-month-filter') ? document.getElementById('trend-month-filter').value : 'Report';
+      const dateStamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+
+      const sheetName = focusedTopic ? "Shop_Heatmap" : "Analytics_Matrix";
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+      let safeSubName = focusedTopic 
+        ? "Shop_Heatmap_" + focusedTopic.replace(/[^a-zA-Z0-9ก-๙]/g, '_').substring(0, 25)
+        : "Trend_Matrix_" + monthFilter;
+
+      XLSX.writeFile(wb, `Analytics_${safeSubName}_${dateStamp}.xlsx`);
     }
 
     function updateCharts(topicName) {
