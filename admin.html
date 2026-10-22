@@ -49,14 +49,22 @@
     .swal2-confirm { border-radius: 50px !important; padding: 10px 25px !important; font-weight: 600 !important; }
     .swal2-cancel { border-radius: 50px !important; padding: 10px 25px !important; font-weight: 600 !important; }
     
-    /* สไตล์สำหรับ Executive Analytics */
-    .filter-bar-bi { background: linear-gradient(135deg, #f8faff 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 18px; padding: 16px 20px; }
+    /* สไตล์สำหรับ Executive Analytics & Shop Heatmap */
+    .filter-bar-bi { background: linear-gradient(135deg, #f8faff 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 18px; padding: 18px 20px; }
+    .focus-topic-box { background: linear-gradient(135deg, #fff5f5 0%, #fff0f0 100%); border: 1.5px solid #ffcdd2; border-radius: 14px; padding: 12px 16px; margin-top: 12px; }
     .trend-mini-card { background: #fff; border: 1px solid #eaeaea; border-radius: 16px; padding: 18px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); border-left: 5px solid #002d72; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
     .trend-mini-title { font-size: 13px; color: #666; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
     .trend-mini-value { font-size: 26px; font-weight: 800; color: #222; margin: 0; line-height: 1.1; }
     .trend-mini-sub { font-size: 12px; color: #777; margin-top: 8px; font-weight: 600; }
     .bi-card-box { border: 1px solid #edf2f7; border-radius: 20px; padding: 22px; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.02); height: 100%; }
     .progress-thin { height: 8px; border-radius: 50px; background-color: #edf2f7; overflow: hidden; }
+    
+    /* ป้ายสี Heatmap */
+    .hm-pill { display: inline-block; min-width: 52px; padding: 4px 8px; border-radius: 8px; font-weight: 700; font-size: 12px; text-align: center; }
+    .hm-green { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .hm-orange { background-color: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+    .hm-red { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .hm-gray { background-color: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0; }
   </style>
 </head>
 <body>
@@ -155,16 +163,16 @@
       </div>
 
       <!-- ========================================================= -->
-      <!-- 🚀 โฉมใหม่: Executive Analytics View ครบทั้ง 4 ส่วน -->
+      <!-- 🚀 Executive Analytics View + โหมดเจาะลึกทุกช่องทางภายใต้ Shop -->
       <!-- ========================================================= -->
       <div id="trend-view" class="d-none">
         
-        <!-- ส่วนที่ 1: Smart Filter Bar (3 มิติ: เดือน, ช่องทาง, ประเภทข่าว) -->
+        <!-- ส่วนที่ 1: Smart Filter Bar (3 มิติ + Dropdown ที่ 4 โฟกัสหัวข้อข่าวเจาะลึกกลุ่ม Shop) -->
         <div class="filter-bar-bi mb-4">
           <div class="row g-3 align-items-center">
             <div class="col-md-4">
               <label class="fw-bold small text-secondary mb-1"><i class="fas fa-calendar-alt text-danger me-1"></i> 1. เลือกช่วงเวลา / เดือน:</label>
-              <select id="trend-month-filter" class="form-select form-select-sm fw-bold border-secondary-subtle" style="border-radius: 10px; padding: 8px 12px;" onchange="renderTrendCharts()">
+              <select id="trend-month-filter" class="form-select form-select-sm fw-bold border-secondary-subtle" style="border-radius: 10px; padding: 8px 12px;" onchange="onPeriodOrCategoryFilterChange()">
                 <option value="LAST_15">🔥 15 แคมเปญล่าสุด</option>
                 <option value="ALL_TIME">📅 ทุกแคมเปญทั้งหมด</option>
               </select>
@@ -179,7 +187,7 @@
             </div>
             <div class="col-md-4">
               <label class="fw-bold small text-secondary mb-1"><i class="fas fa-tags text-success me-1"></i> 3. กรองประเภทแคมเปญ:</label>
-              <select id="trend-category-filter" class="form-select form-select-sm fw-bold border-secondary-subtle" style="border-radius: 10px; padding: 8px 12px;" onchange="renderTrendCharts()">
+              <select id="trend-category-filter" class="form-select form-select-sm fw-bold border-secondary-subtle" style="border-radius: 10px; padding: 8px 12px;" onchange="onPeriodOrCategoryFilterChange()">
                 <option value="All">ดูทั้งหมด (ผสมทุกประเภท)</option>
                 <option value="Morning-Brief">☕ เฉพาะข่าว Morning Brief</option>
                 <option value="Category-All">เฉพาะประเภท All (ทุกคน)</option>
@@ -188,52 +196,76 @@
               </select>
             </div>
           </div>
+
+          <!-- 🎯 แถบพิเศษ: เลือกหัวข้อข่าวเพื่อผ่าตัดเทรนด์ทุกช่องทางภายใต้ Shop -->
+          <div class="focus-topic-box">
+            <div class="row g-2 align-items-center">
+              <div class="col-md-5">
+                <div class="fw-bold text-danger" style="font-size: 14px;">
+                  <i class="fas fa-crosshairs me-1"></i> 4. เจาะลึกหัวข้อข่าว (เทียบทุกช่องทางภายใต้กลุ่ม Shop):
+                </div>
+                <div class="text-muted" style="font-size: 12px;">
+                  เมื่อเลือกหัวข้อข่าว กราฟจะสลับไปเปรียบเทียบ <b>% ข่าวนี้ vs ค่าเฉลี่ยปกติของแต่ละช่องทางใน Shop</b> พร้อมตาราง Heatmap
+                </div>
+              </div>
+              <div class="col-md-5">
+                <select id="trend-topic-focus" class="form-select form-select-sm fw-bold border-danger-subtle" style="border-radius: 10px; padding: 8px 12px;" onchange="onFocusTopicChange()">
+                  <option value="">-- ดูเทรนด์รวมตามช่วงเวลา (ไม่เจาะจงข่าว) --</option>
+                </select>
+              </div>
+              <div class="col-md-2 text-end">
+                <button id="btn-clear-focus-topic" class="btn btn-sm btn-outline-danger rounded-pill w-100 fw-bold d-none" onclick="clearFocusTopic()">
+                  <i class="fas fa-rotate-left me-1"></i> กลับดูเทรนด์รวม
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- ส่วนที่ 2: 4 Executive KPI Cards -->
         <div class="row g-3 mb-4">
           <div class="col-md-3 col-sm-6">
             <div class="trend-mini-card" style="border-left-color: #002d72;">
-              <div class="trend-mini-title"><span>อัตราการรับทราบเฉลี่ย</span> <i class="fas fa-bullseye text-primary"></i></div>
+              <div class="trend-mini-title"><span id="kpi-title-1">อัตราการรับทราบเฉลี่ย</span> <i class="fas fa-bullseye text-primary"></i></div>
               <div class="trend-mini-value" id="kpi-period-avg" style="color: #002d72;">0%</div>
               <div class="trend-mini-sub" id="kpi-period-sub">จาก 0 แคมเปญ</div>
             </div>
           </div>
           <div class="col-md-3 col-sm-6">
             <div class="trend-mini-card" style="border-left-color: #ff0000;">
-              <div class="trend-mini-title"><span>แคมเปญล่าสุด vs ค่าเฉลี่ย</span> <i class="fas fa-bolt text-danger"></i></div>
+              <div class="trend-mini-title"><span id="kpi-title-2">แคมเปญล่าสุด vs ค่าเฉลี่ย</span> <i class="fas fa-bolt text-danger"></i></div>
               <div class="trend-mini-value" id="trend-last-percent">0%</div>
               <div class="trend-mini-sub" id="trend-diff">กำลังคำนวณ...</div>
             </div>
           </div>
           <div class="col-md-3 col-sm-6">
             <div class="trend-mini-card" style="border-left-color: #00b33c;">
-              <div class="trend-mini-title"><span>แชมป์ช่องทาง (Top Performer)</span> <i class="fas fa-trophy text-success"></i></div>
+              <div class="trend-mini-title"><span id="kpi-title-3">แชมป์ช่องทาง (Top Performer)</span> <i class="fas fa-trophy text-success"></i></div>
               <div class="trend-mini-value text-truncate" id="kpi-top-channel" style="font-size: 19px; color: #00b33c;">-</div>
               <div class="trend-mini-sub" id="kpi-top-sub">เฉลี่ยสูงสุดในช่วงที่เลือก</div>
             </div>
           </div>
           <div class="col-md-3 col-sm-6">
             <div class="trend-mini-card" style="border-left-color: #ff8c00;">
-              <div class="trend-mini-title"><span>ต้องเร่งติดตาม (Focus Needed)</span> <i class="fas fa-exclamation-triangle text-warning"></i></div>
+              <div class="trend-mini-title"><span id="kpi-title-4">ต้องเร่งติดตาม (Focus Needed)</span> <i class="fas fa-exclamation-triangle text-warning"></i></div>
               <div class="trend-mini-value text-truncate" id="kpi-low-channel" style="font-size: 19px; color: #e65100;">-</div>
               <div class="trend-mini-sub" id="kpi-low-sub">ค้างอ่านสะสมสูงสุด</div>
             </div>
           </div>
         </div>
 
-        <!-- ส่วนที่ 3: กราฟวิเคราะห์ 2 มุมมอง (Line Progression + Channel Ranking Bar) -->
+        <!-- ส่วนที่ 3: กราฟวิเคราะห์ 2 มุมมอง -->
         <div class="row g-4 mb-4">
           <div class="col-lg-8">
             <div class="bi-card-box">
               <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                 <div>
                   <h6 class="fw-bold m-0" style="color:#222;" id="line-chart-title"><i class="fas fa-wave-square me-2 text-primary"></i> แนวโน้มการรับทราบรายแคมเปญ (Progression)</h6>
-                  <small class="text-muted"><i class="fas fa-mouse-pointer me-1 text-danger"></i> คลิกที่จุดกราฟเพื่อดูยอดอ่านแล้ว / ค้างอ่าน รายแคมเปญ</small>
+                  <small class="text-muted" id="line-chart-subtitle"><i class="fas fa-mouse-pointer me-1 text-danger"></i> คลิกที่จุดกราฟเพื่อดูยอดอ่านแล้ว / ค้างอ่าน รายแคมเปญ</small>
                 </div>
                 <span class="badge bg-light text-dark border" id="trend-active-filter-badge">15 แคมเปญล่าสุด</span>
               </div>
-              <div style="position: relative; height: 320px; width: 100%;">
+              <div style="position: relative; height: 330px; width: 100%;">
                 <canvas id="dualTrendChart"></canvas>
               </div>
             </div>
@@ -242,27 +274,32 @@
           <div class="col-lg-4">
             <div class="bi-card-box">
               <div class="mb-3">
-                <h6 class="fw-bold m-0" style="color:#222;"><i class="fas fa-ranking-star me-2 text-danger"></i> จัดอันดับช่องทาง (% เฉลี่ยสะสม)</h6>
-                <small class="text-muted">คำนวณรวมทุกแคมเปญในช่วงเวลาที่เลือก</small>
+                <h6 class="fw-bold m-0" style="color:#222;" id="bar-chart-title"><i class="fas fa-ranking-star me-2 text-danger"></i> จัดอันดับช่องทาง (% เฉลี่ยสะสม)</h6>
+                <small class="text-muted" id="bar-chart-subtitle">คำนวณรวมทุกแคมเปญในช่วงเวลาที่เลือก</small>
               </div>
-              <div style="position: relative; height: 320px; width: 100%; overflow-y: auto;">
+              <div style="position: relative; height: 330px; width: 100%; overflow-y: auto;">
                 <canvas id="channelRankBarChart"></canvas>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- ส่วนที่ 4: ตารางวินิจฉัยรายแคมเปญ (Campaign Diagnostic Matrix) -->
+        <!-- ส่วนที่ 4: ตารางวินิจฉัย (สลับอัตโนมัติระหว่าง Campaign Matrix กับ Shop Channel Heatmap) -->
         <div class="bi-card-box">
           <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
             <div>
-              <h6 class="fw-bold m-0" style="color:#222;"><i class="fas fa-microscope me-2 text-danger"></i> ตารางวิเคราะห์ผลงานรายแคมเปญ (Diagnostic Matrix)</h6>
+              <h6 class="fw-bold m-0" style="color:#222;" id="matrix-main-title"><i class="fas fa-microscope me-2 text-danger"></i> ตารางวิเคราะห์ผลงานรายแคมเปญ (Diagnostic Matrix)</h6>
               <small class="text-muted" id="matrix-subtitle">แสดงข้อมูลตามช่วงเวลาและช่องทางที่เลือกด้านบน</small>
+            </div>
+            <div id="heatmap-legend" class="d-none small">
+              <span class="hm-pill hm-green me-1">ดีเยี่ยม (≥80%)</span>
+              <span class="hm-pill hm-orange me-1">ปานกลาง (50-79%)</span>
+              <span class="hm-pill hm-red">ต้องเร่งติดตาม (&lt;50%)</span>
             </div>
           </div>
           <div class="table-responsive">
             <table class="table table-hover align-middle mb-0" style="font-size: 14px;">
-              <thead>
+              <thead id="analytics-matrix-thead">
                 <tr>
                   <th class="text-start">แคมเปญ / หัวข้อข่าว</th>
                   <th>วันเริ่ม</th>
@@ -387,8 +424,8 @@
         topicCategoryMap = {};
         globalTopics.forEach(t => { topicCategoryMap[t.name] = t.category; });
         
-        // เตรียมตัวเลือกเดือนและช่องทางสำหรับหน้า Analytics
         populateAnalyticsFilters();
+        populateFocusTopicDropdown();
 
         filterTable('กำลังดำเนินการ');
       } catch (e) {
@@ -398,9 +435,7 @@
       }
     }
 
-    // สร้าง Dropdown เดือน และ ช่องทางย่อย อัตโนมัติจากข้อมูลจริง
     function populateAnalyticsFilters() {
-      // 1. สร้างตัวเลือกเดือนจาก rawStartDate (และ rawDate)
       const monthSelect = document.getElementById('trend-month-filter');
       const currentMonthVal = monthSelect.value || "LAST_15";
       let monthSet = new Set();
@@ -430,7 +465,6 @@
         monthSelect.value = currentMonthVal;
       }
 
-      // 2. สร้างตัวเลือกช่องทางย่อย แยกกลุ่ม All Branded (Shop) และ Geo-Based
       const chSelect = document.getElementById('trend-channel-filter');
       const currentChVal = chSelect.value || "COMPARE_ALL";
       let shopChannels = new Set();
@@ -470,6 +504,76 @@
       chSelect.innerHTML = chHtml;
       if ([...chSelect.options].some(o => o.value === currentChVal)) {
         chSelect.value = currentChVal;
+      }
+    }
+
+    // สร้างรายการหัวข้อข่าวใน Dropdown ช่องที่ 4 (กรองเฉพาะข่าวที่เกี่ยวกับ Shop และอยู่ในช่วงเวลาที่เลือก)
+    function populateFocusTopicDropdown() {
+      const focusSelect = document.getElementById('trend-topic-focus');
+      if (!focusSelect) return;
+      const prevSelected = focusSelect.value;
+
+      const monthFilter = document.getElementById('trend-month-filter') ? document.getElementById('trend-month-filter').value : 'LAST_15';
+      const filterCat = document.getElementById('trend-category-filter') ? document.getElementById('trend-category-filter').value : 'All';
+
+      let eligibleTopics = globalTopics.filter(t => {
+        let cat = (t.category || "").toString().trim();
+        let topicNameLower = (t.name || "").toString().toLowerCase();
+        // ตัดข่าวที่เป็นของ Geo-Based หรือ Non Shop ล้วนออก เพราะโหมดนี้เน้นเจาะลึกช่องทางภายใต้ Shop
+        if (cat === 'Geo-Based' || cat === 'Non Shop') return false;
+        if (filterCat === 'Morning-Brief' && !topicNameLower.includes('morning brief')) return false;
+        if (filterCat === 'Category-All' && !(cat === 'All' || cat === '-')) return false;
+        if (filterCat === 'Shop' && cat !== 'Shop') return false;
+
+        if (monthFilter !== 'LAST_15' && monthFilter !== 'ALL_TIME') {
+          let dStr = t.rawStartDate || t.rawDate || "";
+          if (!dStr.startsWith(monthFilter)) return false;
+        }
+        return true;
+      });
+
+      // เรียงจากแคมเปญใหม่สุดขึ้นก่อน
+      eligibleTopics.sort((a, b) => new Date(b.rawStartDate) - new Date(a.rawStartDate));
+
+      focusSelect.innerHTML = `<option value="">-- ดูเทรนด์รวมตามช่วงเวลา (ไม่เจาะจงข่าว) --</option>`;
+      eligibleTopics.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.name;
+        opt.textContent = `🎯 [${t.startDate}] ${t.name} (รวม ${t.percentage})`;
+        focusSelect.appendChild(opt);
+      });
+
+      if (prevSelected && [...focusSelect.options].some(o => o.value === prevSelected)) {
+        focusSelect.value = prevSelected;
+      } else {
+        focusSelect.value = "";
+      }
+      toggleFocusClearButton();
+    }
+
+    function onPeriodOrCategoryFilterChange() {
+      populateFocusTopicDropdown();
+      renderTrendCharts();
+    }
+
+    function onFocusTopicChange() {
+      toggleFocusClearButton();
+      renderTrendCharts();
+    }
+
+    function clearFocusTopic() {
+      const focusSelect = document.getElementById('trend-topic-focus');
+      if (focusSelect) focusSelect.value = "";
+      toggleFocusClearButton();
+      renderTrendCharts();
+    }
+
+    function toggleFocusClearButton() {
+      const focusVal = document.getElementById('trend-topic-focus') ? document.getElementById('trend-topic-focus').value : "";
+      const btn = document.getElementById('btn-clear-focus-topic');
+      if (btn) {
+        if (focusVal) btn.classList.remove('d-none');
+        else btn.classList.add('d-none');
       }
     }
 
@@ -589,7 +693,6 @@
     function isShopChannel(name) { return name.toLowerCase().includes("shop") || name.toLowerCase().includes("coco") || name.toLowerCase().includes("hall") || name.toLowerCase().includes("db7") || name.toLowerCase().includes("ww") || name.toLowerCase().includes("partner") || name.toLowerCase().includes("franchise") || name.toLowerCase().includes("event"); }
     function isGeoBasedChannel(name) { return !isShopChannel(name); }
 
-    // เช็คว่าช่องทาง ch อยู่ในกลุ่มเป้าหมายของหัวข้อข่าว t หรือไม่
     function isChannelTargetedByTopic(ch, t) {
       const cleanCh = (ch || "").toString().trim();
       const cat = (t.category || "All").toString().trim();
@@ -643,38 +746,301 @@
     }
 
     // =========================================================================
+    // 🎯 โหมดพิเศษ (ตัวเลือก A): ผ่าตัดทุกช่องทางภายใต้ Shop เมื่อเลือกหัวข้อข่าว
+    // =========================================================================
+    function renderShopTopicDeepDive(selectedTopicName, contextTopics) {
+      const topicObj = globalTopics.find(t => t.name === selectedTopicName);
+      const statsForSelected = globalTopicStats[selectedTopicName] || {};
+
+      // ใช้แคมเปญที่เกี่ยวข้องกับ Shop มาคำนวณค่าเฉลี่ยปกติ (Historical Baseline) ของแต่ละช่องทาง
+      let baselinePool = contextTopics.filter(t => t.category !== 'Geo-Based' && t.category !== 'Non Shop');
+      if (baselinePool.length === 0) {
+        baselinePool = globalTopics.filter(t => t.category !== 'Geo-Based' && t.category !== 'Non Shop');
+      }
+
+      // เก็บ 5 แคมเปญล่าสุดของ Shop สำหรับสร้างคอลัมน์ Heatmap
+      let sortedShopTopics = [...baselinePool].sort((a, b) => new Date(a.rawStartDate) - new Date(b.rawStartDate));
+      let recent5Topics = sortedShopTopics.slice(-5);
+
+      let shopChannelList = [];
+      let totalShopTarget = 0, totalShopAck = 0;
+      let histTotalSum = 0, histAckSum = 0;
+
+      for (let ch in statsForSelected) {
+        let cleanCh = ch.toString().trim();
+        if (!isShopChannel(cleanCh)) continue;
+
+        let curTotal = statsForSelected[ch].total || 0;
+        let curAck = statsForSelected[ch].acked || 0;
+        if (curTotal === 0) continue;
+
+        let curPercent = Math.round((curAck / curTotal) * 100);
+        totalShopTarget += curTotal;
+        totalShopAck += curAck;
+
+        // คำนวณค่าเฉลี่ยปกติสะสม (Baseline) ของช่องทางนี้
+        let chHistTotal = 0, chHistAck = 0;
+        baselinePool.forEach(bt => {
+          let bStats = globalTopicStats[bt.name];
+          if (bStats && bStats[ch] && bStats[ch].total > 0) {
+            chHistTotal += bStats[ch].total;
+            chHistAck += bStats[ch].acked;
+          }
+        });
+        let baselinePercent = chHistTotal > 0 ? Math.round((chHistAck / chHistTotal) * 100) : curPercent;
+        histTotalSum += chHistTotal;
+        histAckSum += chHistAck;
+
+        // เก็บ % ของ 5 แคมเปญล่าสุดสำหรับตาราง Heatmap
+        let recent5Percents = recent5Topics.map(rt => {
+          let rStats = globalTopicStats[rt.name];
+          if (rStats && rStats[ch] && rStats[ch].total > 0) {
+            return Math.round((rStats[ch].acked / rStats[ch].total) * 100);
+          }
+          return null;
+        });
+
+        shopChannelList.push({
+          channel: cleanCh,
+          total: curTotal,
+          acked: curAck,
+          unread: curTotal - curAck,
+          percent: curPercent,
+          baseline: baselinePercent,
+          diff: curPercent - baselinePercent,
+          recent5: recent5Percents
+        });
+      }
+
+      // เรียงช่องทางใน Shop จาก % ข่าวที่เลือกมากไปน้อย
+      shopChannelList.sort((a, b) => b.percent - a.percent || b.acked - a.acked);
+
+      let overallTopicShopPct = totalShopTarget > 0 ? Math.round((totalShopAck / totalShopTarget) * 100) : 0;
+      let overallHistShopPct = histTotalSum > 0 ? Math.round((histAckSum / histTotalSum) * 100) : 0;
+      let overallDiff = overallTopicShopPct - overallHistShopPct;
+
+      // อัปเดตป้ายหัวข้อและ 4 KPI Cards สำหรับโหมดเจาะลึกข่าว Shop
+      document.getElementById('trend-active-filter-badge').innerText = `🎯 โหมดเจาะลึกข่าวกลุ่ม Shop`;
+      document.getElementById('kpi-title-1').innerText = `% รับทราบข่าวนี้ (รวมทุก Shop)`;
+      document.getElementById('kpi-period-avg').innerText = `${overallTopicShopPct}%`;
+      document.getElementById('kpi-period-sub').innerHTML = `อ่านแล้ว <b>${totalShopAck.toLocaleString()}</b> / ${totalShopTarget.toLocaleString()} คน`;
+
+      document.getElementById('kpi-title-2').innerText = `เทียบค่าเฉลี่ยปกติของ Shop`;
+      document.getElementById('trend-last-percent').innerText = `${overallHistShopPct}%`;
+      document.getElementById('trend-diff').innerHTML = overallDiff >= 0
+        ? `<span class="text-success"><i class="fas fa-arrow-trend-up"></i> ข่าวนี้สูงกว่าปกติ +${overallDiff}%</span>`
+        : `<span class="text-danger"><i class="fas fa-arrow-trend-down"></i> ข่าวนี้ต่ำกว่าปกติ ${overallDiff}%</span>`;
+
+      document.getElementById('kpi-title-3').innerText = `แชมป์ Shop ในข่าวนี้`;
+      document.getElementById('kpi-title-4').innerText = `Shop ที่ต้องเร่งติดตามในข่าวนี้`;
+
+      if (shopChannelList.length > 0) {
+        let topCh = shopChannelList[0];
+        document.getElementById('kpi-top-channel').innerText = topCh.channel;
+        document.getElementById('kpi-top-channel').title = topCh.channel;
+        document.getElementById('kpi-top-sub').innerHTML = `ได้ <b>${topCh.percent}%</b> (ค่าเฉลี่ยปกติ ${topCh.baseline}%)`;
+
+        let lowList = [...shopChannelList].sort((a, b) => a.percent - b.percent || b.unread - a.unread);
+        let lowCh = lowList[0];
+        document.getElementById('kpi-low-channel').innerText = lowCh.channel;
+        document.getElementById('kpi-low-channel').title = lowCh.channel;
+        document.getElementById('kpi-low-sub').innerHTML = `ได้ <b>${lowCh.percent}%</b> (ค้างอ่าน <b>${lowCh.unread.toLocaleString()}</b> คน)`;
+      }
+
+      // วาดกราฟที่ 1: Combo Bar (% ข่าวนี้) + Line (% ค่าเฉลี่ยปกติของแต่ละช่องทางภายใต้ Shop)
+      document.getElementById('line-chart-title').innerHTML = `<i class="fas fa-store me-2 text-danger"></i> เปรียบเทียบช่องทางภายใต้ Shop: ข่าวนี้ vs ค่าเฉลี่ยปกติ`;
+      document.getElementById('line-chart-subtitle').innerHTML = `หัวข้อ: <b class="text-dark">${selectedTopicName}</b> (แท่ง = % ข่าวนี้ | เส้นประ = % ค่าเฉลี่ยปกติของช่องทางนั้น)`;
+
+      let cLabels = shopChannelList.map(c => c.channel.length > 18 ? c.channel.substring(0, 18) + '...' : c.channel);
+      let cTopicData = shopChannelList.map(c => c.percent);
+      let cBaseData = shopChannelList.map(c => c.baseline);
+      let cBarColors = shopChannelList.map(c => c.percent >= 80 ? 'rgba(0, 179, 60, 0.85)' : (c.percent >= 50 ? 'rgba(255, 140, 0, 0.85)' : 'rgba(255, 0, 0, 0.85)'));
+
+      const ctxLine = document.getElementById('dualTrendChart').getContext('2d');
+      if (dualTrendChartInstance) dualTrendChartInstance.destroy();
+      dualTrendChartInstance = new Chart(ctxLine, {
+        data: {
+          labels: cLabels,
+          datasets: [
+            {
+              type: 'line',
+              label: '% ค่าเฉลี่ยปกติของช่องทาง (Historical Baseline)',
+              data: cBaseData,
+              borderColor: '#002d72',
+              backgroundColor: '#002d72',
+              borderWidth: 3,
+              borderDash: [5, 5],
+              tension: 0.25,
+              pointRadius: 5,
+              pointHoverRadius: 7,
+              order: 1,
+              datalabels: {
+                align: 'top',
+                color: '#002d72',
+                backgroundColor: 'rgba(238, 245, 255, 0.9)',
+                borderRadius: 4,
+                padding: 2,
+                font: { family: 'Sarabun', size: 10, weight: 'bold' },
+                formatter: v => 'เฉลี่ย ' + v + '%'
+              }
+            },
+            {
+              type: 'bar',
+              label: '% รับทราบในหัวข้อข่าวที่เลือก',
+              data: cTopicData,
+              backgroundColor: cBarColors,
+              borderRadius: 8,
+              maxBarThickness: 42,
+              order: 2,
+              datalabels: {
+                anchor: 'center',
+                align: 'center',
+                color: '#ffffff',
+                font: { family: 'Sarabun', size: 12, weight: 'bold' },
+                formatter: v => v + '%'
+              }
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 12, weight: 'bold' } } }
+          },
+          scales: {
+            y: { beginAtZero: true, max: 115, ticks: { callback: v => v <= 100 ? v + "%" : "" } },
+            x: { ticks: { font: { family: 'Sarabun', size: 11, weight: 'bold' } } }
+          }
+        }
+      });
+
+      // วาดกราฟที่ 2: Horizontal Ranking Bar เฉพาะช่องทางใน Shop ของข่าวนี้
+      document.getElementById('bar-chart-title').innerHTML = `<i class="fas fa-ranking-star me-2 text-danger"></i> อันดับช่องทาง Shop ในข่าวนี้`;
+      document.getElementById('bar-chart-subtitle').innerText = `เรียงตาม % การรับทราบจากสูงสุดไปต่ำสุด`;
+
+      const ctxBar = document.getElementById('channelRankBarChart').getContext('2d');
+      if (channelRankBarInstance) channelRankBarInstance.destroy();
+      channelRankBarInstance = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+          labels: cLabels,
+          datasets: [{
+            label: '% รับทราบข่าวนี้',
+            data: cTopicData,
+            backgroundColor: shopChannelList.map(c => c.percent >= 80 ? '#00b33c' : (c.percent >= 50 ? '#ff8c00' : '#ff0000')),
+            borderRadius: 6,
+            barThickness: 18
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              anchor: 'end',
+              align: 'right',
+              color: '#333',
+              font: { family: 'Sarabun', size: 11, weight: 'bold' },
+              formatter: (v, ctx) => {
+                let item = shopChannelList[ctx.dataIndex];
+                return `${v}% (${item.acked}/${item.total})`;
+              }
+            }
+          },
+          scales: {
+            x: { beginAtZero: true, max: 125, ticks: { display: false }, grid: { display: false } },
+            y: { ticks: { font: { family: 'Sarabun', size: 11, weight: 'bold' } }, grid: { display: false } }
+          }
+        }
+      });
+
+      // วาดตารางส่วนที่ 4: Shop Channel Performance & Heatmap Matrix
+      document.getElementById('matrix-main-title').innerHTML = `<i class="fas fa-table-cells me-2 text-danger"></i> ตารางผ่าตัดช่องทางภายใต้กลุ่ม Shop & Heatmap เทียบ 5 แคมเปญล่าสุด`;
+      document.getElementById('matrix-subtitle').innerHTML = `เปรียบเทียบผลงานรายช่องทางในหัวข้อ <b>"${selectedTopicName}"</b> คู่กับเทรนด์ย้อนหลัง`;
+      document.getElementById('heatmap-legend').classList.remove('d-none');
+
+      let recentHeadersHtml = recent5Topics.map((rt, i) => {
+        let shortName = rt.name.length > 14 ? rt.name.substring(0, 14) + '...' : rt.name;
+        let isFocused = rt.name === selectedTopicName;
+        return `<th title="${escapeHtmlAttr(rt.name)} (${rt.startDate})" style="font-size: 12px; ${isFocused ? 'background:#fff0f0; color:#cc0000;' : ''}">
+          ${isFocused ? '🎯 ' : ''}${shortName}<br><span class="text-muted fw-normal" style="font-size:10px;">${rt.startDate}</span>
+        </th>`;
+      }).join('');
+
+      document.getElementById('analytics-matrix-thead').innerHTML = `
+        <tr>
+          <th class="text-start">ช่องทางภายใต้กลุ่ม Shop</th>
+          <th>เป้าหมาย</th>
+          <th>อ่านแล้ว</th>
+          <th>ค้างอ่าน</th>
+          <th style="background:#fff5f5; color:#cc0000;">% ข่าวที่เลือก</th>
+          <th>% เฉลี่ยปกติ</th>
+          <th>เทียบค่าเฉลี่ย</th>
+          ${recentHeadersHtml}
+        </tr>
+      `;
+
+      const matrixBody = document.getElementById('analytics-matrix-body');
+      matrixBody.innerHTML = '';
+
+      shopChannelList.forEach(item => {
+        let mainPillClass = item.percent >= 80 ? 'hm-green' : (item.percent >= 50 ? 'hm-orange' : 'hm-red');
+        let diffHtml = item.diff > 0
+          ? `<span class="text-success fw-bold"><i class="fas fa-caret-up"></i> +${item.diff}%</span>`
+          : (item.diff < 0 ? `<span class="text-danger fw-bold"><i class="fas fa-caret-down"></i> ${item.diff}%</span>` : `<span class="text-muted">0%</span>`);
+
+        let recentCellsHtml = item.recent5.map(pct => {
+          if (pct === null) return `<td><span class="hm-pill hm-gray">-</span></td>`;
+          let cClass = pct >= 80 ? 'hm-green' : (pct >= 50 ? 'hm-orange' : 'hm-red');
+          return `<td><span class="hm-pill ${cClass}">${pct}%</span></td>`;
+        }).join('');
+
+        matrixBody.innerHTML += `
+          <tr>
+            <td class="text-start fw-bold text-dark"><i class="fas fa-store text-primary me-2"></i>${item.channel}</td>
+            <td class="fw-bold">${item.total.toLocaleString()}</td>
+            <td class="text-success fw-bold">${item.acked.toLocaleString()}</td>
+            <td class="text-danger fw-bold">${item.unread.toLocaleString()}</td>
+            <td style="background:#fffcfc;"><span class="hm-pill ${mainPillClass}" style="font-size: 13px;">${item.percent}%</span></td>
+            <td class="fw-bold text-secondary">${item.baseline}%</td>
+            <td>${diffHtml}</td>
+            ${recentCellsHtml}
+          </tr>
+        `;
+      });
+    }
+
+    // =========================================================================
     // 🚀 ฟังก์ชันหลัก: คำนวณและวาดกราฟ Executive Analytics ทั้ง 4 ส่วน
     // =========================================================================
     function renderTrendCharts() {
       const monthFilter = document.getElementById('trend-month-filter') ? document.getElementById('trend-month-filter').value : 'LAST_15';
       const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'COMPARE_ALL';
       const filterCat = document.getElementById('trend-category-filter') ? document.getElementById('trend-category-filter').value : 'All';
-
-      const monthText = document.getElementById('trend-month-filter').selectedOptions[0].text;
-      const channelText = document.getElementById('trend-channel-filter').selectedOptions[0].text;
-      document.getElementById('trend-active-filter-badge').innerText = `${monthText} | ${channelText}`;
-      document.getElementById('matrix-subtitle').innerText = `เงื่อนไข: ${monthText} • ${channelText}`;
+      const focusedTopicName = document.getElementById('trend-topic-focus') ? document.getElementById('trend-topic-focus').value : '';
 
       // 1. กรองหัวข้อข่าวตามประเภท, ช่องทางที่เลือก, และช่วงเดือน
       let filteredTopics = globalTopics.filter(t => {
         let topicNameLower = (t.name || "").toString().toLowerCase();
         let cat = (t.category || "").toString().trim();
 
-        // กรองตามประเภทแคมเปญ
         if (filterCat === 'Morning-Brief' && !topicNameLower.includes('morning brief')) return false;
         if (filterCat === 'Category-All' && !(cat === 'All' || cat === '-')) return false;
         if (filterCat === 'Shop' && cat !== 'Shop') return false;
         if (filterCat === 'Geo-Based' && cat !== 'Geo-Based') return false;
 
-        // กรองตามความเกี่ยวข้องของช่องทาง (เช่น ถ้าเลือกดูเฉพาะช่องทางย่อยใน Shop แต่เป็นข่าวเฉพาะ Geo-Based ให้ข้าม)
-        if (channelFilter === 'GROUP_SHOP' && cat === 'Geo-Based') return false;
-        if (channelFilter === 'GROUP_GEO' && cat === 'Shop') return false;
-        if (channelFilter.startsWith('CH:')) {
-          const targetCh = channelFilter.substring(3);
-          if (!isChannelTargetedByTopic(targetCh, t)) return false;
+        if (!focusedTopicName) {
+          if (channelFilter === 'GROUP_SHOP' && cat === 'Geo-Based') return false;
+          if (channelFilter === 'GROUP_GEO' && cat === 'Shop') return false;
+          if (channelFilter.startsWith('CH:')) {
+            const targetCh = channelFilter.substring(3);
+            if (!isChannelTargetedByTopic(targetCh, t)) return false;
+          }
         }
 
-        // กรองตามช่วงเดือน
         if (monthFilter !== 'LAST_15' && monthFilter !== 'ALL_TIME') {
           let dStr = t.rawStartDate || t.rawDate || "";
           if (!dStr.startsWith(monthFilter)) return false;
@@ -682,11 +1048,44 @@
         return true;
       });
 
-      // เรียงตามวันเริ่มแคมเปญจากเก่าไปใหม่
       let sortedTopics = [...filteredTopics].sort((a, b) => new Date(a.rawStartDate) - new Date(b.rawStartDate));
       let activeTopicsForTrend = (monthFilter === 'LAST_15') ? sortedTopics.slice(-15) : sortedTopics;
 
-      // กรณีไม่มีข้อมูลตรงตามตัวกรอง
+      // 🎯 หากผู้ใช้เลือก "หัวข้อข่าว" ในช่องที่ 4 ให้สลับเข้าโหมดเจาะลึกทุกช่องทางภายใต้ Shop ทันที
+      if (focusedTopicName) {
+        renderShopTopicDeepDive(focusedTopicName, activeTopicsForTrend);
+        return;
+      }
+
+      // คืนค่าหัวข้อกลับสู่โหมดเทรนด์รวมตามปกติ
+      document.getElementById('kpi-title-1').innerText = 'อัตราการรับทราบเฉลี่ย';
+      document.getElementById('kpi-title-2').innerText = 'แคมเปญล่าสุด vs ค่าเฉลี่ย';
+      document.getElementById('kpi-title-3').innerText = 'แชมป์ช่องทาง (Top Performer)';
+      document.getElementById('kpi-title-4').innerText = 'ต้องเร่งติดตาม (Focus Needed)';
+      document.getElementById('line-chart-title').innerHTML = `<i class="fas fa-wave-square me-2 text-primary"></i> แนวโน้มการรับทราบรายแคมเปญ (Progression)`;
+      document.getElementById('line-chart-subtitle').innerHTML = `<i class="fas fa-mouse-pointer me-1 text-danger"></i> คลิกที่จุดกราฟเพื่อดูยอดอ่านแล้ว / ค้างอ่าน รายแคมเปญ`;
+      document.getElementById('bar-chart-title').innerHTML = `<i class="fas fa-ranking-star me-2 text-danger"></i> จัดอันดับช่องทาง (% เฉลี่ยสะสม)`;
+      document.getElementById('bar-chart-subtitle').innerText = `คำนวณรวมทุกแคมเปญในช่วงเวลาที่เลือก`;
+      document.getElementById('matrix-main-title').innerHTML = `<i class="fas fa-microscope me-2 text-danger"></i> ตารางวิเคราะห์ผลงานรายแคมเปญ (Diagnostic Matrix)`;
+      document.getElementById('heatmap-legend').classList.add('d-none');
+      document.getElementById('analytics-matrix-thead').innerHTML = `
+        <tr>
+          <th class="text-start">แคมเปญ / หัวข้อข่าว</th>
+          <th>วันเริ่ม</th>
+          <th>ประเภท</th>
+          <th>เป้าหมาย (คน)</th>
+          <th>อ่านแล้ว (คน)</th>
+          <th>ค้างอ่าน (คน)</th>
+          <th style="min-width: 150px;">% สำเร็จ (ในกลุ่มที่เลือก)</th>
+          <th>เทียบค่าเฉลี่ย</th>
+        </tr>
+      `;
+
+      const monthText = document.getElementById('trend-month-filter').selectedOptions[0].text;
+      const channelText = document.getElementById('trend-channel-filter').selectedOptions[0].text;
+      document.getElementById('trend-active-filter-badge').innerText = `${monthText} | ${channelText}`;
+      document.getElementById('matrix-subtitle').innerText = `เงื่อนไข: ${monthText} • ${channelText}`;
+
       if (activeTopicsForTrend.length === 0) {
         if (dualTrendChartInstance) dualTrendChartInstance.destroy();
         if (channelRankBarInstance) channelRankBarInstance.destroy();
@@ -705,7 +1104,7 @@
       // 2. คำนวณสถิติรายแคมเปญและสะสมรายช่องทางย่อย
       let labels = [], shopData = [], geoData = [], allAvgData = [], specificChData = [];
       rawTrendDataList = [];
-      let channelAggregates = {}; // สะสมยอดรายช่องทางเพื่อจัดอันดับ Bar Chart และหา Top / Focus KPI
+      let channelAggregates = {};
 
       const isSingleChannel = channelFilter.startsWith('CH:');
       const selectedSingleChannelName = isSingleChannel ? channelFilter.substring(3) : null;
@@ -737,7 +1136,6 @@
               specAck += cAck;
             }
 
-            // สะสมเข้า Channel Aggregates ตามขอบเขตที่เลือก
             let includeInRank = true;
             if (channelFilter === 'GROUP_SHOP' && !isShopChannel(cleanCh)) includeInRank = false;
             if (channelFilter === 'GROUP_GEO' && !isGeoBasedChannel(cleanCh)) includeInRank = false;
@@ -758,7 +1156,6 @@
         let avgP = totalT > 0 ? Math.round((totalA / totalT) * 100) : (parseFloat(t.percentage) || 0);
         let specP = specTotal > 0 ? Math.round((specAck / specTotal) * 100) : 0;
 
-        // กำหนดค่าของแถวสำหรับตาราง Matrix ตามมุมมองที่เลือก
         let focusTotal = totalT, focusAck = totalA, focusPercent = avgP;
         if (channelFilter === 'GROUP_SHOP') { focusTotal = shopTotal; focusAck = shopAck; focusPercent = sP; }
         else if (channelFilter === 'GROUP_GEO') { focusTotal = geoTotal; focusAck = geoAck; focusPercent = gP; }
@@ -798,7 +1195,6 @@
         : (diffFromAvg < 0 ? `<span class="text-danger"><i class="fas fa-arrow-trend-down"></i> ${diffFromAvg}% ต่ำกว่าค่าเฉลี่ย</span>` : `<span class="text-secondary"><i class="fas fa-equals"></i> เท่ากับค่าเฉลี่ย</span>`);
       document.getElementById('trend-diff').innerHTML = diffHtml;
 
-      // จัดอันดับช่องทางจาก channelAggregates
       let rankList = Object.keys(channelAggregates).map(ch => {
         let item = channelAggregates[ch];
         let pct = item.total > 0 ? Math.round((item.acked / item.total) * 100) : 0;
@@ -811,7 +1207,6 @@
         document.getElementById('kpi-top-channel').title = topCh.name;
         document.getElementById('kpi-top-sub').innerHTML = `รับทราบเฉลี่ย <b>${topCh.percent}%</b> (${topCh.acked.toLocaleString()}/${topCh.total.toLocaleString()})`;
 
-        // ช่องทางที่ต้องเร่งติดตาม: เรียงตาม % ต่ำสุด (หรือถ้า % เท่ากันดูที่ยอดค้างอ่านสูงสุด)
         let lowList = [...rankList].sort((a, b) => a.percent - b.percent || b.unread - a.unread);
         let lowCh = lowList[0];
         document.getElementById('kpi-low-channel').innerText = lowCh.name;
@@ -874,7 +1269,6 @@
           datalabels: { align: 'top', color: '#ff0000', font: { weight: 'bold', size: 11, family: 'Sarabun' }, formatter: v => v + '%' }
         });
       } else {
-        // COMPARE_ALL
         if (filterCat !== 'Geo-Based') {
           datasets.push({
             label: '% All Branded (Shop)',
@@ -934,7 +1328,7 @@
       const ctxBar = document.getElementById('channelRankBarChart').getContext('2d');
       if (channelRankBarInstance) channelRankBarInstance.destroy();
 
-      let topRankForChart = rankList.slice(0, 12); // แสดงสูงสุด 12 ช่องทางให้อ่านง่าย
+      let topRankForChart = rankList.slice(0, 12);
       let barLabels = topRankForChart.map(r => r.name.length > 16 ? r.name.substring(0, 16) + '...' : r.name);
       let barValues = topRankForChart.map(r => r.percent);
       let barColors = topRankForChart.map(r => {
@@ -975,7 +1369,7 @@
         }
       });
 
-      // 6. สร้างตารางส่วนที่ 4: Campaign Diagnostic Matrix (เรียงจากแคมเปญล่าสุดขึ้นก่อน)
+      // 6. สร้างตารางส่วนที่ 4: Campaign Diagnostic Matrix
       const matrixBody = document.getElementById('analytics-matrix-body');
       matrixBody.innerHTML = '';
       let reversedMatrix = [...rawTrendDataList].reverse();
