@@ -1,3 +1,6 @@
+นี่คือโค้ด HTML ฉบับสมบูรณ์ที่ปรับแก้ครบทั้ง **4 จุด** (ส่ง `index` แทนชื่อหัวข้อ, ป้องกันการกดซ้ำ `isSubmitting`, รองรับกรณีไม่มีรูปโปรไฟล์ LINE, และเพิ่ม `headers` สำหรับ Google Apps Script) พร้อมจัดระเบียบช่องว่างให้สะอาด สามารถคัดลอกไปวางทับไฟล์เดิมบน GitHub ได้เลยครับ
+
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -20,7 +23,7 @@
     
     .profile-card { padding: 22px 18px; background: #ffffff; border-radius: 24px; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 16px; margin-bottom: 25px; border: 1px solid #f0f0f0; box-shadow: 0 12px 35px rgba(0,0,0,0.04); position: relative; overflow: hidden; width: 100%; }
     
-    /* 🚨 อัปเดต: CSS สำหรับ Interactive List (กล่องเลือกหัวข้อแบบจิ้ม) */
+    /* CSS สำหรับ Interactive List (กล่องเลือกหัวข้อแบบจิ้ม) */
     .topic-list-header { font-size: 14px; font-weight: 700; color: #333; margin-bottom: 12px; text-align: left; width: 100%; padding-left: 5px; }
     .topic-item { background: #f8f9fa; border: 1.5px solid #f0f0f0; border-radius: 16px; padding: 16px 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; text-align: left; }
     .topic-item:active { transform: scale(0.98); }
@@ -117,9 +120,9 @@
         </div>
       </div>
 
-      <!-- 🚨 อัปเดต: โซน Interactive List แทนที่ Dropdown เดิม -->
+      <!-- โซน Interactive List -->
       <div id="topic-list-container" class="w-100 mb-4">
-         <!-- รายการหัวข้อข่าวจะถูกสร้างด้วย Javascript ตรงนี้ -->
+        <!-- รายการหัวข้อข่าวจะถูกสร้างด้วย Javascript ตรงนี้ -->
       </div>
       
       <div class="consent-box text-start shadow-sm" onclick="handleSubmit()" style="background: #fffbdf; border-color: #ffeba1;">
@@ -154,7 +157,8 @@
     let lineId, userObj, topicList;
     let typingTimer;
     let failCount = 0; 
-    let currentSelectedTopic = ""; // 🚨 ตัวแปรเก็บค่าหัวข้อที่ถูกคลิกเลือก
+    let currentSelectedTopic = ""; // ตัวแปรเก็บค่าหัวข้อที่ถูกคลิกเลือก
+    let isSubmitting = false;      // [จุดที่ 2] ตัวแปรป้องกันการกดซ้ำ (Double Submit)
 
     const TrueSwal = Swal.mixin({
       customClass: { popup: 'swal-true-popup', confirmButton: 'btn-true' },
@@ -169,23 +173,24 @@
         const p = await liff.getProfile(); 
         lineId = p.userId;
         
+        const defaultAvatar = document.getElementById('loading-pfp').src;
         if (p.pictureUrl) {
           document.getElementById('loading-pfp').src = p.pictureUrl;
         }
         
         const response = await fetch(`${GAS_URL}?action=getInitialData&lineId=${lineId}`);
-        if(!response.ok) throw new Error("Network response was not ok");
+        if (!response.ok) throw new Error("Network response was not ok");
         
         const res = await response.json();
         topicList = res.topics;
 
         if (res.isRegistered) {
           userObj = res.user;
-          document.getElementById('user-pfp').src = p.pictureUrl;
+          // [จุดที่ 3] รองรับกรณีพนักงานไม่ได้ตั้งรูปโปรไฟล์ LINE
+          document.getElementById('user-pfp').src = p.pictureUrl || defaultAvatar;
           document.getElementById('user-name').innerText = "คุณ" + userObj.fullName;
           document.getElementById('user-meta').innerHTML = "ID : " + userObj.empId + "<br>" + userObj.channel;
           
-          // 🚨 อัปเดต: สร้างรายการหัวข้อข่าว (Interactive List) แทน Dropdown
           const container = document.getElementById('topic-list-container');
           
           if (!res.topics || res.topics.length === 0) {
@@ -196,13 +201,13 @@
                 <h6 class="fw-bold text-success m-0">เยี่ยมมาก! </h6>
                 <p class="small text-muted m-0 mt-1">คุณได้รับทราบข้อมูลครบทุกหัวข้อแล้ว</p>
               </div>`;
-            document.querySelector('.consent-box').classList.add('hidden'); // ซ่อนปุ่มกดยอมรับไปเลยเพราะไม่มีงาน
+            document.querySelector('.consent-box').classList.add('hidden');
           } else {
-            // กรณีมีข่าวค้าง ให้สร้างการ์ดลิสต์
+            // [จุดที่ 1] ส่ง index แทนชื่อหัวข้อตรงๆ เพื่อป้องกันบั๊กเครื่องหมายคำพูด (' หรือ ")
             let listHtml = `<div class="topic-list-header"><i class="fas fa-clipboard-list me-2 text-danger"></i> รายการ : ยังไม่ได้กดรับทราบ (${res.topics.length} หัวข้อ)</div>`;
-            res.topics.forEach(t => {
+            res.topics.forEach((t, index) => {
               listHtml += `
-                <div class="topic-item" onclick="selectTopic('${t.name}', this)">
+                <div class="topic-item" onclick="selectTopic(${index}, this)">
                   <div class="topic-item-title">${t.name}</div>
                   <i class="fas fa-check-circle topic-check-icon"></i>
                 </div>
@@ -224,9 +229,9 @@
       }
     }
 
-    // 🚨 อัปเดต: ฟังก์ชันจัดการเวลาที่พนักงานจิ้มเลือกหัวข้อข่าว
-    function selectTopic(topicName, element) {
-      currentSelectedTopic = topicName;
+    // [จุดที่ 1] ฟังก์ชันรับค่า index มาอ้างอิงชื่อหัวข้อจาก topicList
+    function selectTopic(index, element) {
+      currentSelectedTopic = topicList[index].name;
       document.querySelectorAll('.topic-item').forEach(el => el.classList.remove('selected'));
       element.classList.add('selected');
     }
@@ -292,6 +297,9 @@
     }
 
     async function confirmReg() {
+      if (isSubmitting) return;
+      isSubmitting = true;
+
       const payload = { 
         lineId, 
         empId: document.getElementById('reg-id').value, 
@@ -302,7 +310,9 @@
       };
       
       const res = await callApi('register', payload);
-      if(res === "Success") {
+      isSubmitting = false;
+
+      if (res === "Success") {
         window.location.reload();
       } else if (res === "Already Registered") {
         TrueSwal.fire({ icon: 'warning', title: 'รหัสซ้ำ', text: 'รหัสพนักงานนี้ถูกลงทะเบียนไปแล้ว' });
@@ -310,12 +320,15 @@
     }
 
     async function handleSubmit() {
-      // 🚨 เช็คจากตัวแปร currentSelectedTopic แทน Dropdown value
+      // [จุดที่ 2] ป้องกันการกดซ้ำขณะกำลังส่งข้อมูล
+      if (isSubmitting) return;
+
       if (!currentSelectedTopic) {
         document.getElementById('consentCheck').checked = false;
         return TrueSwal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'โปรดจิ้มเลือกหัวข้อข่าวสารที่ต้องการรับทราบก่อนกดยืนยันครับ' });
       }
       
+      isSubmitting = true;
       document.getElementById('consentCheck').checked = true;
       const t = currentSelectedTopic;
 
@@ -331,12 +344,16 @@
       };
       
       const res = await callApi('acknowledge', payload);
+      isSubmitting = false;
+
       if (res === "Success") {
         document.getElementById('success-topic-name').innerText = t;
         showView('success');
-      } else { 
+      } else if (res) { 
         TrueSwal.fire({ icon: 'info', title: 'ข้อมูลซ้ำ', text: 'ท่านได้รับทราบข่าวนี้ไปแล้ว' }); 
         document.getElementById('consentCheck').checked = false; 
+      } else {
+        document.getElementById('consentCheck').checked = false;
       }
     }
 
@@ -348,7 +365,12 @@
       }
       
       try {
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action, payload }) }).then(r => r.json());
+        // [จุดที่ 4] เพิ่ม headers Content-Type: text/plain เพื่อป้องกันปัญหา CORS กับ Google Apps Script
+        const res = await fetch(GAS_URL, { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action, payload }) 
+        }).then(r => r.json());
         
         if (action === 'acknowledge') {
           document.getElementById('save-overlay').classList.add('hidden'); 
@@ -370,3 +392,5 @@
   </script>
 </body>
 </html>
+
+```
