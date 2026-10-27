@@ -51,7 +51,7 @@
     .swal2-confirm { border-radius: 50px !important; padding: 10px 25px !important; font-weight: 600 !important; }
     .swal2-cancel { border-radius: 50px !important; padding: 10px 25px !important; font-weight: 600 !important; }
     
-    /* สไตล์สำหรับ Executive Analytics & Shop Heatmap */
+    /* สไตล์สำหรับ Executive Analytics & Heatmap */
     .filter-bar-bi { background: linear-gradient(135deg, #f8faff 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 18px; padding: 18px 20px; }
     .focus-topic-box { background: linear-gradient(135deg, #fff5f5 0%, #fff0f0 100%); border: 1.5px solid #ffcdd2; border-radius: 14px; padding: 12px 16px; margin-top: 12px; }
     .trend-mini-card { background: #fff; border: 1px solid #eaeaea; border-radius: 16px; padding: 18px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); border-left: 5px solid #002d72; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
@@ -165,11 +165,11 @@
       </div>
 
       <!-- ========================================================= -->
-      <!-- 🚀 Executive Analytics View + โหมดเจาะลึกทุกช่องทางภายใต้ Shop -->
+      <!-- 🚀 Executive Analytics View + โหมดเจาะลึกตามกลุ่มที่เลือก -->
       <!-- ========================================================= -->
       <div id="trend-view" class="d-none">
         
-        <!-- ส่วนที่ 1: Smart Filter Bar (3 มิติ + Dropdown ที่ 4 โฟกัสหัวข้อข่าวเจาะลึกกลุ่ม Shop) -->
+        <!-- ส่วนที่ 1: Smart Filter Bar -->
         <div class="filter-bar-bi mb-4">
           <div class="row g-3 align-items-center">
             <div class="col-md-4">
@@ -181,7 +181,8 @@
             </div>
             <div class="col-md-4">
               <label class="fw-bold small text-secondary mb-1"><i class="fas fa-sitemap text-primary me-1"></i> 2. เลือกมุมมองช่องทาง (Channel):</label>
-              <select id="trend-channel-filter" class="form-select form-select-sm fw-bold border-secondary-subtle" style="border-radius: 10px; padding: 8px 12px;" onchange="renderTrendCharts()">
+              <!-- 🚨 แก้ไข: ให้เรียก onPeriodOrCategoryFilterChange() เพื่อกรองรายการข่าวในข้อ 4 ด้วย -->
+              <select id="trend-channel-filter" class="form-select form-select-sm fw-bold border-secondary-subtle" style="border-radius: 10px; padding: 8px 12px;" onchange="onPeriodOrCategoryFilterChange()">
                 <option value="COMPARE_ALL">⚖️ เปรียบเทียบ All Branded vs Geo-Based</option>
                 <option value="GROUP_SHOP">🏪 รวมกลุ่ม All Branded ( Retail Shop )</option>
                 <option value="GROUP_GEO">📍 รวมกลุ่ม Geo-Based ( Non Shop )</option>
@@ -199,14 +200,14 @@
             </div>
           </div>
 
-          <!-- 🎯 แถบพิเศษ: เลือกหัวข้อข่าวเพื่อผ่าตัดเทรนด์ทุกช่องทางภายใต้ Shop -->
+          <!-- 🎯 แถบพิเศษ: เลือกหัวข้อข่าวเพื่อผ่าตัดเทรนด์ทุกช่องทางภายใต้กลุ่มที่เลือก (Shop หรือ Geo-Based) -->
           <div class="focus-topic-box">
             <div class="row g-2 align-items-center">
               <div class="col-md-5">
-                <div class="fw-bold text-danger" style="font-size: 14px;">
+                <div class="fw-bold text-danger" style="font-size: 14px;" id="focus-box-title">
                   <i class="fas fa-crosshairs me-1"></i> 4. เจาะลึกหัวข้อข่าว (เทียบทุกช่องทางภายใต้กลุ่ม Shop):
                 </div>
-                <div class="text-muted" style="font-size: 12px;">
+                <div class="text-muted" style="font-size: 12px;" id="focus-box-desc">
                   เมื่อเลือกหัวข้อข่าว กราฟจะสลับไปเปรียบเทียบ <b>% ข่าวนี้ vs ค่าเฉลี่ยปกติของแต่ละช่องทางใน Shop</b> พร้อมตาราง Heatmap
                 </div>
               </div>
@@ -515,22 +516,78 @@
       }
     }
 
+    // 🚨 อัปเดต: ตรวจสอบว่ากำลังอยู่ในโหมดวิเคราะห์ Geo-Based หรือ Shop
+    function isCurrentFocusGeoMode(selectedTopicObj = null) {
+      const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'COMPARE_ALL';
+      const filterCat = document.getElementById('trend-category-filter') ? document.getElementById('trend-category-filter').value : 'All';
+
+      if (selectedTopicObj) {
+        const tCat = (selectedTopicObj.category || "").toString().trim();
+        if (tCat === 'Geo-Based' || tCat === 'Non Shop') return true;
+        if (tCat === 'Shop') return false;
+      }
+
+      if (channelFilter === 'GROUP_GEO' || filterCat === 'Geo-Based') return true;
+      if (channelFilter.startsWith('CH:')) {
+        const chName = channelFilter.substring(3);
+        if (isGeoBasedChannel(chName)) return true;
+      }
+      return false;
+    }
+
+    // 🚨 อัปเดต: กรองหัวข้อข่าวในข้อ 4 ให้ตรงกับช่องทาง (ข้อ 2) และประเภทแคมเปญ (ข้อ 3)
     function populateFocusTopicDropdown() {
       const focusSelect = document.getElementById('trend-topic-focus');
       if (!focusSelect) return;
       const prevSelected = focusSelect.value;
 
       const monthFilter = document.getElementById('trend-month-filter') ? document.getElementById('trend-month-filter').value : 'LAST_15';
+      const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'COMPARE_ALL';
       const filterCat = document.getElementById('trend-category-filter') ? document.getElementById('trend-category-filter').value : 'All';
+
+      const isGeoMode = isCurrentFocusGeoMode();
+
+      // อัปเดตป้ายข้อความในกล่องที่ 4 ให้ตรงกับกลุ่มที่เลือก
+      const titleEl = document.getElementById('focus-box-title');
+      const descEl = document.getElementById('focus-box-desc');
+      if (isGeoMode) {
+        if (titleEl) titleEl.innerHTML = `<i class="fas fa-crosshairs me-1"></i> 4. เจาะลึกหัวข้อข่าว (เทียบทุกตำแหน่งภายใต้กลุ่ม Geo-Based):`;
+        if (descEl) descEl.innerHTML = `เมื่อเลือกหัวข้อข่าว กราฟจะสลับไปเปรียบเทียบ <b>% ข่าวนี้ vs ค่าเฉลี่ยปกติของแต่ละตำแหน่งใน Geo-Based</b> พร้อมตาราง Heatmap`;
+      } else {
+        if (titleEl) titleEl.innerHTML = `<i class="fas fa-crosshairs me-1"></i> 4. เจาะลึกหัวข้อข่าว (เทียบทุกช่องทางภายใต้กลุ่ม Shop):`;
+        if (descEl) descEl.innerHTML = `เมื่อเลือกหัวข้อข่าว กราฟจะสลับไปเปรียบเทียบ <b>% ข่าวนี้ vs ค่าเฉลี่ยปกติของแต่ละช่องทางใน Shop</b> พร้อมตาราง Heatmap`;
+      }
 
       let eligibleTopics = globalTopics.filter(t => {
         let cat = (t.category || "").toString().trim();
         let topicNameLower = (t.name || "").toString().toLowerCase();
-        if (cat === 'Geo-Based' || cat === 'Non Shop') return false;
+
+        // 1. กรองตามข้อ 3 (ประเภทแคมเปญ)
         if (filterCat === 'Morning-Brief' && !topicNameLower.includes('morning brief')) return false;
         if (filterCat === 'Category-All' && !(cat === 'All' || cat === '-')) return false;
         if (filterCat === 'Shop' && cat !== 'Shop') return false;
+        if (filterCat === 'Geo-Based' && cat !== 'Geo-Based') return false;
 
+        // 2. กรองตามข้อ 2 (มุมมองช่องทาง)
+        if (channelFilter === 'GROUP_GEO') {
+          // แสดงเฉพาะแคมเปญเจาะลึกของ Geo-Based เท่านั้นตามที่ต้องการ
+          if (cat !== 'Geo-Based') return false;
+        } else if (channelFilter === 'GROUP_SHOP') {
+          if (cat === 'Geo-Based' || cat === 'Non Shop') return false;
+        } else if (channelFilter.startsWith('CH:')) {
+          const targetCh = channelFilter.substring(3);
+          if (isGeoBasedChannel(targetCh)) {
+            if (cat !== 'Geo-Based') return false;
+            if (!isChannelTargetedByTopic(targetCh, t)) return false;
+          } else {
+            if (cat === 'Geo-Based' || cat === 'Non Shop') return false;
+          }
+        } else {
+          // กรณี COMPARE_ALL แต่ไม่ได้เลือก filterCat เป็น Geo-Based
+          if (filterCat !== 'Geo-Based' && (cat === 'Geo-Based' || cat === 'Non Shop')) return false;
+        }
+
+        // 3. กรองตามข้อ 1 (เดือน)
         if (monthFilter !== 'LAST_15' && monthFilter !== 'ALL_TIME') {
           let dStr = t.rawStartDate || t.rawDate || "";
           if (!dStr.startsWith(monthFilter)) return false;
@@ -544,7 +601,8 @@
       eligibleTopics.forEach(t => {
         const opt = document.createElement('option');
         opt.value = t.name;
-        opt.textContent = `🎯 [${t.startDate}] ${t.name} (รวม ${t.percentage})`;
+        let subInfo = (t.category === 'Geo-Based' && t.subTarget && t.subTarget.trim() !== '') ? ` [${t.subTarget}]` : '';
+        opt.textContent = `🎯 [${t.startDate}] ${t.name}${subInfo} (รวม ${t.percentage})`;
         focusSelect.appendChild(opt);
       });
 
@@ -589,6 +647,7 @@
         document.getElementById('standard-table-view').classList.add('d-none');
         document.getElementById('doughnut-section').classList.add('d-none');
         document.getElementById('trend-view').classList.remove('d-none');
+        populateFocusTopicDropdown();
         renderTrendCharts();
         return;
       }
@@ -751,37 +810,54 @@
     }
 
     // =========================================================================
-    // 🎯 โหมดพิเศษ (ตัวเลือก A): ผ่าตัดทุกช่องทางภายใต้ Shop เมื่อเลือกหัวข้อข่าว
+    // 🎯 โหมดพิเศษ: ผ่าตัดทุกช่องทางภายใต้กลุ่มที่เลือก (รองรับทั้ง Shop และ Geo-Based)
     // =========================================================================
     function renderShopTopicDeepDive(selectedTopicName, contextTopics) {
       const statsForSelected = globalTopicStats[selectedTopicName] || {};
+      const selectedTopicObj = globalTopics.find(t => t.name === selectedTopicName) || { name: selectedTopicName, category: 'All', subTarget: '' };
+      
+      const isGeoFocus = isCurrentFocusGeoMode(selectedTopicObj);
+      const groupLabel = isGeoFocus ? "Geo-Based" : "Shop";
+      const iconClass = isGeoFocus ? "fa-map-marker-alt text-danger" : "fa-store text-primary";
 
-      let baselinePool = contextTopics.filter(t => t.category !== 'Geo-Based' && t.category !== 'Non Shop');
+      let baselinePool = contextTopics.filter(t => {
+        if (isGeoFocus) return t.category === 'Geo-Based';
+        return t.category !== 'Geo-Based' && t.category !== 'Non Shop';
+      });
       if (baselinePool.length === 0) {
-        baselinePool = globalTopics.filter(t => t.category !== 'Geo-Based' && t.category !== 'Non Shop');
+        baselinePool = globalTopics.filter(t => {
+          if (isGeoFocus) return t.category === 'Geo-Based';
+          return t.category !== 'Geo-Based' && t.category !== 'Non Shop';
+        });
       }
 
-      let sortedShopTopics = [...baselinePool].sort((a, b) => new Date(a.rawStartDate) - new Date(b.rawStartDate));
-      let recent5Topics = sortedShopTopics.slice(-5);
+      let sortedPoolTopics = [...baselinePool].sort((a, b) => new Date(a.rawStartDate) - new Date(b.rawStartDate));
+      let recent5Topics = sortedPoolTopics.slice(-5);
 
-      let shopChannelList = [];
-      let totalShopTarget = 0, totalShopAck = 0;
+      let targetChannelList = [];
+      let totalGroupTarget = 0, totalGroupAck = 0;
       let histTotalSum = 0, histAckSum = 0;
 
       for (let ch in statsForSelected) {
         let cleanCh = ch.toString().trim();
-        if (!isShopChannel(cleanCh)) continue;
+        if (isGeoFocus) {
+          if (!isGeoBasedChannel(cleanCh)) continue;
+          if (!isChannelTargetedByTopic(cleanCh, selectedTopicObj)) continue;
+        } else {
+          if (!isShopChannel(cleanCh)) continue;
+        }
 
         let curTotal = statsForSelected[ch].total || 0;
         let curAck = statsForSelected[ch].acked || 0;
         if (curTotal === 0) continue;
 
         let curPercent = Math.round((curAck / curTotal) * 100);
-        totalShopTarget += curTotal;
-        totalShopAck += curAck;
+        totalGroupTarget += curTotal;
+        totalGroupAck += curAck;
 
         let chHistTotal = 0, chHistAck = 0;
         baselinePool.forEach(bt => {
+          if (!isChannelTargetedByTopic(cleanCh, bt)) return;
           let bStats = globalTopicStats[bt.name];
           if (bStats && bStats[ch] && bStats[ch].total > 0) {
             chHistTotal += bStats[ch].total;
@@ -793,6 +869,7 @@
         histAckSum += chHistAck;
 
         let recent5Percents = recent5Topics.map(rt => {
+          if (!isChannelTargetedByTopic(cleanCh, rt)) return null;
           let rStats = globalTopicStats[rt.name];
           if (rStats && rStats[ch] && rStats[ch].total > 0) {
             return Math.round((rStats[ch].acked / rStats[ch].total) * 100);
@@ -800,7 +877,7 @@
           return null;
         });
 
-        shopChannelList.push({
+        targetChannelList.push({
           channel: cleanCh,
           total: curTotal,
           acked: curAck,
@@ -812,46 +889,51 @@
         });
       }
 
-      shopChannelList.sort((a, b) => b.percent - a.percent || b.acked - a.acked);
+      targetChannelList.sort((a, b) => b.percent - a.percent || b.acked - a.acked);
 
-      let overallTopicShopPct = totalShopTarget > 0 ? Math.round((totalShopAck / totalShopTarget) * 100) : 0;
-      let overallHistShopPct = histTotalSum > 0 ? Math.round((histAckSum / histTotalSum) * 100) : 0;
-      let overallDiff = overallTopicShopPct - overallHistShopPct;
+      let overallTopicPct = totalGroupTarget > 0 ? Math.round((totalGroupAck / totalGroupTarget) * 100) : 0;
+      let overallHistPct = histTotalSum > 0 ? Math.round((histAckSum / histTotalSum) * 100) : 0;
+      let overallDiff = overallTopicPct - overallHistPct;
 
-      document.getElementById('trend-active-filter-badge').innerText = `🎯 โหมดเจาะลึกข่าวกลุ่ม Shop`;
-      document.getElementById('kpi-title-1').innerText = `% รับทราบข่าวนี้ (รวมทุก Shop)`;
-      document.getElementById('kpi-period-avg').innerText = `${overallTopicShopPct}%`;
-      document.getElementById('kpi-period-sub').innerHTML = `อ่านแล้ว <b>${totalShopAck.toLocaleString()}</b> / ${totalShopTarget.toLocaleString()} คน`;
+      document.getElementById('trend-active-filter-badge').innerText = `🎯 โหมดเจาะลึกข่าวกลุ่ม ${groupLabel}`;
+      document.getElementById('kpi-title-1').innerText = `% รับทราบข่าวนี้ (รวม ${groupLabel})`;
+      document.getElementById('kpi-period-avg').innerText = `${overallTopicPct}%`;
+      document.getElementById('kpi-period-sub').innerHTML = `อ่านแล้ว <b>${totalGroupAck.toLocaleString()}</b> / ${totalGroupTarget.toLocaleString()} คน`;
 
-      document.getElementById('kpi-title-2').innerText = `เทียบค่าเฉลี่ยปกติของ Shop`;
-      document.getElementById('trend-last-percent').innerText = `${overallHistShopPct}%`;
+      document.getElementById('kpi-title-2').innerText = `เทียบค่าเฉลี่ยปกติของ ${groupLabel}`;
+      document.getElementById('trend-last-percent').innerText = `${overallHistPct}%`;
       document.getElementById('trend-diff').innerHTML = overallDiff >= 0
         ? `<span class="text-success"><i class="fas fa-arrow-trend-up"></i> ข่าวนี้สูงกว่าปกติ +${overallDiff}%</span>`
         : `<span class="text-danger"><i class="fas fa-arrow-trend-down"></i> ข่าวนี้ต่ำกว่าปกติ ${overallDiff}%</span>`;
 
-      document.getElementById('kpi-title-3').innerText = `แชมป์ Shop ในข่าวนี้`;
-      document.getElementById('kpi-title-4').innerText = `Shop ที่ต้องเร่งติดตามในข่าวนี้`;
+      document.getElementById('kpi-title-3').innerText = `แชมป์ ${groupLabel} ในข่าวนี้`;
+      document.getElementById('kpi-title-4').innerText = `${groupLabel} ที่ต้องเร่งติดตามในข่าวนี้`;
 
-      if (shopChannelList.length > 0) {
-        let topCh = shopChannelList[0];
+      if (targetChannelList.length > 0) {
+        let topCh = targetChannelList[0];
         document.getElementById('kpi-top-channel').innerText = topCh.channel;
         document.getElementById('kpi-top-channel').title = topCh.channel;
         document.getElementById('kpi-top-sub').innerHTML = `ได้ <b>${topCh.percent}%</b> (ค่าเฉลี่ยปกติ ${topCh.baseline}%)`;
 
-        let lowList = [...shopChannelList].sort((a, b) => a.percent - b.percent || b.unread - a.unread);
+        let lowList = [...targetChannelList].sort((a, b) => a.percent - b.percent || b.unread - a.unread);
         let lowCh = lowList[0];
         document.getElementById('kpi-low-channel').innerText = lowCh.channel;
         document.getElementById('kpi-low-channel').title = lowCh.channel;
         document.getElementById('kpi-low-sub').innerHTML = `ได้ <b>${lowCh.percent}%</b> (ค้างอ่าน <b>${lowCh.unread.toLocaleString()}</b> คน)`;
+      } else {
+        document.getElementById('kpi-top-channel').innerText = '-';
+        document.getElementById('kpi-top-sub').innerText = '-';
+        document.getElementById('kpi-low-channel').innerText = '-';
+        document.getElementById('kpi-low-sub').innerText = '-';
       }
 
-      document.getElementById('line-chart-title').innerHTML = `<i class="fas fa-store me-2 text-danger"></i> เปรียบเทียบช่องทางภายใต้ Shop: ข่าวนี้ vs ค่าเฉลี่ยปกติ`;
-      document.getElementById('line-chart-subtitle').innerHTML = `หัวข้อ: <b class="text-dark">${selectedTopicName}</b> (แท่ง = % ข่าวนี้ | เส้นประ = % ค่าเฉลี่ยปกติของช่องทางนั้น)`;
+      document.getElementById('line-chart-title').innerHTML = `<i class="fas ${iconClass} me-2"></i> เปรียบเทียบภายใต้ ${groupLabel}: ข่าวนี้ vs ค่าเฉลี่ยปกติ`;
+      document.getElementById('line-chart-subtitle').innerHTML = `หัวข้อ: <b class="text-dark">${selectedTopicName}</b> (แท่ง = % ข่าวนี้ | เส้นประ = % ค่าเฉลี่ยปกติ)`;
 
-      let cLabels = shopChannelList.map(c => c.channel.length > 18 ? c.channel.substring(0, 18) + '...' : c.channel);
-      let cTopicData = shopChannelList.map(c => c.percent);
-      let cBaseData = shopChannelList.map(c => c.baseline);
-      let cBarColors = shopChannelList.map(c => c.percent >= 80 ? 'rgba(0, 179, 60, 0.85)' : (c.percent >= 50 ? 'rgba(255, 140, 0, 0.85)' : 'rgba(255, 0, 0, 0.85)'));
+      let cLabels = targetChannelList.map(c => c.channel.length > 18 ? c.channel.substring(0, 18) + '...' : c.channel);
+      let cTopicData = targetChannelList.map(c => c.percent);
+      let cBaseData = targetChannelList.map(c => c.baseline);
+      let cBarColors = targetChannelList.map(c => c.percent >= 80 ? 'rgba(0, 179, 60, 0.85)' : (c.percent >= 50 ? 'rgba(255, 140, 0, 0.85)' : 'rgba(255, 0, 0, 0.85)'));
 
       const ctxLine = document.getElementById('dualTrendChart').getContext('2d');
       if (dualTrendChartInstance) dualTrendChartInstance.destroy();
@@ -861,7 +943,7 @@
           datasets: [
             {
               type: 'line',
-              label: '% ค่าเฉลี่ยปกติของช่องทาง (Historical Baseline)',
+              label: '% ค่าเฉลี่ยปกติ (Historical Baseline)',
               data: cBaseData,
               borderColor: '#002d72',
               backgroundColor: '#002d72',
@@ -912,7 +994,7 @@
         }
       });
 
-      document.getElementById('bar-chart-title').innerHTML = `<i class="fas fa-ranking-star me-2 text-danger"></i> อันดับช่องทาง Shop ในข่าวนี้`;
+      document.getElementById('bar-chart-title').innerHTML = `<i class="fas fa-ranking-star me-2 text-danger"></i> อันดับ ${groupLabel} ในข่าวนี้`;
       document.getElementById('bar-chart-subtitle').innerText = `เรียงตาม % การรับทราบจากสูงสุดไปต่ำสุด`;
 
       const ctxBar = document.getElementById('channelRankBarChart').getContext('2d');
@@ -924,7 +1006,7 @@
           datasets: [{
             label: '% รับทราบข่าวนี้',
             data: cTopicData,
-            backgroundColor: shopChannelList.map(c => c.percent >= 80 ? '#00b33c' : (c.percent >= 50 ? '#ff8c00' : '#ff0000')),
+            backgroundColor: targetChannelList.map(c => c.percent >= 80 ? '#00b33c' : (c.percent >= 50 ? '#ff8c00' : '#ff0000')),
             borderRadius: 6,
             barThickness: 18
           }]
@@ -941,7 +1023,7 @@
               color: '#333',
               font: { family: 'Sarabun', size: 11, weight: 'bold' },
               formatter: (v, ctx) => {
-                let item = shopChannelList[ctx.dataIndex];
+                let item = targetChannelList[ctx.dataIndex];
                 return `${v}% (${item.acked}/${item.total})`;
               }
             }
@@ -953,8 +1035,8 @@
         }
       });
 
-      document.getElementById('matrix-main-title').innerHTML = `<i class="fas fa-table-cells me-2 text-danger"></i> ตารางผ่าตัดช่องทางภายใต้กลุ่ม Shop & Heatmap เทียบ 5 แคมเปญล่าสุด`;
-      document.getElementById('matrix-subtitle').innerHTML = `เปรียบเทียบผลงานรายช่องทางในหัวข้อ <b>"${selectedTopicName}"</b> คู่กับเทรนด์ย้อนหลัง`;
+      document.getElementById('matrix-main-title').innerHTML = `<i class="fas fa-table-cells me-2 text-danger"></i> ตารางผ่าตัดภายใต้กลุ่ม ${groupLabel} & Heatmap เทียบ 5 แคมเปญล่าสุด`;
+      document.getElementById('matrix-subtitle').innerHTML = `เปรียบเทียบผลงานในหัวข้อ <b>"${selectedTopicName}"</b> คู่กับเทรนด์ย้อนหลังของกลุ่ม ${groupLabel}`;
       document.getElementById('heatmap-legend').classList.remove('d-none');
 
       let recentHeadersHtml = recent5Topics.map(rt => {
@@ -967,7 +1049,7 @@
 
       document.getElementById('analytics-matrix-thead').innerHTML = `
         <tr>
-          <th class="text-start">ช่องทางภายใต้กลุ่ม Shop</th>
+          <th class="text-start">ช่องทาง / ตำแหน่ง (${groupLabel})</th>
           <th>เป้าหมาย</th>
           <th>อ่านแล้ว</th>
           <th>ค้างอ่าน</th>
@@ -981,7 +1063,7 @@
       const matrixBody = document.getElementById('analytics-matrix-body');
       matrixBody.innerHTML = '';
 
-      shopChannelList.forEach(item => {
+      targetChannelList.forEach(item => {
         let mainPillClass = item.percent >= 80 ? 'hm-green' : (item.percent >= 50 ? 'hm-orange' : 'hm-red');
         let diffHtml = item.diff > 0
           ? `<span class="text-success fw-bold"><i class="fas fa-caret-up"></i> +${item.diff}%</span>`
@@ -995,7 +1077,7 @@
 
         matrixBody.innerHTML += `
           <tr>
-            <td class="text-start fw-bold text-dark"><i class="fas fa-store text-primary me-2"></i>${item.channel}</td>
+            <td class="text-start fw-bold text-dark"><i class="fas ${iconClass} me-2"></i>${item.channel}</td>
             <td class="fw-bold">${item.total.toLocaleString()}</td>
             <td class="text-success fw-bold">${item.acked.toLocaleString()}</td>
             <td class="text-danger fw-bold">${item.unread.toLocaleString()}</td>
@@ -1028,9 +1110,11 @@
 
         if (!focusedTopicName) {
           if (channelFilter === 'GROUP_SHOP' && cat === 'Geo-Based') return false;
-          if (channelFilter === 'GROUP_GEO' && cat === 'Shop') return false;
+          // 🚨 แก้ไข: เมื่อเลือก GROUP_GEO ให้แสดงเฉพาะแคมเปญของ Geo-Based เท่านั้นตามที่ต้องการ
+          if (channelFilter === 'GROUP_GEO' && cat !== 'Geo-Based') return false;
           if (channelFilter.startsWith('CH:')) {
             const targetCh = channelFilter.substring(3);
+            if (isGeoBasedChannel(targetCh) && cat !== 'Geo-Based') return false;
             if (!isChannelTargetedByTopic(targetCh, t)) return false;
           }
         }
@@ -1369,12 +1453,13 @@
           : `<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1">${diff}% ต่ำกว่าเฉลี่ย</span>`;
         
         let barColor = item.focusPercent >= 80 ? 'bg-success' : (item.focusPercent >= 50 ? 'bg-warning' : 'bg-danger');
+        let subBadge = (item.category === 'Geo-Based' && item.subTarget) ? ` <span class="badge bg-info text-dark border ms-1" style="font-size:10px;">${item.subTarget}</span>` : '';
 
         matrixBody.innerHTML += `
           <tr style="cursor: pointer;" onclick="showDrillDown(rawTrendDataList[${origIdx}])" title="คลิกเพื่อดูรายละเอียด">
             <td class="text-start fw-bold text-dark">${item.name}</td>
             <td class="text-muted small">${item.startDate || '-'}</td>
-            <td><span class="badge bg-light text-secondary border">${item.category}</span></td>
+            <td><span class="badge bg-light text-secondary border">${item.category}</span>${subBadge}</td>
             <td class="fw-bold">${item.focusTotal.toLocaleString()}</td>
             <td class="text-success fw-bold">${item.focusAck.toLocaleString()}</td>
             <td class="text-danger fw-bold">${item.focusUnread.toLocaleString()}</td>
@@ -1406,7 +1491,6 @@
 
       const sheetData = [];
 
-      // 1. ดึงหัวตาราง (ใช้ชื่อเต็มจาก title ถ้ามี เพื่อให้หัวคอลัมน์ใน Excel ชัดเจนไม่ถูกตัดคำว่า ...)
       const headerCells = thead.querySelectorAll('tr th');
       const headerRow = [];
       headerCells.forEach(th => {
@@ -1416,12 +1500,10 @@
       });
       sheetData.push(headerRow);
 
-      // 2. ดึงข้อมูลทุกแถว (แปลงค่าตัวเลขให้เป็น Number แท้ เพื่อให้คำนวณต่อใน Excel ได้)
       bodyRows.forEach(tr => {
         const rowData = [];
         tr.querySelectorAll('td').forEach(td => {
           let text = td.innerText.replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim();
-          // หากเป็นตัวเลขล้วนที่มีลูกน้ำคั่น (เช่น 1,250) ให้แปลงเป็น Number
           if (/^-?\d{1,3}(,\d{3})*$/.test(text)) {
             rowData.push(parseInt(text.replace(/,/g, ''), 10));
           } else {
@@ -1431,7 +1513,6 @@
         sheetData.push(rowData);
       });
 
-      // 3. สร้าง Workbook และปรับความกว้างคอลัมน์อัตโนมัติด้วย SheetJS (XLSX)
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet(sheetData);
 
@@ -1449,11 +1530,11 @@
       const monthFilter = document.getElementById('trend-month-filter') ? document.getElementById('trend-month-filter').value : 'Report';
       const dateStamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
 
-      const sheetName = focusedTopic ? "Shop_Heatmap" : "Analytics_Matrix";
+      const sheetName = focusedTopic ? "Topic_Heatmap" : "Analytics_Matrix";
       XLSX.utils.book_append_sheet(wb, ws, sheetName);
 
       let safeSubName = focusedTopic 
-        ? "Shop_Heatmap_" + focusedTopic.replace(/[^a-zA-Z0-9ก-๙]/g, '_').substring(0, 25)
+        ? "Heatmap_" + focusedTopic.replace(/[^a-zA-Z0-9ก-๙]/g, '_').substring(0, 25)
         : "Trend_Matrix_" + monthFilter;
 
       XLSX.writeFile(wb, `Analytics_${safeSubName}_${dateStamp}.xlsx`);
