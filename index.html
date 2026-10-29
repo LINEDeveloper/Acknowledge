@@ -151,16 +151,46 @@
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycby-pLn-ACbareuCdomxdkX2Oe1H9gVNseUDb2k-CENm3DX3YrQvbtoFYErSZvHQppU/exec"; 
     
-    let lineId, userObj, topicList;
+    let lineId, userObj, topicList = [];
     let typingTimer;
     let failCount = 0; 
-    let currentSelectedTopic = ""; // ตัวแปรเก็บค่าหัวข้อที่ถูกคลิกเลือก
-    let isSubmitting = false;      // [จุดที่ 2] ตัวแปรป้องกันการกดซ้ำ (Double Submit)
+    let currentSelectedTopic = "";
+    let isSubmitting = false;
 
     const TrueSwal = Swal.mixin({
       customClass: { popup: 'swal-true-popup', confirmButton: 'btn-true' },
       buttonsStyling: false
     });
+
+    // ฟังก์ชันวาดรายการหัวข้อข่าว (แยกออกมาเพื่อให้อัปเดตซ่อนข่าวที่อ่านแล้วได้ทันที)
+    function renderTopicListUI() {
+      const container = document.getElementById('topic-list-container');
+      const consentBox = document.querySelector('.consent-box');
+      currentSelectedTopic = "";
+      document.getElementById('consentCheck').checked = false;
+
+      if (!topicList || topicList.length === 0) {
+        container.innerHTML = `
+          <div class="p-4 text-center rounded-4 shadow-sm" style="background: linear-gradient(135deg, #f0fdf4 0%, #e8f5e9 100%); border: 1px solid #c8e6c9;">
+            <i class="fas fa-check-circle mb-2 text-success" style="font-size: 32px;"></i>
+            <h6 class="fw-bold text-success m-0">เยี่ยมมาก! </h6>
+            <p class="small text-muted m-0 mt-1">คุณได้รับทราบข้อมูลครบทุกหัวข้อแล้ว</p>
+          </div>`;
+        if (consentBox) consentBox.classList.add('hidden');
+      } else {
+        let listHtml = `<div class="topic-list-header"><i class="fas fa-clipboard-list me-2 text-danger"></i> รายการ : ยังไม่ได้กดรับทราบ (${topicList.length} หัวข้อ)</div>`;
+        topicList.forEach((t, index) => {
+          listHtml += `
+            <div class="topic-item" onclick="selectTopic(${index}, this)">
+              <div class="topic-item-title">${t.name}</div>
+              <i class="fas fa-check-circle topic-check-icon"></i>
+            </div>
+          `;
+        });
+        container.innerHTML = listHtml;
+        if (consentBox) consentBox.classList.remove('hidden');
+      }
+    }
 
     async function init() {
       try {
@@ -175,44 +205,22 @@
           document.getElementById('loading-pfp').src = p.pictureUrl;
         }
         
-        const response = await fetch(`${GAS_URL}?action=getInitialData&lineId=${lineId}`);
+        // เพิ่ม timestamp และ no-store ป้องกันมือถือจำ Cache รายการข่าวเก่าที่เคยกดไปแล้ว
+        const response = await fetch(`${GAS_URL}?action=getInitialData&lineId=${encodeURIComponent(lineId)}&_t=${Date.now()}`, {
+          cache: 'no-store'
+        });
         if (!response.ok) throw new Error("Network response was not ok");
         
         const res = await response.json();
-        topicList = res.topics;
+        topicList = res.topics || [];
 
         if (res.isRegistered) {
           userObj = res.user;
-          // [จุดที่ 3] รองรับกรณีพนักงานไม่ได้ตั้งรูปโปรไฟล์ LINE
           document.getElementById('user-pfp').src = p.pictureUrl || defaultAvatar;
           document.getElementById('user-name').innerText = "คุณ" + userObj.fullName;
           document.getElementById('user-meta').innerHTML = "ID : " + userObj.empId + "<br>" + userObj.channel;
           
-          const container = document.getElementById('topic-list-container');
-          
-          if (!res.topics || res.topics.length === 0) {
-            // กรณีไม่มีข่าวค้างเลย
-            container.innerHTML = `
-              <div class="p-4 text-center rounded-4 shadow-sm" style="background: linear-gradient(135deg, #f0fdf4 0%, #e8f5e9 100%); border: 1px solid #c8e6c9;">
-                <i class="fas fa-check-circle mb-2 text-success" style="font-size: 32px;"></i>
-                <h6 class="fw-bold text-success m-0">เยี่ยมมาก! </h6>
-                <p class="small text-muted m-0 mt-1">คุณได้รับทราบข้อมูลครบทุกหัวข้อแล้ว</p>
-              </div>`;
-            document.querySelector('.consent-box').classList.add('hidden');
-          } else {
-            // [จุดที่ 1] ส่ง index แทนชื่อหัวข้อตรงๆ เพื่อป้องกันบั๊กเครื่องหมายคำพูด (' หรือ ")
-            let listHtml = `<div class="topic-list-header"><i class="fas fa-clipboard-list me-2 text-danger"></i> รายการ : ยังไม่ได้กดรับทราบ (${res.topics.length} หัวข้อ)</div>`;
-            res.topics.forEach((t, index) => {
-              listHtml += `
-                <div class="topic-item" onclick="selectTopic(${index}, this)">
-                  <div class="topic-item-title">${t.name}</div>
-                  <i class="fas fa-check-circle topic-check-icon"></i>
-                </div>
-              `;
-            });
-            container.innerHTML = listHtml;
-          }
-          
+          renderTopicListUI();
           showView('acknowledge');
         } else { 
           showView('register'); 
@@ -221,13 +229,13 @@
         TrueSwal.fire({
           icon: 'error',
           title: 'เชื่อมต่อล้มเหลว',
-          text: 'ไม่สามารถติดต่อฐานข้อมูลได้ โปรดตรวจสอบการตั้งค่า Deploy (Anyone)'
+          text: 'ไม่สามารถติดต่อฐานข้อมูลได้ โปรดตรวจสอบสัญญาณอินเทอร์เน็ตแล้วลองใหม่อีกครั้ง'
         });
       }
     }
 
-    // [จุดที่ 1] ฟังก์ชันรับค่า index มาอ้างอิงชื่อหัวข้อจาก topicList
     function selectTopic(index, element) {
+      if (!topicList[index]) return;
       currentSelectedTopic = topicList[index].name;
       document.querySelectorAll('.topic-item').forEach(el => el.classList.remove('selected'));
       element.classList.add('selected');
@@ -259,7 +267,7 @@
 
         typingTimer = setTimeout(async () => {
           try {
-            const res = await fetch(`${GAS_URL}?action=findEmployee&empId=${id}`).then(r => r.json());
+            const res = await fetch(`${GAS_URL}?action=findEmployee&empId=${encodeURIComponent(id.trim())}`, { cache: 'no-store' }).then(r => r.json());
             
             regLoading.classList.add('hidden');
 
@@ -299,9 +307,9 @@
 
       const payload = { 
         lineId, 
-        empId: document.getElementById('reg-id').value, 
-        fullName: document.getElementById('reg-name').innerText, 
-        channel: document.getElementById('reg-channel').innerText,
+        empId: document.getElementById('reg-id').value.trim(), 
+        fullName: document.getElementById('reg-name').innerText.trim(), 
+        channel: document.getElementById('reg-channel').innerText.trim(),
         branch: document.getElementById('reg-branch').value, 
         zone: document.getElementById('reg-zone').value      
       };
@@ -312,12 +320,13 @@
       if (res === "Success") {
         window.location.reload();
       } else if (res === "Already Registered") {
-        TrueSwal.fire({ icon: 'warning', title: 'รหัสซ้ำ', text: 'รหัสพนักงานนี้ถูกลงทะเบียนไปแล้ว' });
+        TrueSwal.fire({ icon: 'warning', title: 'รหัสซ้ำ', text: 'รหัสพนักงานหรือชื่อนี้ถูกลงทะเบียนไปแล้ว' });
+      } else {
+        TrueSwal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: 'ระบบมีผู้ใช้งานจำนวนมาก โปรดกดยืนยันอีกครั้ง' });
       }
     }
 
     async function handleSubmit() {
-      // [จุดที่ 2] ป้องกันการกดซ้ำขณะกำลังส่งข้อมูล
       if (isSubmitting) return;
 
       if (!currentSelectedTopic) {
@@ -344,16 +353,23 @@
       isSubmitting = false;
 
       if (res === "Success") {
+        // ลบหัวข้อที่บันทึกสำเร็จออกจากรายการในหน่วยความจำทันที
+        topicList = topicList.filter(x => x.name !== t);
         document.getElementById('success-topic-name').innerText = t;
         showView('success');
-      } else if (res) { 
-        TrueSwal.fire({ icon: 'info', title: 'ข้อมูลซ้ำ', text: 'ท่านได้รับทราบข่าวนี้ไปแล้ว' }); 
-        document.getElementById('consentCheck').checked = false; 
+      } else if (res === "Duplicate") { 
+        // 🚨 แก้ไข: เช็กเฉพาะคำว่า "Duplicate" จริงๆ เท่านั้น และซ่อนหัวข้อข่าวนี้ทิ้งทันทีเพื่อไม่ให้กดซ้ำอีก
+        topicList = topicList.filter(x => x.name !== t);
+        renderTopicListUI();
+        TrueSwal.fire({ icon: 'info', title: 'ข้อมูลซ้ำ', text: 'ท่านได้รับทราบข่าวนี้ไปแล้ว ระบบได้อัปเดตรายการให้เรียบร้อยครับ' }); 
       } else {
+        // กรณี res === "Error" หรือ null (เช่น คิวเต็มหลังจากลองซ้ำแล้ว)
         document.getElementById('consentCheck').checked = false;
+        TrueSwal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: 'ขณะนี้มีผู้ใช้งานพร้อมกันจำนวนมาก โปรดแตะยืนยันอีกครั้งครับ' });
       }
     }
 
+    // 🚀 อัปเกรด: เพิ่มระบบ Auto-Retry ลองส่งใหม่อัตโนมัติสูงสุด 3 ครั้ง เมื่อมีคนกดพร้อมกันเยอะๆ
     async function callApi(action, payload) {
       if (action === 'acknowledge') {
         document.getElementById('save-overlay').classList.remove('hidden'); 
@@ -361,33 +377,48 @@
         TrueSwal.fire({ title: 'กำลังตรวจสอบ โปรดรอสักครู่...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
       }
       
-      try {
-        // [จุดที่ 4] เพิ่ม headers Content-Type: text/plain เพื่อป้องกันปัญหา CORS กับ Google Apps Script
-        const res = await fetch(GAS_URL, { 
-          method: 'POST', 
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action, payload }) 
-        }).then(r => r.json());
-        
-        if (action === 'acknowledge') {
-          document.getElementById('save-overlay').classList.add('hidden'); 
-        } else {
-          Swal.close();
+      const maxAttempts = 3;
+      let lastResult = null;
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          const response = await fetch(GAS_URL, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action, payload }) 
+          });
+          
+          if (!response.ok) throw new Error("HTTP status " + response.status);
+          const res = await response.json();
+          lastResult = res;
+
+          // ถ้าสำเร็จ หรือ ข้อมูลซ้ำจริงๆ ให้จบการทำงานและส่งผลลัพธ์กลับทันที
+          if (res === "Success" || res === "Duplicate" || res === "Already Registered") {
+            break;
+          }
+
+          // ถ้าหลังบ้านตอบว่า "Error" (เช่น ติดคิว Lock) ให้รอแบบสุ่ม 1-2 วินาทีแล้วลองส่งใหม่ในลูปถัดไป
+          if (attempt < maxAttempts) {
+            await new Promise(r => setTimeout(r, 800 * attempt + Math.floor(Math.random() * 600)));
+          }
+        } catch (e) {
+          console.error(`Attempt ${attempt} failed:`, e);
+          if (attempt < maxAttempts) {
+            await new Promise(r => setTimeout(r, 800 * attempt + Math.floor(Math.random() * 600)));
+          }
         }
-        return res;
-      } catch (e) {
-        if (action === 'acknowledge') {
-          document.getElementById('save-overlay').classList.add('hidden');
-        } else {
-          Swal.close();
-        }
-        TrueSwal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: 'บันทึกข้อมูลไม่สำเร็จ โปรดลองอีกครั้ง' });
       }
+
+      if (action === 'acknowledge') {
+        document.getElementById('save-overlay').classList.add('hidden'); 
+      } else {
+        Swal.close();
+      }
+      
+      return lastResult;
     }
 
     window.onload = init;
   </script>
 </body>
 </html>
-
-```
