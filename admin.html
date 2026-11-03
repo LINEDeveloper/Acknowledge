@@ -61,6 +61,9 @@
     .bi-card-box { border: 1px solid #edf2f7; border-radius: 20px; padding: 22px; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.02); height: 100%; }
     .progress-thin { height: 8px; border-radius: 50px; background-color: #edf2f7; overflow: hidden; }
     
+    /* 💡 สไตล์สำหรับกล่องสรุปผลวิเคราะห์อัตโนมัติ (ไอเดียที่ 2) */
+    .ai-insight-banner { background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%); border: 1px solid #dbeafe; border-left: 5px solid #002d72; border-radius: 16px; padding: 14px 20px; box-shadow: 0 4px 12px rgba(0,45,114,0.04); }
+
     /* ป้ายสี Heatmap */
     .hm-pill { display: inline-block; min-width: 52px; padding: 4px 8px; border-radius: 8px; font-weight: 700; font-size: 12px; text-align: center; }
     .hm-green { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
@@ -181,7 +184,6 @@
             </div>
             <div class="col-md-4">
               <label class="fw-bold small text-secondary mb-1"><i class="fas fa-sitemap text-primary me-1"></i> 2. เลือกมุมมองช่องทาง (Channel):</label>
-              <!-- 🚨 แก้ไข: ให้เรียก onPeriodOrCategoryFilterChange() เพื่อกรองรายการข่าวในข้อ 4 ด้วย -->
               <select id="trend-channel-filter" class="form-select form-select-sm fw-bold border-secondary-subtle" style="border-radius: 10px; padding: 8px 12px;" onchange="onPeriodOrCategoryFilterChange()">
                 <option value="COMPARE_ALL">⚖️ เปรียบเทียบ All Branded vs Geo-Based</option>
                 <option value="GROUP_SHOP">🏪 รวมกลุ่ม All Branded ( Retail Shop )</option>
@@ -226,7 +228,7 @@
         </div>
 
         <!-- ส่วนที่ 2: 4 Executive KPI Cards -->
-        <div class="row g-3 mb-4">
+        <div class="row g-3 mb-3">
           <div class="col-md-3 col-sm-6">
             <div class="trend-mini-card" style="border-left-color: #002d72;">
               <div class="trend-mini-title"><span id="kpi-title-1">อัตราการรับทราบเฉลี่ย</span> <i class="fas fa-bullseye text-primary"></i></div>
@@ -253,6 +255,18 @@
               <div class="trend-mini-title"><span id="kpi-title-4">ต้องเร่งติดตาม (Focus Needed)</span> <i class="fas fa-exclamation-triangle text-warning"></i></div>
               <div class="trend-mini-value text-truncate" id="kpi-low-channel" style="font-size: 19px; color: #e65100;">-</div>
               <div class="trend-mini-sub" id="kpi-low-sub">ค้างอ่านสะสมสูงสุด</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 💡 ไอเดียที่ 2: กล่องสรุปผลวิเคราะห์อัตโนมัติ (Smart Executive Summary) -->
+        <div id="ai-executive-summary" class="ai-insight-banner mb-4">
+          <div class="d-flex align-items-start gap-3">
+            <div style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #002d72, #ff0000); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; box-shadow: 0 3px 8px rgba(0,45,114,0.2);">
+              <i class="fas fa-lightbulb"></i>
+            </div>
+            <div style="font-size: 13.5px; line-height: 1.65; color: #333; width: 100%;" id="ai-summary-text">
+              กำลังประมวลผลสรุปข้อมูล...
             </div>
           </div>
         </div>
@@ -516,7 +530,6 @@
       }
     }
 
-    // 🚨 อัปเดต: ตรวจสอบว่ากำลังอยู่ในโหมดวิเคราะห์ Geo-Based หรือ Shop
     function isCurrentFocusGeoMode(selectedTopicObj = null) {
       const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'COMPARE_ALL';
       const filterCat = document.getElementById('trend-category-filter') ? document.getElementById('trend-category-filter').value : 'All';
@@ -535,7 +548,6 @@
       return false;
     }
 
-    // 🚨 อัปเดต: กรองหัวข้อข่าวในข้อ 4 ให้ตรงกับช่องทาง (ข้อ 2) และประเภทแคมเปญ (ข้อ 3)
     function populateFocusTopicDropdown() {
       const focusSelect = document.getElementById('trend-topic-focus');
       if (!focusSelect) return;
@@ -547,7 +559,6 @@
 
       const isGeoMode = isCurrentFocusGeoMode();
 
-      // อัปเดตป้ายข้อความในกล่องที่ 4 ให้ตรงกับกลุ่มที่เลือก
       const titleEl = document.getElementById('focus-box-title');
       const descEl = document.getElementById('focus-box-desc');
       if (isGeoMode) {
@@ -562,15 +573,12 @@
         let cat = (t.category || "").toString().trim();
         let topicNameLower = (t.name || "").toString().toLowerCase();
 
-        // 1. กรองตามข้อ 3 (ประเภทแคมเปญ)
         if (filterCat === 'Morning-Brief' && !topicNameLower.includes('morning brief')) return false;
         if (filterCat === 'Category-All' && !(cat === 'All' || cat === '-')) return false;
         if (filterCat === 'Shop' && cat !== 'Shop') return false;
         if (filterCat === 'Geo-Based' && cat !== 'Geo-Based') return false;
 
-        // 2. กรองตามข้อ 2 (มุมมองช่องทาง)
         if (channelFilter === 'GROUP_GEO') {
-          // แสดงเฉพาะแคมเปญเจาะลึกของ Geo-Based เท่านั้นตามที่ต้องการ
           if (cat !== 'Geo-Based') return false;
         } else if (channelFilter === 'GROUP_SHOP') {
           if (cat === 'Geo-Based' || cat === 'Non Shop') return false;
@@ -583,11 +591,9 @@
             if (cat === 'Geo-Based' || cat === 'Non Shop') return false;
           }
         } else {
-          // กรณี COMPARE_ALL แต่ไม่ได้เลือก filterCat เป็น Geo-Based
           if (filterCat !== 'Geo-Based' && (cat === 'Geo-Based' || cat === 'Non Shop')) return false;
         }
 
-        // 3. กรองตามข้อ 1 (เดือน)
         if (monthFilter !== 'LAST_15' && monthFilter !== 'ALL_TIME') {
           let dStr = t.rawStartDate || t.rawDate || "";
           if (!dStr.startsWith(monthFilter)) return false;
@@ -920,11 +926,24 @@
         document.getElementById('kpi-low-channel').innerText = lowCh.channel;
         document.getElementById('kpi-low-channel').title = lowCh.channel;
         document.getElementById('kpi-low-sub').innerHTML = `ได้ <b>${lowCh.percent}%</b> (ค้างอ่าน <b>${lowCh.unread.toLocaleString()}</b> คน)`;
+
+        // 💡 ไอเดียที่ 2: สรุปผลวิเคราะห์อัตโนมัติสำหรับโหมดเจาะลึกหัวข้อข่าว
+        const totalUnreadGroup = totalGroupTarget - totalGroupAck;
+        const diffWord = overallDiff >= 0 
+          ? `<span class="text-success fw-bold">สูงกว่าค่าเฉลี่ยปกติ +${overallDiff}%</span>` 
+          : `<span class="text-danger fw-bold">ต่ำกว่าค่าเฉลี่ยปกติ ${overallDiff}%</span>`;
+        document.getElementById('ai-summary-text').innerHTML = `
+          <b style="color:#002d72;">💡 สรุปผลวิเคราะห์เจาะลึกแคมเปญ "${selectedTopicName}" (กลุ่ม ${groupLabel}):</b><br>
+          ภาพรวมการรับทราบอยู่ที่ <b class="text-primary">${overallTopicPct}%</b> (${diffWord} จากค่าเฉลี่ยปกติที่ ${overallHistPct}%) • 
+          ช่องทางที่ทำผลงานสูงสุดคือ <b class="text-success">${topCh.channel} (${topCh.percent}%)</b> • 
+          สิ่งที่ควรดำเนินการต่อ: เร่งติดตามกลุ่ม <b class="text-danger">${lowCh.channel} (${lowCh.percent}%)</b> ซึ่งมียอดค้างอ่าน <b>${lowCh.unread.toLocaleString()} คน</b> (จากยอดค้างอ่านรวมทั้งแคมเปญ ${totalUnreadGroup.toLocaleString()} คน)
+        `;
       } else {
         document.getElementById('kpi-top-channel').innerText = '-';
         document.getElementById('kpi-top-sub').innerText = '-';
         document.getElementById('kpi-low-channel').innerText = '-';
         document.getElementById('kpi-low-sub').innerText = '-';
+        document.getElementById('ai-summary-text').innerHTML = `<span class="text-muted">ไม่พบข้อมูลช่องทางสำหรับแคมเปญที่เลือก</span>`;
       }
 
       document.getElementById('line-chart-title').innerHTML = `<i class="fas ${iconClass} me-2"></i> เปรียบเทียบภายใต้ ${groupLabel}: ข่าวนี้ vs ค่าเฉลี่ยปกติ`;
@@ -1110,7 +1129,6 @@
 
         if (!focusedTopicName) {
           if (channelFilter === 'GROUP_SHOP' && cat === 'Geo-Based') return false;
-          // 🚨 แก้ไข: เมื่อเลือก GROUP_GEO ให้แสดงเฉพาะแคมเปญของ Geo-Based เท่านั้นตามที่ต้องการ
           if (channelFilter === 'GROUP_GEO' && cat !== 'Geo-Based') return false;
           if (channelFilter.startsWith('CH:')) {
             const targetCh = channelFilter.substring(3);
@@ -1173,6 +1191,7 @@
         document.getElementById('kpi-top-sub').innerText = '-';
         document.getElementById('kpi-low-channel').innerText = '-';
         document.getElementById('kpi-low-sub').innerText = '-';
+        document.getElementById('ai-summary-text').innerHTML = `<span class="text-muted">ไม่พบข้อมูลแคมเปญในเงื่อนไขที่เลือก</span>`;
         document.getElementById('analytics-matrix-body').innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">ไม่พบข้อมูลแคมเปญที่ตรงกับตัวกรองที่เลือก</td></tr>`;
         return;
       }
@@ -1183,6 +1202,7 @@
 
       const isSingleChannel = channelFilter.startsWith('CH:');
       const selectedSingleChannelName = isSingleChannel ? channelFilter.substring(3) : null;
+      const isSelectedSingleShop = isSingleChannel ? isShopChannel(selectedSingleChannelName) : false;
 
       activeTopicsForTrend.forEach(t => {
         let stats = globalTopicStats[t.name];
@@ -1214,6 +1234,11 @@
             let includeInRank = true;
             if (channelFilter === 'GROUP_SHOP' && !isShopChannel(cleanCh)) includeInRank = false;
             if (channelFilter === 'GROUP_GEO' && !isGeoBasedChannel(cleanCh)) includeInRank = false;
+            // หากเลือกช่องทางเดี่ยว และกรองเฉพาะ Shop หรือ Geo ให้จัดอันดับเฉพาะกลุ่มเดียวกันเพื่อให้เปรียบเทียบชัดเจน
+            if (isSingleChannel) {
+              if ((filterCat === 'Shop' || filterCat === 'Morning-Brief' || isSelectedSingleShop) && !isShopChannel(cleanCh)) includeInRank = false;
+              if ((filterCat === 'Geo-Based' || !isSelectedSingleShop) && !isGeoBasedChannel(cleanCh)) includeInRank = false;
+            }
             if (includeInRank) {
               if (!channelAggregates[cleanCh]) channelAggregates[cleanCh] = { total: 0, acked: 0, unread: 0, campaigns: 0 };
               channelAggregates[cleanCh].total += cTotal;
@@ -1231,6 +1256,16 @@
         let avgP = totalT > 0 ? Math.round((totalA / totalT) * 100) : (parseFloat(t.percentage) || 0);
         let specP = specTotal > 0 ? Math.round((specAck / specTotal) * 100) : 0;
 
+        // 💡 ไอเดียที่ 1: คำนวณค่า Benchmark ให้ตรงกับบริบทกลุ่มที่เลือกเปรียบเทียบ
+        let benchmarkP = avgP;
+        if (isSingleChannel) {
+          if (filterCat === 'Shop' || filterCat === 'Morning-Brief' || isSelectedSingleShop) {
+            benchmarkP = sP;
+          } else if (filterCat === 'Geo-Based' || !isSelectedSingleShop) {
+            benchmarkP = gP;
+          }
+        }
+
         let focusTotal = totalT, focusAck = totalA, focusPercent = avgP;
         if (channelFilter === 'GROUP_SHOP') { focusTotal = shopTotal; focusAck = shopAck; focusPercent = sP; }
         else if (channelFilter === 'GROUP_GEO') { focusTotal = geoTotal; focusAck = geoAck; focusPercent = gP; }
@@ -1239,7 +1274,7 @@
         labels.push(t.name.length > 18 ? t.name.substring(0, 18) + "..." : t.name);
         shopData.push(sP);
         geoData.push(gP);
-        allAvgData.push(avgP);
+        allAvgData.push(benchmarkP);
         specificChData.push(specP);
 
         rawTrendDataList.push({
@@ -1251,7 +1286,8 @@
           geoTotal, geoAck, geoUnread: geoTotal - geoAck,
           specificChannelName: selectedSingleChannelName,
           specificTotal: specTotal, specificAck: specAck, specificUnread: specTotal - specAck, specificPercent: specP,
-          focusTotal, focusAck, focusUnread: focusTotal - focusAck, focusPercent
+          focusTotal, focusAck, focusUnread: focusTotal - focusAck, focusPercent,
+          benchmarkPercent: benchmarkP
         });
       });
 
@@ -1293,6 +1329,48 @@
         document.getElementById('kpi-low-sub').innerText = '-';
       }
 
+      // 💡 ไอเดียที่ 1: ตั้งชื่อป้ายกำกับ Benchmark อัตโนมัติตามบริบทที่กรองอยู่
+      let benchmarkLabel = '% เฉลี่ยรวมทุกช่องทาง (Benchmark)';
+      if (filterCat === 'Shop' || filterCat === 'Morning-Brief' || (isSingleChannel && isSelectedSingleShop)) {
+        benchmarkLabel = '% เฉลี่ยรวมทุกช่องทาง Shop (Benchmark)';
+      } else if (filterCat === 'Geo-Based' || (isSingleChannel && !isSelectedSingleShop)) {
+        benchmarkLabel = '% เฉลี่ยรวมกลุ่ม Geo-Based (Benchmark)';
+      }
+
+      // 💡 ไอเดียที่ 2: สร้างข้อความสรุปผลวิเคราะห์อัตโนมัติ (Smart Executive Summary)
+      const benchmarkAvg = allAvgData.length > 0 ? Math.round(allAvgData.reduce((a, b) => a + b, 0) / allAvgData.length) : 0;
+      const sortedByPerf = [...rawTrendDataList].sort((a, b) => a.focusPercent - b.focusPercent);
+      const worstCampaign = sortedByPerf[0];
+      const bestCampaign = sortedByPerf[sortedByPerf.length - 1];
+
+      if (isSingleChannel) {
+        const chRankIdx = rankList.findIndex(r => r.name === selectedSingleChannelName);
+        const rankText = chRankIdx !== -1 ? `อันดับที่ <b>${chRankIdx + 1}</b> จาก ${rankList.length} ช่องทาง` : '';
+        const vsBench = periodAvg - benchmarkAvg;
+        const vsBenchHtml = vsBench >= 0 
+          ? `<span class="text-success fw-bold">สูงกว่าค่าเฉลี่ยกลุ่ม +${vsBench}%</span> (ค่าเฉลี่ยกลุ่ม ${benchmarkAvg}%)`
+          : `<span class="text-danger fw-bold">ต่ำกว่าค่าเฉลี่ยกลุ่ม ${vsBench}%</span> (ค่าเฉลี่ยกลุ่ม ${benchmarkAvg}%)`;
+
+        document.getElementById('ai-summary-text').innerHTML = `
+          <b style="color:#002d72;">💡 สรุปผลวิเคราะห์ (${monthText.replace(/^[^\s]+\s/, '')} • ${selectedSingleChannelName}):</b><br>
+          มีอัตราการรับทราบเฉลี่ยอยู่ที่ <b class="text-primary">${periodAvg}%</b> (${rankText} • ${vsBenchHtml}) • 
+          แคมเปญที่ทำได้ดีที่สุดคือ <b class="text-success">"${bestCampaign.name}" (${bestCampaign.focusPercent}%)</b> • 
+          สิ่งที่ควรทำต่อ: เร่งติดตามแคมเปญ <b class="text-danger">"${worstCampaign.name}" (${worstCampaign.focusPercent}%)</b> ซึ่งยังมีผู้ค้างอ่าน <b>${worstCampaign.focusUnread.toLocaleString()} คน</b>
+        `;
+      } else {
+        const topChName = rankList.length > 0 ? `${rankList[0].name} (${rankList[0].percent}%)` : '-';
+        const lowList = [...rankList].sort((a, b) => a.percent - b.percent || b.unread - a.unread);
+        const lowChObj = lowList.length > 0 ? lowList[0] : null;
+        const lowChText = lowChObj ? `${lowChObj.name} (เฉลี่ย ${lowChObj.percent}% • ค้างอ่านสะสม ${lowChObj.unread.toLocaleString()} ครั้ง)` : '-';
+
+        document.getElementById('ai-summary-text').innerHTML = `
+          <b style="color:#002d72;">💡 สรุปผลวิเคราะห์ภาพรวม (${monthText.replace(/^[^\s]+\s/, '')} • ${channelText.replace(/^[^\s]+\s/, '')}):</b><br>
+          อัตราการรับทราบเฉลี่ยรวมอยู่ที่ <b class="text-primary">${periodAvg}%</b> (จาก ${rawTrendDataList.length} แคมเปญ) • 
+          แคมเปญที่ทำผลงานสูงสุดคือ <b class="text-success">"${bestCampaign.name}" (${bestCampaign.focusPercent}%)</b> • 
+          สิ่งที่ควรทำต่อ: เร่งติดตามแคมเปญ <b class="text-danger">"${worstCampaign.name}" (${worstCampaign.focusPercent}%)</b> และกระตุ้นช่องทาง <b class="text-danger">${lowChText}</b>
+        `;
+      }
+
       let datasets = [];
       if (isSingleChannel) {
         datasets.push({
@@ -1304,18 +1382,37 @@
           tension: 0.3,
           pointRadius: 5,
           pointHoverRadius: 8,
-          datalabels: { align: 'top', color: '#cc0000', font: { weight: 'bold', size: 11, family: 'Sarabun' }, formatter: v => v + '%' }
+          datalabels: { 
+            align: (ctx) => {
+              const idx = ctx.dataIndex;
+              return specificChData[idx] >= allAvgData[idx] ? 'top' : 'bottom';
+            },
+            color: '#cc0000', 
+            font: { weight: 'bold', size: 11, family: 'Sarabun' }, 
+            formatter: v => v + '%' 
+          }
         });
+        // 💡 ไอเดียที่ 1: เปิดแสดงตัวเลข % บนเส้นประสีเทา (Benchmark) และใช้ชื่อป้ายกำกับตามบริบทจริง
         datasets.push({
-          label: '% เฉลี่ยรวมทั้งบริษัท (Benchmark)',
+          label: benchmarkLabel,
           data: allAvgData,
           borderColor: '#64748b',
           backgroundColor: '#64748b',
           borderWidth: 2,
           borderDash: [6, 6],
           tension: 0.3,
-          pointRadius: 3,
-          datalabels: { display: false }
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          datalabels: { 
+            display: true,
+            align: (ctx) => {
+              const idx = ctx.dataIndex;
+              return allAvgData[idx] > specificChData[idx] ? 'top' : 'bottom';
+            },
+            color: '#64748b',
+            font: { weight: 'bold', size: 10, family: 'Sarabun' },
+            formatter: v => v + '%'
+          }
         });
       } else if (channelFilter === 'GROUP_SHOP') {
         datasets.push({
