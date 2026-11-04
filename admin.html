@@ -179,7 +179,7 @@
               <label class="fw-bold small text-secondary mb-1"><i class="fas fa-calendar-alt text-danger me-1"></i> 1. เลือกช่วงเวลา / เดือน:</label>
               <select id="trend-month-filter" class="form-select form-select-sm fw-bold border-secondary-subtle" style="border-radius: 10px; padding: 8px 12px;" onchange="onMonthFilterChange()">
                 <option value="ACTIVE_ONLY">🟢 แคมเปญที่กำลังดำเนินการอยู่</option>
-                <option value="ALL_TIME">📅 ทุกแคมเปญทั้งหมด</option>
+                <option value="ALL_ENDED">📅 ทุกแคมเปญที่สิ้นสุดแล้ว (สะสมทั้งหมด)</option>
               </select>
             </div>
             <div class="col-md-4">
@@ -447,6 +447,7 @@
         
         populateAnalyticsFilters();
         updateSmartCategoryDropdown(true);
+        syncMonthDropdownLabels();
         populateFocusTopicDropdown();
 
         filterTable('กำลังดำเนินการ');
@@ -457,11 +458,71 @@
       }
     }
 
+    // 🎯 ฟังก์ชันกลางตรวจสอบว่าแคมเปญตรงกับช่วงเวลา/เดือนที่เลือกในช่องที่ 1 หรือไม่
+    // - ACTIVE_ONLY : เฉพาะแคมเปญที่มีสถานะ "กำลังดำเนินการ"
+    // - ALL_ENDED   : เฉพาะแคมเปญที่มีสถานะ "สิ้นสุดแล้ว" ทั้งหมด (ป้องกันแคมเปญที่ยังไม่จบมาดึงกราฟหัวทิ่มและฉุดค่าเฉลี่ยรวม)
+    // - YYYY-MM     : เฉพาะแคมเปญที่มีสถานะ "สิ้นสุดแล้ว" และมีวันสิ้นสุด (rawDate) อยู่ในเดือนนั้นๆ
     function isTopicInSelectedMonthPeriod(t, monthFilter) {
-      if (monthFilter === 'ALL_TIME') return true;
       if (monthFilter === 'ACTIVE_ONLY') return t.status === 'กำลังดำเนินการ';
+      if (monthFilter === 'ALL_ENDED' || monthFilter === 'ALL_TIME') return t.status === 'สิ้นสุดแล้ว';
       let endMonthStr = t.rawDate || t.rawStartDate || "";
       return t.status === 'สิ้นสุดแล้ว' && endMonthStr.startsWith(monthFilter);
+    }
+
+    // 🎯 ตรวจสอบว่าแคมเปญตรงกับช่องทาง (ช่องที่ 2) และประเภทแคมเปญ (ช่องที่ 3) หรือไม่
+    function doesTopicMatchChannelAndCategory(t, channelFilter, filterCat, scopeMode) {
+      const isSingleChannel = channelFilter.startsWith('CH:');
+      const targetCh = isSingleChannel ? channelFilter.substring(3) : null;
+
+      if (isSingleChannel && !isChannelTargetedByTopic(targetCh, t)) return false;
+
+      let cat = (t.category || "").toString().trim();
+      let nameLower = (t.name || "").toString().toLowerCase();
+
+      if (channelFilter === 'GROUP_SHOP' && (cat === 'Geo-Based' || cat === 'Non Shop')) return false;
+      if (channelFilter === 'GROUP_GEO' && cat === 'Shop') return false;
+
+      if (filterCat === 'All') {
+        if (scopeMode === 'SHOP') return cat !== 'Geo-Based' && cat !== 'Non Shop';
+        if (scopeMode === 'GEO') return cat !== 'Shop';
+        return true;
+      }
+      if (filterCat === 'Morning-Brief') return nameLower.includes('morning brief') && cat !== 'Geo-Based' && cat !== 'Non Shop';
+      if (filterCat === 'Category-All') return cat === 'All' || cat === '-';
+      if (filterCat === 'Shop') return cat === 'Shop';
+      if (filterCat === 'Geo-Based') return cat === 'Geo-Based';
+      return true;
+    }
+
+    // 🎯 อัปเดตตัวเลขจำนวนแคมเปญในวงเล็บของ "ช่องที่ 1" ให้ตรงกับช่องทาง (ช่อง 2) และหมวดหมู่ (ช่อง 3) ที่เลือกจริง 100%
+    function syncMonthDropdownLabels() {
+      const monthSelect = document.getElementById('trend-month-filter');
+      if (!monthSelect) return;
+
+      const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'GROUP_SHOP';
+      const filterCat = document.getElementById('trend-category-filter') ? document.getElementById('trend-category-filter').value : 'Shop';
+      const scopeMode = getChannelScopeMode();
+
+      const countForPeriod = (periodVal) => {
+        return globalTopics.filter(t => {
+          if (!isTopicInSelectedMonthPeriod(t, periodVal)) return false;
+          return doesTopicMatchChannelAndCategory(t, channelFilter, filterCat, scopeMode);
+        }).length;
+      };
+
+      Array.from(monthSelect.options).forEach(opt => {
+        const val = opt.value;
+        const c = countForPeriod(val);
+        if (val === 'ACTIVE_ONLY') {
+          opt.text = `🟢 แคมเปญที่กำลังดำเนินการอยู่ (${c} แคมเปญ)`;
+        } else if (val === 'ALL_ENDED') {
+          opt.text = `📅 ทุกแคมเปญที่สิ้นสุดแล้ว (${c} แคมเปญ)`;
+        } else if (/^\d{4}-\d{2}$/.test(val)) {
+          const parts = val.split('-');
+          const mName = THAI_MONTHS[parseInt(parts[1], 10) - 1] || parts[1];
+          opt.text = `เดือน${mName} ${parts[0]} (${c} แคมเปญ)`;
+        }
+      });
     }
 
     function populateAnalyticsFilters() {
@@ -469,21 +530,24 @@
       const prevMonthVal = monthSelect.dataset.initialized ? monthSelect.value : null;
 
       let activeCount = 0;
+      let endedTotalCount = 0;
       let monthSet = new Set();
       globalTopics.forEach(t => {
         if (t.status === 'กำลังดำเนินการ') {
           activeCount++;
-        }
-        let dStr = t.rawDate || t.rawStartDate;
-        if (t.status === 'สิ้นสุดแล้ว' && dStr && dStr.length >= 7) {
-          monthSet.add(dStr.substring(0, 7));
+        } else if (t.status === 'สิ้นสุดแล้ว') {
+          endedTotalCount++;
+          let dStr = t.rawDate || t.rawStartDate;
+          if (dStr && dStr.length >= 7) {
+            monthSet.add(dStr.substring(0, 7));
+          }
         }
       });
       let sortedMonths = Array.from(monthSet).sort().reverse();
       
       let monthHtml = `
         <option value="ACTIVE_ONLY">🟢 แคมเปญที่กำลังดำเนินการอยู่ (${activeCount} แคมเปญ)</option>
-        <option value="ALL_TIME">📅 ทุกแคมเปญทั้งหมด (${globalTopics.length} แคมเปญ)</option>
+        <option value="ALL_ENDED">📅 ทุกแคมเปญที่สิ้นสุดแล้ว (${endedTotalCount} แคมเปญ)</option>
       `;
       if (sortedMonths.length > 0) {
         monthHtml += `<optgroup label="--- เลือกตามเดือน (แคมเปญที่สิ้นสุดในเดือนนั้น) ---">`;
@@ -504,12 +568,11 @@
         } else if (sortedMonths.length > 0) {
           monthSelect.value = sortedMonths[0];
         } else {
-          monthSelect.value = "ALL_TIME";
+          monthSelect.value = "ALL_ENDED";
         }
       }
       monthSelect.dataset.initialized = "true";
 
-      // 🎯 ตัด "เปรียบเทียบ All Branded vs Geo-Based" ออก และให้เริ่มต้นที่ "รวมกลุ่ม All Branded ( Retail Shop )"
       const chSelect = document.getElementById('trend-channel-filter');
       const currentChVal = chSelect.value && chSelect.value !== "COMPARE_ALL" ? chSelect.value : "GROUP_SHOP";
       let shopChannels = new Set();
@@ -637,23 +700,27 @@
 
     function onMonthFilterChange() {
       updateSmartCategoryDropdown(false);
+      syncMonthDropdownLabels();
       populateFocusTopicDropdown();
       renderTrendCharts();
     }
 
     function onChannelFilterChange() {
       updateSmartCategoryDropdown(true);
+      syncMonthDropdownLabels();
       populateFocusTopicDropdown();
       renderTrendCharts();
     }
 
     function onCategoryFilterChange() {
+      syncMonthDropdownLabels();
       populateFocusTopicDropdown();
       renderTrendCharts();
     }
 
     function onPeriodOrCategoryFilterChange() {
       updateSmartCategoryDropdown(false);
+      syncMonthDropdownLabels();
       populateFocusTopicDropdown();
       renderTrendCharts();
     }
@@ -684,6 +751,7 @@
       const monthFilter = document.getElementById('trend-month-filter') ? document.getElementById('trend-month-filter').value : 'ACTIVE_ONLY';
       const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'GROUP_SHOP';
       const filterCat = document.getElementById('trend-category-filter') ? document.getElementById('trend-category-filter').value : 'All';
+      const scopeMode = getChannelScopeMode();
 
       const isGeoMode = isCurrentFocusGeoMode();
 
@@ -698,31 +766,8 @@
       }
 
       let eligibleTopics = globalTopics.filter(t => {
-        let cat = (t.category || "").toString().trim();
-        let topicNameLower = (t.name || "").toString().toLowerCase();
-
-        if (filterCat === 'Morning-Brief' && !topicNameLower.includes('morning brief')) return false;
-        if (filterCat === 'Category-All' && !(cat === 'All' || cat === '-')) return false;
-        if (filterCat === 'Shop' && cat !== 'Shop') return false;
-        if (filterCat === 'Geo-Based' && cat !== 'Geo-Based') return false;
-
-        if (channelFilter === 'GROUP_GEO') {
-          if (filterCat === 'All' && cat === 'Shop') return false;
-          if (filterCat === 'Geo-Based' && cat !== 'Geo-Based') return false;
-        } else if (channelFilter === 'GROUP_SHOP') {
-          if (cat === 'Geo-Based' || cat === 'Non Shop') return false;
-        } else if (channelFilter.startsWith('CH:')) {
-          const targetCh = channelFilter.substring(3);
-          if (!isChannelTargetedByTopic(targetCh, t)) return false;
-          if (isGeoBasedChannel(targetCh)) {
-            if (cat === 'Shop') return false;
-          } else {
-            if (cat === 'Geo-Based' || cat === 'Non Shop') return false;
-          }
-        }
-
         if (!isTopicInSelectedMonthPeriod(t, monthFilter)) return false;
-        return true;
+        return doesTopicMatchChannelAndCategory(t, channelFilter, filterCat, scopeMode);
       });
 
       eligibleTopics.sort((a, b) => new Date(b.rawStartDate) - new Date(a.rawStartDate));
@@ -774,6 +819,7 @@
         document.getElementById('doughnut-section').classList.add('d-none');
         document.getElementById('trend-view').classList.remove('d-none');
         updateSmartCategoryDropdown(false);
+        syncMonthDropdownLabels();
         populateFocusTopicDropdown();
         renderTrendCharts();
         return;
@@ -965,6 +1011,7 @@
       });
       if (baselinePool.length === 0) {
         baselinePool = globalTopics.filter(t => {
+          if (t.status !== 'สิ้นสุดแล้ว') return false;
           if (isGeoFocus) return t.category === 'Geo-Based';
           return t.category !== 'Geo-Based' && t.category !== 'Non Shop';
         });
@@ -1261,26 +1308,13 @@
       const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'GROUP_SHOP';
       const filterCat = document.getElementById('trend-category-filter') ? document.getElementById('trend-category-filter').value : 'All';
       const focusedTopicName = document.getElementById('trend-topic-focus') ? document.getElementById('trend-topic-focus').value : '';
+      const scopeMode = getChannelScopeMode();
 
       let filteredTopics = globalTopics.filter(t => {
-        let topicNameLower = (t.name || "").toString().toLowerCase();
-        let cat = (t.category || "").toString().trim();
-
-        if (filterCat === 'Morning-Brief' && !topicNameLower.includes('morning brief')) return false;
-        if (filterCat === 'Category-All' && !(cat === 'All' || cat === '-')) return false;
-        if (filterCat === 'Shop' && cat !== 'Shop') return false;
-        if (filterCat === 'Geo-Based' && cat !== 'Geo-Based') return false;
-
-        if (!focusedTopicName) {
-          if (channelFilter === 'GROUP_SHOP' && (cat === 'Geo-Based' || cat === 'Non Shop')) return false;
-          if (channelFilter === 'GROUP_GEO' && cat === 'Shop') return false;
-          if (channelFilter.startsWith('CH:')) {
-            const targetCh = channelFilter.substring(3);
-            if (!isChannelTargetedByTopic(targetCh, t)) return false;
-          }
-        }
-
         if (!isTopicInSelectedMonthPeriod(t, monthFilter)) return false;
+        if (!focusedTopicName) {
+          return doesTopicMatchChannelAndCategory(t, channelFilter, filterCat, scopeMode);
+        }
         return true;
       });
 
@@ -1316,6 +1350,7 @@
 
       const monthText = document.getElementById('trend-month-filter').selectedOptions[0].text;
       const channelText = document.getElementById('trend-channel-filter').selectedOptions[0].text;
+      const categoryText = document.getElementById('trend-category-filter').selectedOptions[0].text;
       document.getElementById('trend-active-filter-badge').innerText = `${monthText} | ${channelText}`;
 
       if (activeTopicsForTrend.length === 0) {
@@ -1329,7 +1364,7 @@
         document.getElementById('kpi-top-sub').innerText = '-';
         document.getElementById('kpi-low-channel').innerText = '-';
         document.getElementById('kpi-low-sub').innerText = '-';
-        document.getElementById('ai-summary-text').innerHTML = `<span class="text-muted">ขณะนี้ไม่มีแคมเปญในหมวดหมู่ที่เลือก (สามารถสลับช่องที่ 1 เพื่อดูสรุปผลย้อนหลังรายเดือน หรือดูทุกแคมเปญทั้งหมดได้ครับ)</span>`;
+        document.getElementById('ai-summary-text').innerHTML = `<span class="text-muted">ขณะนี้ไม่มีแคมเปญในหมวดหมู่ที่เลือก (สามารถสลับช่องที่ 1 เพื่อดูสรุปผลย้อนหลังรายเดือน หรือดูทุกแคมเปญที่สิ้นสุดแล้วได้ครับ)</span>`;
         document.getElementById('analytics-matrix-body').innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">ไม่พบข้อมูลแคมเปญที่ตรงกับตัวกรองที่เลือก</td></tr>`;
         return;
       }
@@ -1440,7 +1475,7 @@
         : (ongoingCampaignCount > 0
             ? `${rawTrendDataList.length} แคมเปญ (กำลังดำเนินการทั้งหมด)`
             : `${rawTrendDataList.length} แคมเปญ (สิ้นสุดแล้วทั้งหมด)`);
-      document.getElementById('matrix-subtitle').innerHTML = `เงื่อนไข: ${monthText} • ${channelText} • รวม <b>${statusBreakdownText}</b>`;
+      document.getElementById('matrix-subtitle').innerHTML = `เงื่อนไข: ${monthText} • ${channelText} • ${categoryText}`;
 
       let focusSeries = rawTrendDataList.map(d => d.focusPercent);
       let periodAvg = focusSeries.length > 0 ? Math.round(focusSeries.reduce((a, b) => a + b, 0) / focusSeries.length) : 0;
@@ -1552,8 +1587,6 @@
         `;
       }
 
-      // 🎯 หากมีแคมเปญเพียง 1-2 เรื่อง ให้แสดงเป็นกราฟแท่งเปรียบเทียบแทนจุดลอยเดี่ยวๆ
-      // และหากมีแคมเปญมากกว่า 15 เรื่อง (เช่น ทุกแคมเปญทั้งหมด) ให้แสดงตัวเลขเฉพาะจุดสำคัญ (แรก, สูงสุด, ต่ำสุด, ล่าสุด) ไม่ให้ป้ายซ้อนทับกัน
       const useBarForFewItems = rawTrendDataList.length <= 2;
       const isCrowdedChart = rawTrendDataList.length > 15;
       const mainChartType = useBarForFewItems ? 'bar' : 'line';
