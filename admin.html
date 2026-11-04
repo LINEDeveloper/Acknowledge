@@ -185,7 +185,6 @@
             <div class="col-md-4">
               <label class="fw-bold small text-secondary mb-1"><i class="fas fa-sitemap text-primary me-1"></i> 2. เลือกมุมมองช่องทาง (Channel):</label>
               <select id="trend-channel-filter" class="form-select form-select-sm fw-bold border-secondary-subtle" style="border-radius: 10px; padding: 8px 12px;" onchange="onChannelFilterChange()">
-                <option value="COMPARE_ALL">⚖️ เปรียบเทียบ All Branded vs Geo-Based</option>
                 <option value="GROUP_SHOP">🏪 รวมกลุ่ม All Branded ( Retail Shop )</option>
                 <option value="GROUP_GEO">📍 รวมกลุ่ม Geo-Based ( Non Shop )</option>
               </select>
@@ -193,11 +192,10 @@
             <div class="col-md-4">
               <label class="fw-bold small text-secondary mb-1"><i class="fas fa-tags text-success me-1"></i> 3. กรองประเภทแคมเปญ:</label>
               <select id="trend-category-filter" class="form-select form-select-sm fw-bold border-secondary-subtle" style="border-radius: 10px; padding: 8px 12px;" onchange="onCategoryFilterChange()">
-                <option value="All">ดูทั้งหมด (ผสมทุกประเภท)</option>
+                <option value="Shop">🏪 เฉพาะประเภท Shop</option>
+                <option value="All">📌 รวมข่าวที่ต้องอ่าน (Shop + All)</option>
                 <option value="Morning-Brief">☕ เฉพาะข่าว Morning Brief</option>
-                <option value="Category-All">เฉพาะประเภท All (ทุกคน)</option>
-                <option value="Shop">เฉพาะประเภท Shop</option>
-                <option value="Geo-Based">เฉพาะประเภท Geo-Based</option>
+                <option value="Category-All">🌐 เฉพาะประเภท All ทุกคน</option>
               </select>
             </div>
           </div>
@@ -278,7 +276,7 @@
               <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                 <div>
                   <h6 class="fw-bold m-0" style="color:#222;" id="line-chart-title"><i class="fas fa-wave-square me-2 text-primary"></i> แนวโน้มการรับทราบรายแคมเปญ (Progression)</h6>
-                  <small class="text-muted" id="line-chart-subtitle"><i class="fas fa-mouse-pointer me-1 text-danger"></i> คลิกที่จุดกราฟเพื่อดูยอดอ่านแล้ว / ค้างอ่าน รายแคมเปญ</small>
+                  <small class="text-muted" id="line-chart-subtitle"><i class="fas fa-mouse-pointer me-1 text-danger"></i> คลิกที่กราฟเพื่อดูยอดอ่านแล้ว / ค้างอ่าน รายแคมเปญ</small>
                 </div>
                 <span class="badge bg-light text-dark border" id="trend-active-filter-badge">แคมเปญที่กำลังดำเนินการอยู่</span>
               </div>
@@ -448,7 +446,7 @@
         globalTopics.forEach(t => { topicCategoryMap[t.name] = t.category; });
         
         populateAnalyticsFilters();
-        updateSmartCategoryDropdown(false);
+        updateSmartCategoryDropdown(true);
         populateFocusTopicDropdown();
 
         filterTable('กำลังดำเนินการ');
@@ -459,10 +457,6 @@
       }
     }
 
-    // 🎯 ฟังก์ชันกลางตรวจสอบว่าแคมเปญตรงกับช่วงเวลา/เดือนที่เลือกในช่องที่ 1 หรือไม่
-    // - ACTIVE_ONLY : เฉพาะแคมเปญที่มีสถานะ "กำลังดำเนินการ"
-    // - ALL_TIME    : ทุกแคมเปญทั้งหมด
-    // - YYYY-MM     : เฉพาะแคมเปญที่มีสถานะ "สิ้นสุดแล้ว" และมีวันสิ้นสุด (rawDate) อยู่ในเดือนนั้นๆ
     function isTopicInSelectedMonthPeriod(t, monthFilter) {
       if (monthFilter === 'ALL_TIME') return true;
       if (monthFilter === 'ACTIVE_ONLY') return t.status === 'กำลังดำเนินการ';
@@ -502,8 +496,6 @@
       }
       monthSelect.innerHTML = monthHtml;
 
-      // Smart Fallback: หากโหลดครั้งแรกแล้วมีแคมเปญกำลังดำเนินการ ให้เลือก ACTIVE_ONLY
-      // แต่ถ้าขณะนั้นไม่มีแคมเปญกำลังดำเนินการเลย (0 แคมเปญ) ให้สลับไปแสดงเดือนล่าสุดที่สิ้นสุดแล้วอัตโนมัติเพื่อไม่ให้หน้ากราฟโล่ง
       if (prevMonthVal && [...monthSelect.options].some(o => o.value === prevMonthVal)) {
         monthSelect.value = prevMonthVal;
       } else {
@@ -517,8 +509,9 @@
       }
       monthSelect.dataset.initialized = "true";
 
+      // 🎯 ตัด "เปรียบเทียบ All Branded vs Geo-Based" ออก และให้เริ่มต้นที่ "รวมกลุ่ม All Branded ( Retail Shop )"
       const chSelect = document.getElementById('trend-channel-filter');
-      const currentChVal = chSelect.value || "COMPARE_ALL";
+      const currentChVal = chSelect.value && chSelect.value !== "COMPARE_ALL" ? chSelect.value : "GROUP_SHOP";
       let shopChannels = new Set();
       let geoChannels = new Set();
 
@@ -532,7 +525,6 @@
       }
 
       let chHtml = `
-        <option value="COMPARE_ALL">⚖️ เปรียบเทียบ All Branded vs Geo-Based</option>
         <option value="GROUP_SHOP">🏪 รวมกลุ่ม All Branded ( Retail Shop )</option>
         <option value="GROUP_GEO">📍 รวมกลุ่ม Geo-Based ( Non Shop )</option>
       `;
@@ -556,21 +548,22 @@
       chSelect.innerHTML = chHtml;
       if ([...chSelect.options].some(o => o.value === currentChVal)) {
         chSelect.value = currentChVal;
+      } else {
+        chSelect.value = "GROUP_SHOP";
       }
     }
 
     // =========================================================================
-    // 🚀 All-in-One Smart Cascading Filter (นับจำนวนแคมเปญตามช่วงเวลาที่เลือกแม่นยำ 100%)
+    // 🚀 All-in-One Smart Cascading Filter (แยกชัดเจนระหว่างกลุ่ม Shop และ Geo-Based)
     // =========================================================================
     function getChannelScopeMode() {
-      const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'COMPARE_ALL';
-      if (channelFilter === 'GROUP_SHOP') return 'SHOP';
+      const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'GROUP_SHOP';
       if (channelFilter === 'GROUP_GEO') return 'GEO';
       if (channelFilter.startsWith('CH:')) {
         const chName = channelFilter.substring(3);
         return isShopChannel(chName) ? 'SHOP' : 'GEO';
       }
-      return 'ALL';
+      return 'SHOP';
     }
 
     function updateSmartCategoryDropdown(autoSelectDefault = false) {
@@ -579,7 +572,7 @@
 
       const prevValue = catSelect.value;
       const monthFilter = document.getElementById('trend-month-filter') ? document.getElementById('trend-month-filter').value : 'ACTIVE_ONLY';
-      const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'COMPARE_ALL';
+      const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'GROUP_SHOP';
       const scopeMode = getChannelScopeMode();
       const isSingleChannel = channelFilter.startsWith('CH:');
       const targetCh = isSingleChannel ? channelFilter.substring(3) : null;
@@ -622,22 +615,13 @@
           { value: 'Category-All', label: `🌐 เฉพาะประเภท All ทุกคน (${countForOption('Category-All')} แคมเปญ)` }
         ];
         defaultSelected = countForOption('Shop') > 0 ? 'Shop' : 'All';
-      } else if (scopeMode === 'GEO') {
+      } else {
         allowedOptions = [
           { value: 'Geo-Based', label: `📍 เฉพาะประเภท Geo-Based (${countForOption('Geo-Based')} แคมเปญ)` },
           { value: 'All', label: `📌 รวมข่าวที่ต้องอ่าน (Geo-Based + All) (${countForOption('All')} แคมเปญ)` },
           { value: 'Category-All', label: `🌐 เฉพาะประเภท All ทุกคน (${countForOption('Category-All')} แคมเปญ)` }
         ];
         defaultSelected = countForOption('Geo-Based') > 0 ? 'Geo-Based' : 'All';
-      } else {
-        allowedOptions = [
-          { value: 'All', label: `ดูทั้งหมด ผสมทุกประเภท (${countForOption('All')} แคมเปญ)` },
-          { value: 'Morning-Brief', label: `☕ เฉพาะข่าว Morning Brief (${countForOption('Morning-Brief')} แคมเปญ)` },
-          { value: 'Category-All', label: `🌐 เฉพาะประเภท All ทุกคน (${countForOption('Category-All')} แคมเปญ)` },
-          { value: 'Shop', label: `🏪 เฉพาะประเภท Shop (${countForOption('Shop')} แคมเปญ)` },
-          { value: 'Geo-Based', label: `📍 เฉพาะประเภท Geo-Based (${countForOption('Geo-Based')} แคมเปญ)` }
-        ];
-        defaultSelected = 'All';
       }
 
       catSelect.innerHTML = allowedOptions.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
@@ -675,7 +659,7 @@
     }
 
     function isCurrentFocusGeoMode(selectedTopicObj = null) {
-      const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'COMPARE_ALL';
+      const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'GROUP_SHOP';
       const filterCat = document.getElementById('trend-category-filter') ? document.getElementById('trend-category-filter').value : 'All';
 
       if (selectedTopicObj) {
@@ -698,7 +682,7 @@
       const prevSelected = focusSelect.value;
 
       const monthFilter = document.getElementById('trend-month-filter') ? document.getElementById('trend-month-filter').value : 'ACTIVE_ONLY';
-      const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'COMPARE_ALL';
+      const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'GROUP_SHOP';
       const filterCat = document.getElementById('trend-category-filter') ? document.getElementById('trend-category-filter').value : 'All';
 
       const isGeoMode = isCurrentFocusGeoMode();
@@ -735,8 +719,6 @@
           } else {
             if (cat === 'Geo-Based' || cat === 'Non Shop') return false;
           }
-        } else {
-          if (filterCat !== 'Geo-Based' && (cat === 'Geo-Based' || cat === 'Non Shop')) return false;
         }
 
         if (!isTopicInSelectedMonthPeriod(t, monthFilter)) return false;
@@ -1078,7 +1060,6 @@
         document.getElementById('kpi-low-channel').title = lowCh.channel;
         document.getElementById('kpi-low-sub').innerHTML = `ได้ <b>${lowCh.percent}%</b> (ค้างอ่าน <b>${lowCh.unread.toLocaleString()}</b> คน)`;
 
-        // 💡 แยกคำแนะนำตามสถานะของหัวข้อข่าวที่เจาะลึก (กำลังดำเนินการ vs สิ้นสุดแล้ว)
         const totalUnreadGroup = totalGroupTarget - totalGroupAck;
         const isTopicOngoing = selectedTopicObj.status === "กำลังดำเนินการ";
         const statusText = isTopicOngoing
@@ -1277,7 +1258,7 @@
     // =========================================================================
     function renderTrendCharts() {
       const monthFilter = document.getElementById('trend-month-filter') ? document.getElementById('trend-month-filter').value : 'ACTIVE_ONLY';
-      const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'COMPARE_ALL';
+      const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'GROUP_SHOP';
       const filterCat = document.getElementById('trend-category-filter') ? document.getElementById('trend-category-filter').value : 'All';
       const focusedTopicName = document.getElementById('trend-topic-focus') ? document.getElementById('trend-topic-focus').value : '';
 
@@ -1571,9 +1552,21 @@
         `;
       }
 
-      // 🎯 หากมีแคมเปญเพียง 1-2 เรื่อง (เช่น ในโหมดกำลังดำเนินการ) ให้แสดงเป็นกราฟแท่งเปรียบเทียบแทนจุดลอยเดี่ยวๆ
+      // 🎯 หากมีแคมเปญเพียง 1-2 เรื่อง ให้แสดงเป็นกราฟแท่งเปรียบเทียบแทนจุดลอยเดี่ยวๆ
+      // และหากมีแคมเปญมากกว่า 15 เรื่อง (เช่น ทุกแคมเปญทั้งหมด) ให้แสดงตัวเลขเฉพาะจุดสำคัญ (แรก, สูงสุด, ต่ำสุด, ล่าสุด) ไม่ให้ป้ายซ้อนทับกัน
       const useBarForFewItems = rawTrendDataList.length <= 2;
+      const isCrowdedChart = rawTrendDataList.length > 15;
       const mainChartType = useBarForFewItems ? 'bar' : 'line';
+
+      const shouldShowDataLabel = (seriesArr, idx) => {
+        if (!isCrowdedChart) return true;
+        const len = seriesArr.length;
+        if (idx === 0 || idx === len - 1) return true;
+        const maxVal = Math.max(...seriesArr);
+        const minVal = Math.min(...seriesArr);
+        if (idx === seriesArr.indexOf(maxVal) || idx === seriesArr.indexOf(minVal)) return true;
+        return false;
+      };
 
       let datasets = [];
       if (isSingleChannel) {
@@ -1587,9 +1580,10 @@
           maxBarThickness: 55,
           borderWidth: useBarForFewItems ? 0 : 3.5,
           tension: 0.3,
-          pointRadius: 5,
+          pointRadius: isCrowdedChart ? 3.5 : 5,
           pointHoverRadius: 8,
           datalabels: { 
+            display: (ctx) => shouldShowDataLabel(specificChData, ctx.dataIndex),
             align: useBarForFewItems ? 'center' : (ctx) => {
               const idx = ctx.dataIndex;
               return specificChData[idx] >= allAvgData[idx] ? 'top' : 'bottom';
@@ -1612,10 +1606,10 @@
           borderWidth: useBarForFewItems ? 0 : 2,
           borderDash: [6, 6],
           tension: 0.3,
-          pointRadius: 4,
+          pointRadius: isCrowdedChart ? 2.5 : 4,
           pointHoverRadius: 6,
           datalabels: { 
-            display: true,
+            display: (ctx) => !isCrowdedChart && shouldShowDataLabel(allAvgData, ctx.dataIndex),
             align: useBarForFewItems ? 'center' : (ctx) => {
               const idx = ctx.dataIndex;
               return allAvgData[idx] > specificChData[idx] ? 'top' : 'bottom';
@@ -1624,28 +1618,6 @@
             color: useBarForFewItems ? '#ffffff' : '#64748b',
             backgroundColor: useBarForFewItems ? 'transparent' : 'rgba(255, 255, 255, 0.85)',
             font: { weight: 'bold', size: useBarForFewItems ? 12 : 10, family: 'Sarabun' },
-            formatter: v => v + '%'
-          }
-        });
-      } else if (channelFilter === 'GROUP_SHOP') {
-        datasets.push({
-          type: mainChartType,
-          label: '% กลุ่ม All Branded ( Retail Shop )',
-          data: shopData,
-          borderColor: '#002d72',
-          backgroundColor: useBarForFewItems ? 'rgba(0, 45, 114, 0.88)' : '#002d72',
-          borderRadius: useBarForFewItems ? 8 : 0,
-          maxBarThickness: 55,
-          borderWidth: useBarForFewItems ? 0 : 3.5,
-          tension: 0.3,
-          pointRadius: 5,
-          pointHoverRadius: 8,
-          datalabels: {
-            align: useBarForFewItems ? 'center' : 'top',
-            anchor: 'center',
-            color: useBarForFewItems ? '#ffffff' : '#002d72',
-            backgroundColor: useBarForFewItems ? 'transparent' : 'rgba(255, 255, 255, 0.85)',
-            font: { weight: 'bold', size: useBarForFewItems ? 13 : 11, family: 'Sarabun' },
             formatter: v => v + '%'
           }
         });
@@ -1660,9 +1632,10 @@
           maxBarThickness: 55,
           borderWidth: useBarForFewItems ? 0 : 3.5,
           tension: 0.3,
-          pointRadius: 5,
+          pointRadius: isCrowdedChart ? 3.5 : 5,
           pointHoverRadius: 8,
           datalabels: {
+            display: (ctx) => shouldShowDataLabel(geoData, ctx.dataIndex),
             align: useBarForFewItems ? 'center' : 'top',
             anchor: 'center',
             color: useBarForFewItems ? '#ffffff' : '#ff0000',
@@ -1672,52 +1645,28 @@
           }
         });
       } else {
-        if (filterCat !== 'Geo-Based') {
-          datasets.push({
-            type: mainChartType,
-            label: '% All Branded (Shop)',
-            data: shopData,
-            borderColor: '#002d72',
-            backgroundColor: useBarForFewItems ? 'rgba(0, 45, 114, 0.88)' : '#002d72',
-            borderRadius: useBarForFewItems ? 8 : 0,
-            maxBarThickness: 55,
-            borderWidth: useBarForFewItems ? 0 : 3,
-            tension: 0.3,
-            pointRadius: 5,
-            pointHoverRadius: 8,
-            datalabels: {
-              align: useBarForFewItems ? 'center' : 'top',
-              anchor: 'center',
-              color: useBarForFewItems ? '#ffffff' : '#002d72',
-              backgroundColor: useBarForFewItems ? 'transparent' : 'rgba(255, 255, 255, 0.85)',
-              font: { weight: 'bold', size: useBarForFewItems ? 13 : 11, family: 'Sarabun' },
-              formatter: v => v + '%'
-            }
-          });
-        }
-        if (filterCat !== 'Morning-Brief' && filterCat !== 'Shop') {
-          datasets.push({
-            type: mainChartType,
-            label: '% Geo-Based (Non Shop)',
-            data: geoData,
-            borderColor: '#ff0000',
-            backgroundColor: useBarForFewItems ? 'rgba(255, 0, 0, 0.85)' : '#ff0000',
-            borderRadius: useBarForFewItems ? 8 : 0,
-            maxBarThickness: 55,
-            borderWidth: useBarForFewItems ? 0 : 3,
-            tension: 0.3,
-            pointRadius: 5,
-            pointHoverRadius: 8,
-            datalabels: {
-              align: useBarForFewItems ? 'center' : 'bottom',
-              anchor: 'center',
-              color: useBarForFewItems ? '#ffffff' : '#ff0000',
-              backgroundColor: useBarForFewItems ? 'transparent' : 'rgba(255, 255, 255, 0.85)',
-              font: { weight: 'bold', size: useBarForFewItems ? 13 : 11, family: 'Sarabun' },
-              formatter: v => v + '%'
-            }
-          });
-        }
+        datasets.push({
+          type: mainChartType,
+          label: '% กลุ่ม All Branded ( Retail Shop )',
+          data: shopData,
+          borderColor: '#002d72',
+          backgroundColor: useBarForFewItems ? 'rgba(0, 45, 114, 0.88)' : '#002d72',
+          borderRadius: useBarForFewItems ? 8 : 0,
+          maxBarThickness: 55,
+          borderWidth: useBarForFewItems ? 0 : 3.5,
+          tension: 0.3,
+          pointRadius: isCrowdedChart ? 3.5 : 5,
+          pointHoverRadius: 8,
+          datalabels: {
+            display: (ctx) => shouldShowDataLabel(shopData, ctx.dataIndex),
+            align: useBarForFewItems ? 'center' : 'top',
+            anchor: 'center',
+            color: useBarForFewItems ? '#ffffff' : '#002d72',
+            backgroundColor: useBarForFewItems ? 'transparent' : 'rgba(255, 255, 255, 0.85)',
+            font: { weight: 'bold', size: useBarForFewItems ? 13 : 11, family: 'Sarabun' },
+            formatter: v => v + '%'
+          }
+        });
       }
 
       const ctxLine = document.getElementById('dualTrendChart').getContext('2d');
@@ -1730,11 +1679,11 @@
           maintainAspectRatio: false,
           plugins: {
             legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 12, weight: 'bold' } } },
-            datalabels: { display: true, borderRadius: 4, padding: 2 }
+            datalabels: { borderRadius: 4, padding: 2 }
           },
           scales: {
             y: { beginAtZero: true, max: 115, ticks: { callback: v => v <= 100 ? v + "%" : "" } },
-            x: { ticks: { font: { family: 'Sarabun', size: 11 } } }
+            x: { ticks: { font: { family: 'Sarabun', size: 11 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 15 } }
           },
           onClick: (e, activeEls) => {
             if (activeEls.length > 0) {
