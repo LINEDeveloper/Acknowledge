@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -88,6 +88,253 @@
     .hm-orange { background-color: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
     .hm-red { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
     .hm-gray { background-color: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0; }
+
+    /* =================================================================
+       🎨 สไตล์ปุ่ม "ประเมินเว็บ" & ป้ายคะแนน (SVG ภาพวาดแท้ 100%)
+       ================================================================= */
+    .feedback-widget-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-eval-pill {
+      background-color: #fef9e7;
+      border: 1.5px solid #fde68a;
+      color: #b45309;
+      border-radius: 50px;
+      padding: 8px 20px;
+      font-weight: 700;
+      font-size: 15px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(180, 83, 9, 0.06);
+      user-select: none;
+    }
+    .btn-eval-pill:hover {
+      background-color: #fef3c7;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(180, 83, 9, 0.12);
+    }
+    .btn-refresh-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      color: #64748b;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: 0.25s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    }
+    .btn-refresh-icon:hover {
+      background: #f8fafc;
+      color: #0f172a;
+      transform: rotate(45deg);
+    }
+    .rated-score-badge {
+      background-color: #fefce8;
+      border: 1.5px solid #fde68a;
+      border-radius: 18px;
+      padding: 7px 16px 7px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: 0.2s;
+      box-shadow: 0 3px 10px rgba(234, 179, 8, 0.08);
+      text-align: left;
+      user-select: none;
+    }
+    .rated-score-badge:hover {
+      background-color: #fef9c3;
+      transform: translateY(-1px);
+    }
+    .rated-svg-holder {
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .rated-svg-holder svg {
+      width: 42px;
+      height: 42px;
+      display: block;
+    }
+    .rated-score-main {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1;
+      letter-spacing: -0.5px;
+    }
+    .rated-score-main .out-of {
+      font-size: 13px;
+      font-weight: 800;
+      color: #d97706;
+      margin-left: 2px;
+    }
+    .rated-level-text {
+      font-size: 12px;
+      font-weight: 700;
+      color: #334155;
+      line-height: 1.25;
+      margin-top: 2px;
+    }
+    .rated-sub-text {
+      font-size: 11px;
+      font-weight: 700;
+      color: #b45309;
+      border-bottom: 1.5px dotted #d97706;
+      display: inline-block;
+      line-height: 1.2;
+      margin-top: 1px;
+    }
+
+    /* Modal ป๊อปอัปประเมินความพึงพอใจ */
+    .feedback-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(4px);
+      z-index: 10000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 15px;
+    }
+    .feedback-modal-backdrop.show {
+      display: flex;
+    }
+    .feedback-modal-card {
+      background: #ffffff;
+      border-radius: 28px;
+      max-width: 520px;
+      width: 100%;
+      padding: 32px 28px 26px;
+      position: relative;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    .feedback-close-btn {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      border: none;
+      color: #64748b;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .feedback-close-btn:hover { background: #e2e8f0; color: #0f172a; }
+    
+    .feedback-tag-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #fef9e7;
+      border: 1px solid #fde68a;
+      color: #b45309;
+      font-weight: 800;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      padding: 5px 14px;
+      border-radius: 50px;
+      margin-bottom: 12px;
+    }
+    .rating-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin: 22px 0 26px;
+    }
+    .rating-option-card {
+      border: 1.5px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 14px 6px 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .rating-option-card:hover {
+      border-color: #cbd5e1;
+      transform: translateY(-2px);
+    }
+    .rating-option-card.selected {
+      border: 2px solid #dc2626;
+      background: #fff5f5;
+      transform: scale(1.05);
+      box-shadow: 0 8px 20px rgba(220, 38, 38, 0.12);
+    }
+    .rating-svg-face {
+      width: 44px;
+      height: 44px;
+      margin-bottom: 8px;
+    }
+    .rating-svg-face svg {
+      width: 44px;
+      height: 44px;
+      display: block;
+    }
+    .rating-num {
+      font-weight: 800;
+      font-size: 15px;
+      color: #1e293b;
+      line-height: 1.1;
+    }
+    .rating-label {
+      font-size: 11px;
+      color: #64748b;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .rating-option-card.selected .rating-label {
+      color: #dc2626;
+      font-weight: 700;
+    }
+
+    .btn-feedback-later {
+      border: 1.5px solid #e2e8f0;
+      background: #fff;
+      color: #475569;
+      font-weight: 700;
+      font-size: 14px;
+      border-radius: 14px;
+      padding: 12px 20px;
+      width: 36%;
+      transition: 0.2s;
+    }
+    .btn-feedback-later:hover { background: #f8fafc; }
+    .btn-feedback-submit {
+      background: #c81e1e;
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      border-radius: 14px;
+      padding: 12px 20px;
+      width: 64%;
+      transition: 0.2s;
+      box-shadow: 0 4px 12px rgba(200, 30, 30, 0.25);
+    }
+    .btn-feedback-submit:hover { background: #b91c1c; }
   </style>
 </head>
 <body>
@@ -105,9 +352,42 @@
 
   <div class="container mb-5">
     
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
       <h4 class="fw-bold m-0"><i class="fas fa-tachometer-alt me-2 text-danger"></i> ภาพรวมระบบ</h4>
-      <div class="d-flex gap-2">
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        
+        <!-- 🌟 ปุ่มประเมินเว็บ & ป้ายคะแนน (SVG แท้ 100%) + ปุ่มรีเฟรช -->
+        <div class="feedback-widget-wrap me-1">
+          <!-- สถานะก่อนประเมิน -->
+          <div id="state-unrated" class="btn-eval-pill" onclick="openFeedbackModal()" title="คลิกเพื่อประเมินความพึงพอใจการใช้งานเว็บ">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M19 11V12C19 16.4183 15.4183 20 11 20C6.58172 20 3 16.4183 3 12C3 7.58172 6.58172 4 11 4H12" stroke="#D97706" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="8.5" cy="10.5" r="1.2" fill="#D97706"/>
+              <circle cx="13.5" cy="10.5" r="1.2" fill="#D97706"/>
+              <path d="M8 14.5C9 16 13 16 14 14.5" stroke="#D97706" stroke-width="2" stroke-linecap="round"/>
+              <path d="M18 3V9M15 6H21" stroke="#D97706" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span>ประเมินเว็บ</span>
+          </div>
+
+          <!-- สถานะหลังประเมินแล้ว (แสดงภาพวาด SVG ชุดเดียวกับป๊อปอัป) -->
+          <div id="state-rated" class="rated-score-badge d-none" onclick="openFeedbackModal()" title="คลิกเพื่อแก้ไขคะแนนประเมิน">
+            <div class="rated-svg-holder" id="badge-svg-icon"></div>
+            <div>
+              <div class="rated-score-main">
+                <span id="badge-avg-score">5.0</span><span class="out-of">/ 5.0</span>
+              </div>
+              <div class="rated-level-text" id="badge-level-text">ระดับ: ยอดเยี่ยม</div>
+              <div class="rated-sub-text" id="badge-user-sub">คุณให้ 5/5 (จาก 4 คน)</div>
+            </div>
+          </div>
+
+          <!-- ปุ่มรีเฟรชข้อมูล -->
+          <button class="btn-refresh-icon" onclick="loadData()" title="รีเฟรชข้อมูลล่าสุด">
+            <i class="fas fa-rotate-right"></i>
+          </button>
+        </div>
+
         <button class="btn btn-outline-true" onclick="downloadExcel()"><i class="fas fa-file-excel me-1"></i> โหลดไฟล์ Excel</button>
         <button class="btn btn-true" onclick="exportReport()"><i class="fas fa-envelope me-1"></i> ส่งรายงานเข้า Email</button>
       </div>
@@ -381,6 +661,29 @@
     </div>
   </div>
 
+  <!-- =================================================================
+       🌟 ป๊อปอัปประเมินความพึงพอใจ 1-5 ระดับ (SVG แท้ 100%)
+       ================================================================= -->
+  <div id="feedback-modal" class="feedback-modal-backdrop">
+    <div class="feedback-modal-card">
+      <button class="feedback-close-btn" onclick="closeFeedbackModal()"><i class="fas fa-times"></i></button>
+      
+      <div class="feedback-tag-pill">
+        <i class="fas fa-wand-magic-sparkles"></i> USER FEEDBACK
+      </div>
+      
+      <h4 class="fw-bold text-dark mb-1" style="font-weight: 800;">ประเมินความพึงพอใจการใช้งานเว็บ</h4>
+      <p class="text-muted small mb-0">คะแนนของคุณจะถูกบันทึกเพื่อนำไปพัฒนา Workspace Hub ต่อไป</p>
+
+      <div class="rating-grid" id="modal-rating-grid"></div>
+
+      <div class="d-flex gap-2">
+        <button class="btn-feedback-later" onclick="closeFeedbackModal()">ไว้คราวหลัง</button>
+        <button class="btn-feedback-submit" onclick="submitFeedbackScore()">ส่งคะแนนประเมิน</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     Chart.register(ChartDataLabels);
     
@@ -400,6 +703,119 @@
     let isWorking = false;
 
     const THAI_MONTHS = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+    // =========================================================================
+    // 🎨 ระบบปุ่มประเมินความพึงพอใจ (SVG แท้ 100% ฝั่ง Frontend)
+    // =========================================================================
+    let selectedFeedbackScore = 5;
+    let hasUserRated = false;
+
+    const RATING_SVGS = {
+      1: `<svg viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="20" fill="#FEE2E2" stroke="#DC2626" stroke-width="2.5"/>
+            <path d="M15 18L20 21M33 18L28 21" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="17.5" cy="23" r="1.8" fill="#DC2626"/>
+            <circle cx="30.5" cy="23" r="1.8" fill="#DC2626"/>
+            <path d="M17 33C19 29.5 29 29.5 31 33" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>`,
+      2: `<svg viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="20" fill="#FFEDD5" stroke="#EA580C" stroke-width="2.5"/>
+            <circle cx="17.5" cy="21" r="2" fill="#EA580C"/>
+            <circle cx="30.5" cy="21" r="2" fill="#EA580C"/>
+            <path d="M17.5 32C19.5 29.5 28.5 29.5 30.5 32" stroke="#EA580C" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>`,
+      3: `<svg viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="20" fill="#FEF9C3" stroke="#CA8A04" stroke-width="2.5"/>
+            <circle cx="17.5" cy="21" r="2" fill="#CA8A04"/>
+            <circle cx="30.5" cy="21" r="2" fill="#CA8A04"/>
+            <line x1="17" y1="30" x2="31" y2="30" stroke="#CA8A04" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>`,
+      4: `<svg viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="20" fill="#DCFCE7" stroke="#16A34A" stroke-width="2.5"/>
+            <path d="M15 21C16 19 19 19 20 21M28 21C29 19 32 19 33 21" stroke="#16A34A" stroke-width="2.2" stroke-linecap="round"/>
+            <circle cx="14" cy="25" r="2.2" fill="#86EFAC"/>
+            <circle cx="34" cy="25" r="2.2" fill="#86EFAC"/>
+            <path d="M17.5 28.5C19.5 32 28.5 32 30.5 28.5" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>`,
+      5: `<svg viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="20" fill="#FEF08A" stroke="#D97706" stroke-width="2.5"/>
+            <path d="M14.5 20.5C15.8 18 19.2 18 20.5 20.5M27.5 20.5C28.8 18 32.2 18 33.5 20.5" stroke="#78350F" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="13.5" cy="25" r="2.8" fill="#F87171" opacity="0.65"/>
+            <circle cx="34.5" cy="25" r="2.8" fill="#F87171" opacity="0.65"/>
+            <path d="M16 27.5C16 32.5 32 32.5 32 27.5H16Z" fill="#EF4444" stroke="#78350F" stroke-width="2" stroke-linejoin="round"/>
+          </svg>`
+    };
+
+    const LEVEL_LABELS = {
+      1: "ควรปรับปรุง",
+      2: "พอใช้",
+      3: "ปานกลาง",
+      4: "ดีมาก",
+      5: "ยอดเยี่ยม"
+    };
+
+    function initFeedbackWidget() {
+      const savedScore = localStorage.getItem('true_ack_feedback_score');
+      if (savedScore && RATING_SVGS[savedScore]) {
+        selectedFeedbackScore = parseInt(savedScore, 10);
+        hasUserRated = true;
+      }
+      renderFeedbackModalOptions();
+      updateFeedbackWidgetUI();
+    }
+
+    function renderFeedbackModalOptions() {
+      const grid = document.getElementById('modal-rating-grid');
+      if (!grid) return;
+      grid.innerHTML = [1, 2, 3, 4, 5].map(score => `
+        <div class="rating-option-card ${score === selectedFeedbackScore ? 'selected' : ''}" data-score="${score}" onclick="selectRatingOption(${score})">
+          <div class="rating-svg-face">${RATING_SVGS[score]}</div>
+          <div class="rating-num">${score}</div>
+          <div class="rating-label">${LEVEL_LABELS[score]}</div>
+        </div>
+      `).join('');
+    }
+
+    function openFeedbackModal() {
+      renderFeedbackModalOptions();
+      document.getElementById('feedback-modal').classList.add('show');
+    }
+
+    function closeFeedbackModal() {
+      document.getElementById('feedback-modal').classList.remove('show');
+    }
+
+    function selectRatingOption(score) {
+      selectedFeedbackScore = score;
+      document.querySelectorAll('.rating-option-card').forEach(el => {
+        el.classList.toggle('selected', parseInt(el.dataset.score, 10) === score);
+      });
+    }
+
+    function submitFeedbackScore() {
+      hasUserRated = true;
+      localStorage.setItem('true_ack_feedback_score', selectedFeedbackScore);
+      updateFeedbackWidgetUI();
+      closeFeedbackModal();
+    }
+
+    function updateFeedbackWidgetUI() {
+      const unratedEl = document.getElementById('state-unrated');
+      const ratedEl = document.getElementById('state-rated');
+      if (!unratedEl || !ratedEl) return;
+
+      if (hasUserRated) {
+        unratedEl.classList.add('d-none');
+        ratedEl.classList.remove('d-none');
+        document.getElementById('badge-svg-icon').innerHTML = RATING_SVGS[selectedFeedbackScore];
+        document.getElementById('badge-avg-score').innerText = selectedFeedbackScore.toFixed(1);
+        document.getElementById('badge-level-text').innerText = `ระดับ: ${LEVEL_LABELS[selectedFeedbackScore]}`;
+        document.getElementById('badge-user-sub').innerText = `คุณให้ ${selectedFeedbackScore}/5`;
+      } else {
+        unratedEl.classList.remove('d-none');
+        ratedEl.classList.add('d-none');
+      }
+    }
 
     function escapeHtmlAttr(str) {
       return (str || "").toString()
@@ -452,6 +868,7 @@
     }
 
     async function loadData() {
+      initFeedbackWidget();
       document.getElementById('loading-overlay').style.display = 'flex';
       try {
         const res = await fetch(`${GAS_URL}?action=adminStats`).then(r => r.json());
@@ -476,10 +893,6 @@
       }
     }
 
-    // 🎯 ฟังก์ชันกลางตรวจสอบว่าแคมเปญตรงกับช่วงเวลา/เดือนที่เลือกในช่องที่ 1 หรือไม่
-    // - ACTIVE_ONLY : เฉพาะแคมเปญที่มีสถานะ "กำลังดำเนินการ"
-    // - ALL_ENDED   : เฉพาะแคมเปญที่มีสถานะ "สิ้นสุดแล้ว" ทั้งหมด (ป้องกันแคมเปญที่ยังไม่จบมาดึงกราฟหัวทิ่มและฉุดค่าเฉลี่ยรวม)
-    // - YYYY-MM     : เฉพาะแคมเปญที่มีสถานะ "สิ้นสุดแล้ว" และมีวันสิ้นสุด (rawDate) อยู่ในเดือนนั้นๆ
     function isTopicInSelectedMonthPeriod(t, monthFilter) {
       if (monthFilter === 'ACTIVE_ONLY') return t.status === 'กำลังดำเนินการ';
       if (monthFilter === 'ALL_ENDED' || monthFilter === 'ALL_TIME') return t.status === 'สิ้นสุดแล้ว';
@@ -487,7 +900,6 @@
       return t.status === 'สิ้นสุดแล้ว' && endMonthStr.startsWith(monthFilter);
     }
 
-    // 🎯 ตรวจสอบว่าแคมเปญตรงกับช่องทาง (ช่องที่ 2) และประเภทแคมเปญ (ช่องที่ 3) หรือไม่
     function doesTopicMatchChannelAndCategory(t, channelFilter, filterCat, scopeMode) {
       const isSingleChannel = channelFilter.startsWith('CH:');
       const targetCh = isSingleChannel ? channelFilter.substring(3) : null;
@@ -512,7 +924,6 @@
       return true;
     }
 
-    // 🎯 อัปเดตตัวเลขจำนวนแคมเปญในวงเล็บของ "ช่องที่ 1" ให้ตรงกับช่องทาง (ช่อง 2) และหมวดหมู่ (ช่อง 3) ที่เลือกจริง 100%
     function syncMonthDropdownLabels() {
       const monthSelect = document.getElementById('trend-month-filter');
       if (!monthSelect) return;
