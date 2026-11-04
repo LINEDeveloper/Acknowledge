@@ -172,19 +172,19 @@
       <!-- ========================================================= -->
       <div id="trend-view" class="d-none">
         
-        <!-- ส่วนที่ 1: Smart Filter Bar -->
+        <!-- ส่วนที่ 1: Smart Filter Bar (All-in-One Cascading Filters) -->
         <div class="filter-bar-bi mb-4">
           <div class="row g-3 align-items-center">
             <div class="col-md-4">
               <label class="fw-bold small text-secondary mb-1"><i class="fas fa-calendar-alt text-danger me-1"></i> 1. เลือกช่วงเวลา / เดือน:</label>
-              <select id="trend-month-filter" class="form-select form-select-sm fw-bold border-secondary-subtle" style="border-radius: 10px; padding: 8px 12px;" onchange="onPeriodOrCategoryFilterChange()">
+              <select id="trend-month-filter" class="form-select form-select-sm fw-bold border-secondary-subtle" style="border-radius: 10px; padding: 8px 12px;" onchange="onMonthFilterChange()">
                 <option value="LAST_15">🔥 15 แคมเปญล่าสุด</option>
                 <option value="ALL_TIME">📅 ทุกแคมเปญทั้งหมด</option>
               </select>
             </div>
             <div class="col-md-4">
               <label class="fw-bold small text-secondary mb-1"><i class="fas fa-sitemap text-primary me-1"></i> 2. เลือกมุมมองช่องทาง (Channel):</label>
-              <select id="trend-channel-filter" class="form-select form-select-sm fw-bold border-secondary-subtle" style="border-radius: 10px; padding: 8px 12px;" onchange="onPeriodOrCategoryFilterChange()">
+              <select id="trend-channel-filter" class="form-select form-select-sm fw-bold border-secondary-subtle" style="border-radius: 10px; padding: 8px 12px;" onchange="onChannelFilterChange()">
                 <option value="COMPARE_ALL">⚖️ เปรียบเทียบ All Branded vs Geo-Based</option>
                 <option value="GROUP_SHOP">🏪 รวมกลุ่ม All Branded ( Retail Shop )</option>
                 <option value="GROUP_GEO">📍 รวมกลุ่ม Geo-Based ( Non Shop )</option>
@@ -192,7 +192,7 @@
             </div>
             <div class="col-md-4">
               <label class="fw-bold small text-secondary mb-1"><i class="fas fa-tags text-success me-1"></i> 3. กรองประเภทแคมเปญ:</label>
-              <select id="trend-category-filter" class="form-select form-select-sm fw-bold border-secondary-subtle" style="border-radius: 10px; padding: 8px 12px;" onchange="onPeriodOrCategoryFilterChange()">
+              <select id="trend-category-filter" class="form-select form-select-sm fw-bold border-secondary-subtle" style="border-radius: 10px; padding: 8px 12px;" onchange="onCategoryFilterChange()">
                 <option value="All">ดูทั้งหมด (ผสมทุกประเภท)</option>
                 <option value="Morning-Brief">☕ เฉพาะข่าว Morning Brief</option>
                 <option value="Category-All">เฉพาะประเภท All (ทุกคน)</option>
@@ -259,7 +259,7 @@
           </div>
         </div>
 
-        <!-- 💡 ไอเดียที่ 2: กล่องสรุปผลวิเคราะห์อัตโนมัติ (Smart Executive Summary) -->
+        <!-- 💡 กล่องสรุปผลวิเคราะห์อัตโนมัติ (Smart Executive Summary) -->
         <div id="ai-executive-summary" class="ai-insight-banner mb-4">
           <div class="d-flex align-items-start gap-3">
             <div style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #002d72, #ff0000); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; box-shadow: 0 3px 8px rgba(0,45,114,0.2);">
@@ -448,6 +448,7 @@
         globalTopics.forEach(t => { topicCategoryMap[t.name] = t.category; });
         
         populateAnalyticsFilters();
+        updateSmartCategoryDropdown(false);
         populateFocusTopicDropdown();
 
         filterTable('กำลังดำเนินการ');
@@ -530,6 +531,132 @@
       }
     }
 
+    // =========================================================================
+    // 🚀 All-in-One Smart Cascading Filter (ไอเดียที่ 1 + 2 + 3 สำหรับช่องที่ 2 และ 3)
+    // =========================================================================
+    function getChannelScopeMode() {
+      const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'COMPARE_ALL';
+      if (channelFilter === 'GROUP_SHOP') return 'SHOP';
+      if (channelFilter === 'GROUP_GEO') return 'GEO';
+      if (channelFilter.startsWith('CH:')) {
+        const chName = channelFilter.substring(3);
+        return isShopChannel(chName) ? 'SHOP' : 'GEO';
+      }
+      return 'ALL';
+    }
+
+    function updateSmartCategoryDropdown(autoSelectDefault = false) {
+      const catSelect = document.getElementById('trend-category-filter');
+      if (!catSelect) return;
+
+      const prevValue = catSelect.value;
+      const monthFilter = document.getElementById('trend-month-filter') ? document.getElementById('trend-month-filter').value : 'LAST_15';
+      const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'COMPARE_ALL';
+      const scopeMode = getChannelScopeMode();
+      const isSingleChannel = channelFilter.startsWith('CH:');
+      const targetCh = isSingleChannel ? channelFilter.substring(3) : null;
+
+      // ดึงแคมเปญที่อยู่ในกรอบเวลา (ช่องที่ 1) และสิทธิ์การมองเห็นของช่องทาง (ช่องที่ 2) เพื่อมานับจำนวนแคมเปญ
+      let sortedByDate = [...globalTopics].sort((a, b) => new Date(a.rawStartDate) - new Date(b.rawStartDate));
+      let periodPool = sortedByDate.filter(t => {
+        if (monthFilter !== 'LAST_15' && monthFilter !== 'ALL_TIME') {
+          let dStr = t.rawStartDate || t.rawDate || "";
+          if (!dStr.startsWith(monthFilter)) return false;
+        }
+        if (isSingleChannel && !isChannelTargetedByTopic(targetCh, t)) {
+          return false;
+        }
+        return true;
+      });
+
+      const countForOption = (optVal) => {
+        let matched = periodPool.filter(t => {
+          let cat = (t.category || "").toString().trim();
+          let nameLower = (t.name || "").toString().toLowerCase();
+          if (optVal === 'All') {
+            if (scopeMode === 'SHOP') return cat !== 'Geo-Based' && cat !== 'Non Shop';
+            if (scopeMode === 'GEO') return cat !== 'Shop';
+            return true;
+          }
+          if (optVal === 'Morning-Brief') return nameLower.includes('morning brief') && cat !== 'Geo-Based' && cat !== 'Non Shop';
+          if (optVal === 'Category-All') return cat === 'All' || cat === '-';
+          if (optVal === 'Shop') return cat === 'Shop';
+          if (optVal === 'Geo-Based') return cat === 'Geo-Based';
+          return true;
+        });
+        if (monthFilter === 'LAST_15') matched = matched.slice(-15);
+        return matched.length;
+      };
+
+      let allowedOptions = [];
+      let defaultSelected = 'All';
+
+      if (scopeMode === 'SHOP') {
+        // เมื่อเลือกกลุ่ม Shop หรือสาขา Shop: ซ่อน Geo-Based และ Auto-Select "เฉพาะประเภท Shop"
+        allowedOptions = [
+          { value: 'Shop', label: `เฉพาะประเภท Shop (${countForOption('Shop')} แคมเปญ)` },
+          { value: 'Morning-Brief', label: `☕ เฉพาะข่าว Morning Brief (${countForOption('Morning-Brief')} แคมเปญ)` },
+          { value: 'Category-All', label: `เฉพาะประเภท All ทุกคน (${countForOption('Category-All')} แคมเปญ)` },
+          { value: 'All', label: `ดูทั้งหมดของฝั่ง Shop (${countForOption('All')} แคมเปญ)` }
+        ];
+        defaultSelected = countForOption('Shop') > 0 ? 'Shop' : 'All';
+      } else if (scopeMode === 'GEO') {
+        // เมื่อเลือกกลุ่ม Geo-Based หรือตำแหน่ง Geo: ซ่อน Shop/Morning Brief และ Auto-Select "เฉพาะประเภท Geo-Based"
+        allowedOptions = [
+          { value: 'Geo-Based', label: `เฉพาะประเภท Geo-Based (${countForOption('Geo-Based')} แคมเปญ)` },
+          { value: 'Category-All', label: `เฉพาะประเภท All ทุกคน (${countForOption('Category-All')} แคมเปญ)` },
+          { value: 'All', label: `ดูทั้งหมดของฝั่ง Geo-Based (${countForOption('All')} แคมเปญ)` }
+        ];
+        defaultSelected = countForOption('Geo-Based') > 0 ? 'Geo-Based' : 'All';
+      } else {
+        // เมื่อเลือกเปรียบเทียบภาพรวม COMPARE_ALL: แสดงครบทุกตัวเลือก
+        allowedOptions = [
+          { value: 'All', label: `ดูทั้งหมด ผสมทุกประเภท (${countForOption('All')} แคมเปญ)` },
+          { value: 'Morning-Brief', label: `☕ เฉพาะข่าว Morning Brief (${countForOption('Morning-Brief')} แคมเปญ)` },
+          { value: 'Category-All', label: `เฉพาะประเภท All ทุกคน (${countForOption('Category-All')} แคมเปญ)` },
+          { value: 'Shop', label: `เฉพาะประเภท Shop (${countForOption('Shop')} แคมเปญ)` },
+          { value: 'Geo-Based', label: `เฉพาะประเภท Geo-Based (${countForOption('Geo-Based')} แคมเปญ)` }
+        ];
+        defaultSelected = 'All';
+      }
+
+      catSelect.innerHTML = allowedOptions.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+
+      if (autoSelectDefault) {
+        catSelect.value = defaultSelected;
+      } else if (allowedOptions.some(o => o.value === prevValue)) {
+        catSelect.value = prevValue;
+      } else {
+        catSelect.value = defaultSelected;
+      }
+    }
+
+    function onMonthFilterChange() {
+      // เมื่อเปลี่ยนเดือน (ช่องที่ 1): อัปเดตตัวเลขจำนวนแคมเปญในช่องที่ 3 โดยคงหมวดหมู่ที่เลือกไว้
+      updateSmartCategoryDropdown(false);
+      populateFocusTopicDropdown();
+      renderTrendCharts();
+    }
+
+    function onChannelFilterChange() {
+      // เมื่อเปลี่ยนช่องทาง (ช่องที่ 2): กรองตัวเลือกในช่องที่ 3 ใหม่ + Auto-Select หมวดหลักให้อัตโนมัติทันที
+      updateSmartCategoryDropdown(true);
+      populateFocusTopicDropdown();
+      renderTrendCharts();
+    }
+
+    function onCategoryFilterChange() {
+      // เมื่อผู้ใช้กดเปลี่ยนประเภทแคมเปญ (ช่องที่ 3) ด้วยตัวเอง
+      populateFocusTopicDropdown();
+      renderTrendCharts();
+    }
+
+    function onPeriodOrCategoryFilterChange() {
+      updateSmartCategoryDropdown(false);
+      populateFocusTopicDropdown();
+      renderTrendCharts();
+    }
+
     function isCurrentFocusGeoMode(selectedTopicObj = null) {
       const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'COMPARE_ALL';
       const filterCat = document.getElementById('trend-category-filter') ? document.getElementById('trend-category-filter').value : 'All';
@@ -579,14 +706,15 @@
         if (filterCat === 'Geo-Based' && cat !== 'Geo-Based') return false;
 
         if (channelFilter === 'GROUP_GEO') {
-          if (cat !== 'Geo-Based') return false;
+          if (filterCat === 'All' && cat === 'Shop') return false;
+          if (filterCat === 'Geo-Based' && cat !== 'Geo-Based') return false;
         } else if (channelFilter === 'GROUP_SHOP') {
           if (cat === 'Geo-Based' || cat === 'Non Shop') return false;
         } else if (channelFilter.startsWith('CH:')) {
           const targetCh = channelFilter.substring(3);
+          if (!isChannelTargetedByTopic(targetCh, t)) return false;
           if (isGeoBasedChannel(targetCh)) {
-            if (cat !== 'Geo-Based') return false;
-            if (!isChannelTargetedByTopic(targetCh, t)) return false;
+            if (cat === 'Shop') return false;
           } else {
             if (cat === 'Geo-Based' || cat === 'Non Shop') return false;
           }
@@ -620,11 +748,6 @@
       toggleFocusClearButton();
     }
 
-    function onPeriodOrCategoryFilterChange() {
-      populateFocusTopicDropdown();
-      renderTrendCharts();
-    }
-
     function onFocusTopicChange() {
       toggleFocusClearButton();
       renderTrendCharts();
@@ -653,6 +776,7 @@
         document.getElementById('standard-table-view').classList.add('d-none');
         document.getElementById('doughnut-section').classList.add('d-none');
         document.getElementById('trend-view').classList.remove('d-none');
+        updateSmartCategoryDropdown(false);
         populateFocusTopicDropdown();
         renderTrendCharts();
         return;
@@ -927,7 +1051,7 @@
         document.getElementById('kpi-low-channel').title = lowCh.channel;
         document.getElementById('kpi-low-sub').innerHTML = `ได้ <b>${lowCh.percent}%</b> (ค้างอ่าน <b>${lowCh.unread.toLocaleString()}</b> คน)`;
 
-        // 💡 ไอเดียที่ 2: สรุปผลวิเคราะห์อัตโนมัติสำหรับโหมดเจาะลึกหัวข้อข่าว
+        // 💡 สรุปผลวิเคราะห์อัตโนมัติสำหรับโหมดเจาะลึกหัวข้อข่าว
         const totalUnreadGroup = totalGroupTarget - totalGroupAck;
         const diffWord = overallDiff >= 0 
           ? `<span class="text-success fw-bold">สูงกว่าค่าเฉลี่ยปกติ +${overallDiff}%</span>` 
@@ -1128,11 +1252,10 @@
         if (filterCat === 'Geo-Based' && cat !== 'Geo-Based') return false;
 
         if (!focusedTopicName) {
-          if (channelFilter === 'GROUP_SHOP' && cat === 'Geo-Based') return false;
-          if (channelFilter === 'GROUP_GEO' && cat !== 'Geo-Based') return false;
+          if (channelFilter === 'GROUP_SHOP' && (cat === 'Geo-Based' || cat === 'Non Shop')) return false;
+          if (channelFilter === 'GROUP_GEO' && cat === 'Shop') return false;
           if (channelFilter.startsWith('CH:')) {
             const targetCh = channelFilter.substring(3);
-            if (isGeoBasedChannel(targetCh) && cat !== 'Geo-Based') return false;
             if (!isChannelTargetedByTopic(targetCh, t)) return false;
           }
         }
@@ -1234,7 +1357,6 @@
             let includeInRank = true;
             if (channelFilter === 'GROUP_SHOP' && !isShopChannel(cleanCh)) includeInRank = false;
             if (channelFilter === 'GROUP_GEO' && !isGeoBasedChannel(cleanCh)) includeInRank = false;
-            // หากเลือกช่องทางเดี่ยว และกรองเฉพาะ Shop หรือ Geo ให้จัดอันดับเฉพาะกลุ่มเดียวกันเพื่อให้เปรียบเทียบชัดเจน
             if (isSingleChannel) {
               if ((filterCat === 'Shop' || filterCat === 'Morning-Brief' || isSelectedSingleShop) && !isShopChannel(cleanCh)) includeInRank = false;
               if ((filterCat === 'Geo-Based' || !isSelectedSingleShop) && !isGeoBasedChannel(cleanCh)) includeInRank = false;
@@ -1256,7 +1378,7 @@
         let avgP = totalT > 0 ? Math.round((totalA / totalT) * 100) : (parseFloat(t.percentage) || 0);
         let specP = specTotal > 0 ? Math.round((specAck / specTotal) * 100) : 0;
 
-        // 💡 ไอเดียที่ 1: คำนวณค่า Benchmark ให้ตรงกับบริบทกลุ่มที่เลือกเปรียบเทียบ
+        // 💡 คำนวณค่า Benchmark ให้ตรงกับบริบทกลุ่มที่เลือกเปรียบเทียบ
         let benchmarkP = avgP;
         if (isSingleChannel) {
           if (filterCat === 'Shop' || filterCat === 'Morning-Brief' || isSelectedSingleShop) {
@@ -1329,7 +1451,7 @@
         document.getElementById('kpi-low-sub').innerText = '-';
       }
 
-      // 💡 ไอเดียที่ 1: ตั้งชื่อป้ายกำกับ Benchmark อัตโนมัติตามบริบทที่กรองอยู่
+      // 💡 ตั้งชื่อป้ายกำกับ Benchmark อัตโนมัติตามบริบทที่กรองอยู่
       let benchmarkLabel = '% เฉลี่ยรวมทุกช่องทาง (Benchmark)';
       if (filterCat === 'Shop' || filterCat === 'Morning-Brief' || (isSingleChannel && isSelectedSingleShop)) {
         benchmarkLabel = '% เฉลี่ยรวมทุกช่องทาง Shop (Benchmark)';
@@ -1337,7 +1459,7 @@
         benchmarkLabel = '% เฉลี่ยรวมกลุ่ม Geo-Based (Benchmark)';
       }
 
-      // 💡 ไอเดียที่ 2: สร้างข้อความสรุปผลวิเคราะห์อัตโนมัติ (Smart Executive Summary)
+      // 💡 สร้างข้อความสรุปผลวิเคราะห์อัตโนมัติ (Smart Executive Summary)
       const benchmarkAvg = allAvgData.length > 0 ? Math.round(allAvgData.reduce((a, b) => a + b, 0) / allAvgData.length) : 0;
       const sortedByPerf = [...rawTrendDataList].sort((a, b) => a.focusPercent - b.focusPercent);
       const worstCampaign = sortedByPerf[0];
@@ -1358,7 +1480,6 @@
           สิ่งที่ควรทำต่อ: เร่งติดตามแคมเปญ <b class="text-danger">"${worstCampaign.name}" (${worstCampaign.focusPercent}%)</b> ซึ่งยังมีผู้ค้างอ่าน <b>${worstCampaign.focusUnread.toLocaleString()} คน</b>
         `;
       } else {
-        const topChName = rankList.length > 0 ? `${rankList[0].name} (${rankList[0].percent}%)` : '-';
         const lowList = [...rankList].sort((a, b) => a.percent - b.percent || b.unread - a.unread);
         const lowChObj = lowList.length > 0 ? lowList[0] : null;
         const lowChText = lowChObj ? `${lowChObj.name} (เฉลี่ย ${lowChObj.percent}% • ค้างอ่านสะสม ${lowChObj.unread.toLocaleString()} ครั้ง)` : '-';
@@ -1392,7 +1513,6 @@
             formatter: v => v + '%' 
           }
         });
-        // 💡 ไอเดียที่ 1: เปิดแสดงตัวเลข % บนเส้นประสีเทา (Benchmark) และใช้ชื่อป้ายกำกับตามบริบทจริง
         datasets.push({
           label: benchmarkLabel,
           data: allAvgData,
