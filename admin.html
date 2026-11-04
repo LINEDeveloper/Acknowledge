@@ -259,7 +259,7 @@
           </div>
         </div>
 
-        <!-- 💡 กล่องสรุปผลวิเคราะห์อัตโนมัติ (Smart Executive Summary) -->
+        <!-- 💡 กล่องสรุปผลวิเคราะห์อัตโนมัติ (Smart Context-Aware Executive Summary) -->
         <div id="ai-executive-summary" class="ai-insight-banner mb-4">
           <div class="d-flex align-items-start gap-3">
             <div style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #002d72, #ff0000); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; box-shadow: 0 3px 8px rgba(0,45,114,0.2);">
@@ -472,7 +472,6 @@
       const currentMonthVal = monthSelect.value || "LAST_15";
       let monthSet = new Set();
       globalTopics.forEach(t => {
-        // ดึงรายการเดือนจากแคมเปญที่สิ้นสุดแล้ว โดยยึดตามวันสิ้นสุด (rawDate) เพื่อให้ตรงกับแท็บสิ้นสุดแล้ว 100%
         let dStr = t.rawDate || t.rawStartDate;
         if (t.status === 'สิ้นสุดแล้ว' && dStr && dStr.length >= 7) {
           monthSet.add(dStr.substring(0, 7));
@@ -953,7 +952,7 @@
     // =========================================================================
     function renderShopTopicDeepDive(selectedTopicName, contextTopics) {
       const statsForSelected = globalTopicStats[selectedTopicName] || {};
-      const selectedTopicObj = globalTopics.find(t => t.name === selectedTopicName) || { name: selectedTopicName, category: 'All', subTarget: '', status: '' };
+      const selectedTopicObj = globalTopics.find(t => t.name === selectedTopicName) || { name: selectedTopicName, category: 'All', subTarget: '', status: '', endDate: '-' };
       
       const isGeoFocus = isCurrentFocusGeoMode(selectedTopicObj);
       const groupLabel = isGeoFocus ? "Geo-Based" : "Shop";
@@ -1060,16 +1059,28 @@
         document.getElementById('kpi-low-channel').title = lowCh.channel;
         document.getElementById('kpi-low-sub').innerHTML = `ได้ <b>${lowCh.percent}%</b> (ค้างอ่าน <b>${lowCh.unread.toLocaleString()}</b> คน)`;
 
+        // 💡 แยกคำแนะนำตามสถานะของหัวข้อข่าวที่เจาะลึก (กำลังดำเนินการ vs สิ้นสุดแล้ว)
         const totalUnreadGroup = totalGroupTarget - totalGroupAck;
-        const statusText = selectedTopicObj.status === "กำลังดำเนินการ" ? `<span class="badge bg-success rounded-pill ms-1">🟢 กำลังดำเนินการ</span>` : `<span class="badge bg-secondary rounded-pill ms-1">⚪ สิ้นสุดแล้ว</span>`;
+        const isTopicOngoing = selectedTopicObj.status === "กำลังดำเนินการ";
+        const statusText = isTopicOngoing
+          ? `<span class="badge bg-success rounded-pill ms-1">🟢 กำลังดำเนินการ</span>`
+          : `<span class="badge bg-secondary rounded-pill ms-1">⚪ สิ้นสุดแล้ว</span>`;
         const diffWord = overallDiff >= 0 
           ? `<span class="text-success fw-bold">สูงกว่าค่าเฉลี่ยปกติ +${overallDiff}%</span>` 
           : `<span class="text-danger fw-bold">ต่ำกว่าค่าเฉลี่ยปกติ ${overallDiff}%</span>`;
+
+        let deepDiveActionHtml = "";
+        if (isTopicOngoing) {
+          deepDiveActionHtml = `<b class="text-danger">🎯 สิ่งที่ต้องเร่งติดตามด่วน (ก่อนหมดเขต ${selectedTopicObj.endDate || '-'}):</b> เร่งติดตามกลุ่ม <b class="text-danger">${lowCh.channel} (ปัจจุบันรับทราบ ${lowCh.percent}%)</b> ซึ่งมียอดค้างอ่านสูงสุด <b>${lowCh.unread.toLocaleString()} คน</b> (จากยอดค้างอ่านรวมทุกช่องทาง ${totalUnreadGroup.toLocaleString()} คน) แนะนำให้กดส่งรายงานเข้า Email เพื่อตามรายชื่อคนที่ยังไม่อ่านทันที`;
+        } else {
+          const gapTo80 = overallTopicPct < 80 ? ` เพื่อดึงภาพรวมจาก <b>${overallTopicPct}%</b> ให้ผ่านเกณฑ์มาตรฐาน <b>80%</b> (อีก <b>+${80 - overallTopicPct}%</b>)` : ` เพื่อรักษามาตรฐานระดับดีเยี่ยม (≥80%) ให้ต่อเนื่อง`;
+          deepDiveActionHtml = `<b style="color:#002d72;">🚀 ข้อเสนอแนะสำหรับแคมเปญถัดไป:</b> ในแคมเปญที่จบไปนี้ ช่องทางที่มีการรับทราบต่ำสุดคือ <b class="text-danger">${lowCh.channel} (${lowCh.percent}% • พลาดเป้าไม่ได้อ่าน ${lowCh.unread.toLocaleString()} คน)</b> สำหรับแคมเปญใหม่ครั้งถัดไป แนะนำให้หัวหน้างานกวดขันและแจ้งเตือนกลุ่มนี้ตั้งแต่วันแรกๆ ที่ปล่อยข่าว${gapTo80}`;
+        }
+
         document.getElementById('ai-summary-text').innerHTML = `
           <b style="color:#002d72;">💡 สรุปผลวิเคราะห์เจาะลึกแคมเปญ "${selectedTopicName}" (กลุ่ม ${groupLabel}) ${statusText}:</b><br>
-          ภาพรวมการรับทราบอยู่ที่ <b class="text-primary">${overallTopicPct}%</b> (${diffWord} จากค่าเฉลี่ยปกติที่ ${overallHistPct}%) • 
-          ช่องทางที่ทำผลงานสูงสุดคือ <b class="text-success">${topCh.channel} (${topCh.percent}%)</b> • 
-          สิ่งที่ควรดำเนินการต่อ: เร่งติดตามกลุ่ม <b class="text-danger">${lowCh.channel} (${lowCh.percent}%)</b> ซึ่งมียอดค้างอ่าน <b>${lowCh.unread.toLocaleString()} คน</b> (จากยอดค้างอ่านรวมทั้งแคมเปญ ${totalUnreadGroup.toLocaleString()} คน)
+          • ภาพรวมการรับทราบอยู่ที่ <b class="text-primary">${overallTopicPct}%</b> (${diffWord} จากค่าเฉลี่ยปกติที่ ${overallHistPct}%) • ช่องทางที่ทำผลงานสูงสุดคือ <b class="text-success">${topCh.channel} (${topCh.percent}%)</b><br>
+          • ${deepDiveActionHtml}
         `;
       } else {
         document.getElementById('kpi-top-channel').innerText = '-';
@@ -1269,7 +1280,6 @@
           }
         }
 
-        // 🎯 ใช้ฟังก์ชันตรวจสอบช่วงเวลาเดียวกับช่องที่ 3 (นับเฉพาะแคมเปญที่สิ้นสุดในเดือนนั้นๆ)
         if (!isTopicInSelectedMonthPeriod(t, monthFilter)) return false;
         return true;
       });
@@ -1478,10 +1488,24 @@
         benchmarkLabel = '% เฉลี่ยรวมกลุ่ม Geo-Based (Benchmark)';
       }
 
+      // =========================================================================
+      // 💡 Smart Context-Aware Executive Summary (แยกตามสถานะ กำลังดำเนินการ vs สิ้นสุดแล้ว)
+      // =========================================================================
       const benchmarkAvg = allAvgData.length > 0 ? Math.round(allAvgData.reduce((a, b) => a + b, 0) / allAvgData.length) : 0;
-      const sortedByPerf = [...rawTrendDataList].sort((a, b) => a.focusPercent - b.focusPercent);
+      const sortedByPerf = [...rawTrendDataList].sort((a, b) => a.focusPercent - b.focusPercent || b.focusUnread - a.focusUnread);
       const worstCampaign = sortedByPerf[0];
       const bestCampaign = sortedByPerf[sortedByPerf.length - 1];
+
+      // คัดกรองเฉพาะแคมเปญที่ "กำลังดำเนินการ" เพื่อนำไปแจ้งเตือนติดตามงานปัจจุบัน
+      const ongoingList = rawTrendDataList.filter(d => d.status === "กำลังดำเนินการ");
+      const sortedOngoing = [...ongoingList].sort((a, b) => a.focusPercent - b.focusPercent || b.focusUnread - a.focusUnread);
+      const urgentOngoing = sortedOngoing.length > 0 ? sortedOngoing[0] : null;
+
+      const cleanMonthLabel = monthText.replace(/^[^\s]+\s/, '');
+      const cleanChannelLabel = channelText.replace(/^[^\s]+\s/, '');
+      const gapToStandard80 = periodAvg < 80
+        ? `เพื่อยกระดับค่าเฉลี่ยจาก <b>${periodAvg}%</b> ให้ผ่านเกณฑ์มาตรฐาน <b>80%</b> (ต้องกระตุ้นการอ่านเพิ่มขึ้นอีกประมาณ <b>+${80 - periodAvg}%</b> ในรอบถัดไป)`
+        : `เพื่อรักษามาตรฐานระดับดีเยี่ยม (<b>${periodAvg}% ≥ 80%</b>) ให้ต่อเนื่องในรอบถัดไป`;
 
       if (isSingleChannel) {
         const chRankIdx = rankList.findIndex(r => r.name === selectedSingleChannelName);
@@ -1491,22 +1515,38 @@
           ? `<span class="text-success fw-bold">สูงกว่าค่าเฉลี่ยกลุ่ม +${vsBench}%</span> (ค่าเฉลี่ยกลุ่ม ${benchmarkAvg}%)`
           : `<span class="text-danger fw-bold">ต่ำกว่าค่าเฉลี่ยกลุ่ม ${vsBench}%</span> (ค่าเฉลี่ยกลุ่ม ${benchmarkAvg}%)`;
 
+        let actionLineHtml = "";
+        if (ongoingList.length === 1) {
+          actionLineHtml = `<b class="text-danger">🎯 สิ่งที่ต้องเร่งติดตามด่วน (กำลังดำเนินการ):</b> แคมเปญ <b class="text-danger">"${urgentOngoing.name}"</b> ปัจจุบันรับทราบแล้ว <b>${urgentOngoing.focusPercent}%</b> ยังมีพนักงานค้างอ่าน <b>${urgentOngoing.focusUnread.toLocaleString()} คน</b> (แนะนำให้เร่งติดตามก่อนหมดเขตวันที่ <b>${urgentOngoing.endDate || '-'}</b>)`;
+        } else if (ongoingList.length > 1) {
+          actionLineHtml = `<b class="text-danger">🎯 สิ่งที่ต้องเร่งติดตามด่วน (กำลังดำเนินการ ${ongoingList.length} แคมเปญ):</b> แคมเปญที่ยังเปิดอยู่และมีอัตราการอ่านต่ำสุดคือ <b class="text-danger">"${urgentOngoing.name}" (รับทราบแล้ว ${urgentOngoing.focusPercent}% • ค้างอ่าน ${urgentOngoing.focusUnread.toLocaleString()} คน หมดเขต ${urgentOngoing.endDate || '-'})</b> และอีก ${ongoingList.length - 1} แคมเปญที่กำลังดำเนินการ แนะนำให้กดส่งรายงานแจ้งเตือนสาขาก่อนครบกำหนด`;
+        } else {
+          actionLineHtml = `<b style="color:#002d72;">🚀 ข้อเสนอแนะสำหรับแคมเปญถัดไป:</b> ในรอบที่ผ่านมา แคมเปญที่มีการรับทราบต่ำสุดคือ <b class="text-danger">"${worstCampaign.name}" (${worstCampaign.focusPercent}% • พลาดเป้าไม่ได้อ่าน ${worstCampaign.focusUnread.toLocaleString()} คน)</b> สำหรับแคมเปญใหม่ครั้งถัดไป แนะนำให้หัวหน้าสาขาช่วยกระตุ้นการรับทราบตั้งแต่วันแรกๆ ที่ปล่อยข่าวและแจ้งเตือนซ้ำก่อนปิดแคมเปญ ${gapToStandard80}`;
+        }
+
         document.getElementById('ai-summary-text').innerHTML = `
-          <b style="color:#002d72;">💡 สรุปผลวิเคราะห์ (${monthText.replace(/^[^\s]+\s/, '')} • ${selectedSingleChannelName}) — รวม ${statusBreakdownText}:</b><br>
-          มีอัตราการรับทราบเฉลี่ยอยู่ที่ <b class="text-primary">${periodAvg}%</b> (${rankText} • ${vsBenchHtml}) • 
-          แคมเปญที่ทำได้ดีที่สุดคือ <b class="text-success">"${bestCampaign.name}" (${bestCampaign.focusPercent}%)</b> • 
-          สิ่งที่ควรทำต่อ: เร่งติดตามแคมเปญ <b class="text-danger">"${worstCampaign.name}" (${worstCampaign.focusPercent}%)</b> ซึ่งมียอดค้างอ่าน <b>${worstCampaign.focusUnread.toLocaleString()} คน</b>
+          <b style="color:#002d72;">💡 สรุปผลวิเคราะห์ (${cleanMonthLabel} • ${selectedSingleChannelName}) — รวม ${statusBreakdownText}:</b><br>
+          • มีอัตราการรับทราบเฉลี่ยอยู่ที่ <b class="text-primary">${periodAvg}%</b> (${rankText} • ${vsBenchHtml}) • แคมเปญที่ทำได้ดีที่สุดคือ <b class="text-success">"${bestCampaign.name}" (${bestCampaign.focusPercent}%)</b><br>
+          • ${actionLineHtml}
         `;
       } else {
         const lowList = [...rankList].sort((a, b) => a.percent - b.percent || b.unread - a.unread);
         const lowChObj = lowList.length > 0 ? lowList[0] : null;
-        const lowChText = lowChObj ? `${lowChObj.name} (เฉลี่ย ${lowChObj.percent}% • ค้างอ่านสะสม ${lowChObj.unread.toLocaleString()} ครั้ง)` : '-';
+        const lowChText = lowChObj ? `${lowChObj.name} (เฉลี่ย ${lowChObj.percent}%)` : '-';
+
+        let actionLineHtml = "";
+        if (ongoingList.length === 1) {
+          actionLineHtml = `<b class="text-danger">🎯 สิ่งที่ต้องเร่งติดตามด่วน (กำลังดำเนินการ):</b> แคมเปญ <b class="text-danger">"${urgentOngoing.name}"</b> ปัจจุบันมียอดรับทราบ <b>${urgentOngoing.focusPercent}%</b> ยังมีพนักงานค้างอ่าน <b>${urgentOngoing.focusUnread.toLocaleString()} คน</b> (หมดเขต <b>${urgentOngoing.endDate || '-'}</b>) โดยเฉพาะกลุ่ม <b class="text-danger">${lowChText}</b>`;
+        } else if (ongoingList.length > 1) {
+          actionLineHtml = `<b class="text-danger">🎯 สิ่งที่ต้องเร่งติดตามด่วน (กำลังดำเนินการ ${ongoingList.length} แคมเปญ):</b> เร่งติดตามแคมเปญที่ยังเปิดอยู่คือ <b class="text-danger">"${urgentOngoing.name}" (รับทราบแล้ว ${urgentOngoing.focusPercent}% • ค้างอ่าน ${urgentOngoing.focusUnread.toLocaleString()} คน หมดเขต ${urgentOngoing.endDate || '-'})</b> และกระตุ้นช่องทาง <b class="text-danger">${lowChText}</b> ก่อนครบกำหนด`;
+        } else {
+          actionLineHtml = `<b style="color:#002d72;">🚀 ข้อเสนอแนะสำหรับแคมเปญถัดไป:</b> ในรอบที่ผ่านมา แคมเปญที่มีการรับทราบต่ำสุดคือ <b class="text-danger">"${worstCampaign.name}" (${worstCampaign.focusPercent}% • พลาดเป้าไม่ได้อ่าน ${worstCampaign.focusUnread.toLocaleString()} คน)</b> สำหรับแคมเปญใหม่ครั้งถัดไป แนะนำให้วางแผนกวดขันกลุ่ม <b class="text-danger">${lowChText}</b> ตั้งแต่วันแรกที่ปล่อยข่าว ${gapToStandard80}`;
+        }
 
         document.getElementById('ai-summary-text').innerHTML = `
-          <b style="color:#002d72;">💡 สรุปผลวิเคราะห์ภาพรวม (${monthText.replace(/^[^\s]+\s/, '')} • ${channelText.replace(/^[^\s]+\s/, '')}) — รวม ${statusBreakdownText}:</b><br>
-          อัตราการรับทราบเฉลี่ยรวมอยู่ที่ <b class="text-primary">${periodAvg}%</b> • 
-          แคมเปญที่ทำผลงานสูงสุดคือ <b class="text-success">"${bestCampaign.name}" (${bestCampaign.focusPercent}%)</b> • 
-          สิ่งที่ควรทำต่อ: เร่งติดตามแคมเปญ <b class="text-danger">"${worstCampaign.name}" (${worstCampaign.focusPercent}%)</b> และกระตุ้นช่องทาง <b class="text-danger">${lowChText}</b>
+          <b style="color:#002d72;">💡 สรุปผลวิเคราะห์ภาพรวม (${cleanMonthLabel} • ${cleanChannelLabel}) — รวม ${statusBreakdownText}:</b><br>
+          • อัตราการรับทราบเฉลี่ยรวมอยู่ที่ <b class="text-primary">${periodAvg}%</b> • แคมเปญที่ทำผลงานสูงสุดคือ <b class="text-success">"${bestCampaign.name}" (${bestCampaign.focusPercent}%)</b><br>
+          • ${actionLineHtml}
         `;
       }
 
