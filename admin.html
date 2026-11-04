@@ -335,6 +335,7 @@
       box-shadow: 0 4px 12px rgba(200, 30, 30, 0.25);
     }
     .btn-feedback-submit:hover { background: #b91c1c; }
+    .btn-feedback-submit:disabled { opacity: 0.65; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -356,7 +357,7 @@
       <h4 class="fw-bold m-0"><i class="fas fa-tachometer-alt me-2 text-danger"></i> ภาพรวมระบบ</h4>
       <div class="d-flex flex-wrap align-items-center gap-2">
         
-        <!-- 🌟 ปุ่มประเมินเว็บ & ป้ายคะแนน (SVG แท้ 100%) + ปุ่มรีเฟรช -->
+        <!-- 🌟 ปุ่มประเมินเว็บ & ป้ายคะแนน (SVG แท้ 100% + นับจำนวนคนกดจริงจากระบบหลังบ้าน) -->
         <div class="feedback-widget-wrap me-1">
           <!-- สถานะก่อนประเมิน -->
           <div id="state-unrated" class="btn-eval-pill" onclick="openFeedbackModal()" title="คลิกเพื่อประเมินความพึงพอใจการใช้งานเว็บ">
@@ -370,15 +371,15 @@
             <span>ประเมินเว็บ</span>
           </div>
 
-          <!-- สถานะหลังประเมินแล้ว (แสดงภาพวาด SVG ชุดเดียวกับป๊อปอัป) -->
-          <div id="state-rated" class="rated-score-badge d-none" onclick="openFeedbackModal()" title="คลิกเพื่อแก้ไขคะแนนประเมิน">
+          <!-- สถานะแสดงคะแนน (ใช้ภาพวาด SVG ชุดเดียวกับป๊อปอัป พร้อมระบุจำนวนคนจริง) -->
+          <div id="state-rated" class="rated-score-badge d-none" onclick="openFeedbackModal()" title="คลิกเพื่อให้คะแนนหรือแก้ไขคะแนนประเมิน">
             <div class="rated-svg-holder" id="badge-svg-icon"></div>
             <div>
               <div class="rated-score-main">
                 <span id="badge-avg-score">5.0</span><span class="out-of">/ 5.0</span>
               </div>
               <div class="rated-level-text" id="badge-level-text">ระดับ: ยอดเยี่ยม</div>
-              <div class="rated-sub-text" id="badge-user-sub">คุณให้ 5/5 (จาก 4 คน)</div>
+              <div class="rated-sub-text" id="badge-user-sub">คุณให้ 5/5 (จาก 1 คน)</div>
             </div>
           </div>
 
@@ -679,7 +680,7 @@
 
       <div class="d-flex gap-2">
         <button class="btn-feedback-later" onclick="closeFeedbackModal()">ไว้คราวหลัง</button>
-        <button class="btn-feedback-submit" onclick="submitFeedbackScore()">ส่งคะแนนประเมิน</button>
+        <button class="btn-feedback-submit" id="btn-submit-feedback" onclick="submitFeedbackScore()">ส่งคะแนนประเมิน</button>
       </div>
     </div>
   </div>
@@ -705,10 +706,11 @@
     const THAI_MONTHS = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
     // =========================================================================
-    // 🎨 ระบบปุ่มประเมินความพึงพอใจ (SVG แท้ 100% ฝั่ง Frontend)
+    // 🎨 ระบบปุ่มประเมินความพึงพอใจ (SVG แท้ 100% + ซิงค์ยอดจริงกับ PropertiesService)
     // =========================================================================
     let selectedFeedbackScore = 5;
-    let hasUserRated = false;
+    let mySavedScore = null;
+    let serverFeedbackStats = { count: 0, sum: 0, avg: 0 };
 
     const RATING_SVGS = {
       1: `<svg viewBox="0 0 48 48" fill="none">
@@ -754,11 +756,16 @@
       5: "ยอดเยี่ยม"
     };
 
-    function initFeedbackWidget() {
-      const savedScore = localStorage.getItem('true_ack_feedback_score');
-      if (savedScore && RATING_SVGS[savedScore]) {
-        selectedFeedbackScore = parseInt(savedScore, 10);
-        hasUserRated = true;
+    function initFeedbackWidget(backendFeedback) {
+      if (backendFeedback && typeof backendFeedback.count === 'number') {
+        serverFeedbackStats = backendFeedback;
+      }
+      const saved = localStorage.getItem('true_ack_feedback_score');
+      if (saved && RATING_SVGS[saved]) {
+        mySavedScore = parseInt(saved, 10);
+        selectedFeedbackScore = mySavedScore;
+      } else {
+        mySavedScore = null;
       }
       renderFeedbackModalOptions();
       updateFeedbackWidgetUI();
@@ -777,6 +784,7 @@
     }
 
     function openFeedbackModal() {
+      if (mySavedScore) selectedFeedbackScore = mySavedScore;
       renderFeedbackModalOptions();
       document.getElementById('feedback-modal').classList.add('show');
     }
@@ -792,11 +800,57 @@
       });
     }
 
-    function submitFeedbackScore() {
-      hasUserRated = true;
-      localStorage.setItem('true_ack_feedback_score', selectedFeedbackScore);
-      updateFeedbackWidgetUI();
-      closeFeedbackModal();
+    async function submitFeedbackScore() {
+      const submitBtn = document.getElementById('btn-submit-feedback');
+      const previousScore = mySavedScore;
+      const newScore = selectedFeedbackScore;
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'กำลังบันทึก...';
+      }
+
+      try {
+        const res = await fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'saveFeedback',
+            payload: { score: newScore, oldScore: previousScore }
+          })
+        }).then(r => r.json());
+
+        if (res && res.status === "Success") {
+          serverFeedbackStats = { count: res.count, sum: res.sum, avg: res.avg };
+        } else {
+          // กรณีเพิ่งวางโค้ดหน้าเว็บแต่ยังไม่ได้กด Deploy New Version ที่หลังบ้าน ให้คำนวณแสดงผลทันทีไม่ให้ค้าง
+          if (previousScore && serverFeedbackStats.count > 0) {
+            serverFeedbackStats.sum = Math.max(0, serverFeedbackStats.sum - previousScore) + newScore;
+          } else {
+            serverFeedbackStats.count += 1;
+            serverFeedbackStats.sum += newScore;
+          }
+          serverFeedbackStats.avg = Number((serverFeedbackStats.sum / serverFeedbackStats.count).toFixed(1));
+        }
+
+        mySavedScore = newScore;
+        localStorage.setItem('true_ack_feedback_score', String(newScore));
+        updateFeedbackWidgetUI();
+        closeFeedbackModal();
+      } catch (e) {
+        mySavedScore = newScore;
+        localStorage.setItem('true_ack_feedback_score', String(newScore));
+        if (serverFeedbackStats.count === 0) {
+          serverFeedbackStats = { count: 1, sum: newScore, avg: newScore };
+        }
+        updateFeedbackWidgetUI();
+        closeFeedbackModal();
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'ส่งคะแนนประเมิน';
+        }
+      }
     }
 
     function updateFeedbackWidgetUI() {
@@ -804,13 +858,26 @@
       const ratedEl = document.getElementById('state-rated');
       if (!unratedEl || !ratedEl) return;
 
-      if (hasUserRated) {
+      const totalCount = serverFeedbackStats.count || (mySavedScore ? 1 : 0);
+      const avgScore = serverFeedbackStats.count > 0
+        ? Number(serverFeedbackStats.avg)
+        : (mySavedScore ? Number(mySavedScore) : 0);
+
+      // แสดงป้ายคะแนนเมื่อเครื่องนี้เคยกดประเมินแล้ว หรือมีคนในระบบกดประเมินเข้ามาแล้ว
+      if (mySavedScore || totalCount > 0) {
         unratedEl.classList.add('d-none');
         ratedEl.classList.remove('d-none');
-        document.getElementById('badge-svg-icon').innerHTML = RATING_SVGS[selectedFeedbackScore];
-        document.getElementById('badge-avg-score').innerText = selectedFeedbackScore.toFixed(1);
-        document.getElementById('badge-level-text').innerText = `ระดับ: ${LEVEL_LABELS[selectedFeedbackScore]}`;
-        document.getElementById('badge-user-sub').innerText = `คุณให้ ${selectedFeedbackScore}/5`;
+
+        const iconKey = Math.min(5, Math.max(1, Math.round(avgScore || mySavedScore || 5)));
+        document.getElementById('badge-svg-icon').innerHTML = RATING_SVGS[iconKey];
+        document.getElementById('badge-avg-score').innerText = avgScore.toFixed(1);
+        document.getElementById('badge-level-text').innerText = `ระดับ: ${LEVEL_LABELS[iconKey]}`;
+
+        if (mySavedScore) {
+          document.getElementById('badge-user-sub').innerText = `คุณให้ ${mySavedScore}/5 (จาก ${totalCount.toLocaleString()} คน)`;
+        } else {
+          document.getElementById('badge-user-sub').innerText = `คลิกเพื่อให้คะแนน (จาก ${totalCount.toLocaleString()} คน)`;
+        }
       } else {
         unratedEl.classList.remove('d-none');
         ratedEl.classList.add('d-none');
@@ -868,7 +935,6 @@
     }
 
     async function loadData() {
-      initFeedbackWidget();
       document.getElementById('loading-overlay').style.display = 'flex';
       try {
         const res = await fetch(`${GAS_URL}?action=adminStats`).then(r => r.json());
@@ -880,6 +946,7 @@
         topicCategoryMap = {};
         globalTopics.forEach(t => { topicCategoryMap[t.name] = t.category; });
         
+        initFeedbackWidget(res.feedbackStats);
         populateAnalyticsFilters();
         updateSmartCategoryDropdown(true);
         syncMonthDropdownLabels();
@@ -887,6 +954,7 @@
 
         filterTable('กำลังดำเนินการ');
       } catch (e) {
+        initFeedbackWidget();
         Swal.fire('Error', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาตรวจสอบ GAS_URL', 'error');
       } finally {
         document.getElementById('loading-overlay').style.display = 'none';
