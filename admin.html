@@ -61,7 +61,7 @@
     .bi-card-box { border: 1px solid #edf2f7; border-radius: 20px; padding: 22px; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.02); height: 100%; }
     .progress-thin { height: 8px; border-radius: 50px; background-color: #edf2f7; overflow: hidden; }
     
-    /* 💡 สไตล์สำหรับกล่องสรุปผลวิเคราะห์อัตโนมัติ (ไอเดียที่ 2) */
+    /* 💡 สไตล์สำหรับกล่องสรุปผลวิเคราะห์อัตโนมัติ */
     .ai-insight-banner { background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%); border: 1px solid #dbeafe; border-left: 5px solid #002d72; border-radius: 16px; padding: 14px 20px; box-shadow: 0 4px 12px rgba(0,45,114,0.04); }
 
     /* ป้ายสี Heatmap */
@@ -178,7 +178,7 @@
             <div class="col-md-4">
               <label class="fw-bold small text-secondary mb-1"><i class="fas fa-calendar-alt text-danger me-1"></i> 1. เลือกช่วงเวลา / เดือน:</label>
               <select id="trend-month-filter" class="form-select form-select-sm fw-bold border-secondary-subtle" style="border-radius: 10px; padding: 8px 12px;" onchange="onMonthFilterChange()">
-                <option value="LAST_15">🔥 15 แคมเปญล่าสุด</option>
+                <option value="ACTIVE_ONLY">🟢 แคมเปญที่กำลังดำเนินการอยู่</option>
                 <option value="ALL_TIME">📅 ทุกแคมเปญทั้งหมด</option>
               </select>
             </div>
@@ -280,7 +280,7 @@
                   <h6 class="fw-bold m-0" style="color:#222;" id="line-chart-title"><i class="fas fa-wave-square me-2 text-primary"></i> แนวโน้มการรับทราบรายแคมเปญ (Progression)</h6>
                   <small class="text-muted" id="line-chart-subtitle"><i class="fas fa-mouse-pointer me-1 text-danger"></i> คลิกที่จุดกราฟเพื่อดูยอดอ่านแล้ว / ค้างอ่าน รายแคมเปญ</small>
                 </div>
-                <span class="badge bg-light text-dark border" id="trend-active-filter-badge">15 แคมเปญล่าสุด</span>
+                <span class="badge bg-light text-dark border" id="trend-active-filter-badge">แคมเปญที่กำลังดำเนินการอยู่</span>
               </div>
               <div style="position: relative; height: 330px; width: 100%;">
                 <canvas id="dualTrendChart"></canvas>
@@ -459,19 +459,27 @@
       }
     }
 
-    // 🎯 ฟังก์ชันกลางตรวจสอบว่าแคมเปญตรงกับช่วงเวลา/เดือนที่เลือกหรือไม่
-    // เมื่อเลือกเป็นรายเดือน (เช่น 2026-10) จะนับเฉพาะแคมเปญที่ "สิ้นสุดแล้ว" และมี "วันสิ้นสุด (rawDate)" ในเดือนนั้นๆ เท่านั้น (ทำให้ได้ 7 แคมเปญตรงกับแท็บสิ้นสุดแล้ว 100%)
+    // 🎯 ฟังก์ชันกลางตรวจสอบว่าแคมเปญตรงกับช่วงเวลา/เดือนที่เลือกในช่องที่ 1 หรือไม่
+    // - ACTIVE_ONLY : เฉพาะแคมเปญที่มีสถานะ "กำลังดำเนินการ"
+    // - ALL_TIME    : ทุกแคมเปญทั้งหมด
+    // - YYYY-MM     : เฉพาะแคมเปญที่มีสถานะ "สิ้นสุดแล้ว" และมีวันสิ้นสุด (rawDate) อยู่ในเดือนนั้นๆ
     function isTopicInSelectedMonthPeriod(t, monthFilter) {
-      if (monthFilter === 'LAST_15' || monthFilter === 'ALL_TIME') return true;
+      if (monthFilter === 'ALL_TIME') return true;
+      if (monthFilter === 'ACTIVE_ONLY') return t.status === 'กำลังดำเนินการ';
       let endMonthStr = t.rawDate || t.rawStartDate || "";
       return t.status === 'สิ้นสุดแล้ว' && endMonthStr.startsWith(monthFilter);
     }
 
     function populateAnalyticsFilters() {
       const monthSelect = document.getElementById('trend-month-filter');
-      const currentMonthVal = monthSelect.value || "LAST_15";
+      const prevMonthVal = monthSelect.dataset.initialized ? monthSelect.value : null;
+
+      let activeCount = 0;
       let monthSet = new Set();
       globalTopics.forEach(t => {
+        if (t.status === 'กำลังดำเนินการ') {
+          activeCount++;
+        }
         let dStr = t.rawDate || t.rawStartDate;
         if (t.status === 'สิ้นสุดแล้ว' && dStr && dStr.length >= 7) {
           monthSet.add(dStr.substring(0, 7));
@@ -480,8 +488,8 @@
       let sortedMonths = Array.from(monthSet).sort().reverse();
       
       let monthHtml = `
-        <option value="LAST_15">🔥 15 แคมเปญล่าสุด</option>
-        <option value="ALL_TIME">📅 ทุกแคมเปญทั้งหมด (${globalTopics.length})</option>
+        <option value="ACTIVE_ONLY">🟢 แคมเปญที่กำลังดำเนินการอยู่ (${activeCount} แคมเปญ)</option>
+        <option value="ALL_TIME">📅 ทุกแคมเปญทั้งหมด (${globalTopics.length} แคมเปญ)</option>
       `;
       if (sortedMonths.length > 0) {
         monthHtml += `<optgroup label="--- เลือกตามเดือน (แคมเปญที่สิ้นสุดในเดือนนั้น) ---">`;
@@ -493,9 +501,21 @@
         monthHtml += `</optgroup>`;
       }
       monthSelect.innerHTML = monthHtml;
-      if ([...monthSelect.options].some(o => o.value === currentMonthVal)) {
-        monthSelect.value = currentMonthVal;
+
+      // Smart Fallback: หากโหลดครั้งแรกแล้วมีแคมเปญกำลังดำเนินการ ให้เลือก ACTIVE_ONLY
+      // แต่ถ้าขณะนั้นไม่มีแคมเปญกำลังดำเนินการเลย (0 แคมเปญ) ให้สลับไปแสดงเดือนล่าสุดที่สิ้นสุดแล้วอัตโนมัติเพื่อไม่ให้หน้ากราฟโล่ง
+      if (prevMonthVal && [...monthSelect.options].some(o => o.value === prevMonthVal)) {
+        monthSelect.value = prevMonthVal;
+      } else {
+        if (activeCount > 0) {
+          monthSelect.value = "ACTIVE_ONLY";
+        } else if (sortedMonths.length > 0) {
+          monthSelect.value = sortedMonths[0];
+        } else {
+          monthSelect.value = "ALL_TIME";
+        }
       }
+      monthSelect.dataset.initialized = "true";
 
       const chSelect = document.getElementById('trend-channel-filter');
       const currentChVal = chSelect.value || "COMPARE_ALL";
@@ -540,7 +560,7 @@
     }
 
     // =========================================================================
-    // 🚀 All-in-One Smart Cascading Filter (นับจำนวนแคมเปญที่สิ้นสุดในเดือนนั้นๆ แม่นยำ 100%)
+    // 🚀 All-in-One Smart Cascading Filter (นับจำนวนแคมเปญตามช่วงเวลาที่เลือกแม่นยำ 100%)
     // =========================================================================
     function getChannelScopeMode() {
       const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'COMPARE_ALL';
@@ -558,7 +578,7 @@
       if (!catSelect) return;
 
       const prevValue = catSelect.value;
-      const monthFilter = document.getElementById('trend-month-filter') ? document.getElementById('trend-month-filter').value : 'LAST_15';
+      const monthFilter = document.getElementById('trend-month-filter') ? document.getElementById('trend-month-filter').value : 'ACTIVE_ONLY';
       const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'COMPARE_ALL';
       const scopeMode = getChannelScopeMode();
       const isSingleChannel = channelFilter.startsWith('CH:');
@@ -588,7 +608,6 @@
           if (optVal === 'Geo-Based') return cat === 'Geo-Based';
           return true;
         });
-        if (monthFilter === 'LAST_15') matched = matched.slice(-15);
         return matched.length;
       };
 
@@ -678,7 +697,7 @@
       if (!focusSelect) return;
       const prevSelected = focusSelect.value;
 
-      const monthFilter = document.getElementById('trend-month-filter') ? document.getElementById('trend-month-filter').value : 'LAST_15';
+      const monthFilter = document.getElementById('trend-month-filter') ? document.getElementById('trend-month-filter').value : 'ACTIVE_ONLY';
       const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'COMPARE_ALL';
       const filterCat = document.getElementById('trend-category-filter') ? document.getElementById('trend-category-filter').value : 'All';
 
@@ -1257,7 +1276,7 @@
     // 🚀 ฟังก์ชันหลัก: คำนวณและวาดกราฟ Executive Analytics ทั้ง 4 ส่วน
     // =========================================================================
     function renderTrendCharts() {
-      const monthFilter = document.getElementById('trend-month-filter') ? document.getElementById('trend-month-filter').value : 'LAST_15';
+      const monthFilter = document.getElementById('trend-month-filter') ? document.getElementById('trend-month-filter').value : 'ACTIVE_ONLY';
       const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'COMPARE_ALL';
       const filterCat = document.getElementById('trend-category-filter') ? document.getElementById('trend-category-filter').value : 'All';
       const focusedTopicName = document.getElementById('trend-topic-focus') ? document.getElementById('trend-topic-focus').value : '';
@@ -1284,8 +1303,7 @@
         return true;
       });
 
-      let sortedTopics = [...filteredTopics].sort((a, b) => new Date(a.rawStartDate) - new Date(b.rawStartDate));
-      let activeTopicsForTrend = (monthFilter === 'LAST_15') ? sortedTopics.slice(-15) : sortedTopics;
+      let activeTopicsForTrend = [...filteredTopics].sort((a, b) => new Date(a.rawStartDate) - new Date(b.rawStartDate));
 
       if (focusedTopicName) {
         renderShopTopicDeepDive(focusedTopicName, activeTopicsForTrend);
@@ -1297,7 +1315,7 @@
       document.getElementById('kpi-title-3').innerText = 'แชมป์ช่องทาง (Top Performer)';
       document.getElementById('kpi-title-4').innerText = 'ต้องเร่งติดตาม (Focus Needed)';
       document.getElementById('line-chart-title').innerHTML = `<i class="fas fa-wave-square me-2 text-primary"></i> แนวโน้มการรับทราบรายแคมเปญ (Progression)`;
-      document.getElementById('line-chart-subtitle').innerHTML = `<i class="fas fa-mouse-pointer me-1 text-danger"></i> คลิกที่จุดกราฟเพื่อดูยอดอ่านแล้ว / ค้างอ่าน รายแคมเปญ`;
+      document.getElementById('line-chart-subtitle').innerHTML = `<i class="fas fa-mouse-pointer me-1 text-danger"></i> คลิกที่กราฟเพื่อดูยอดอ่านแล้ว / ค้างอ่าน รายแคมเปญ`;
       document.getElementById('bar-chart-title').innerHTML = `<i class="fas fa-ranking-star me-2 text-danger"></i> จัดอันดับช่องทาง (% เฉลี่ยสะสม)`;
       document.getElementById('bar-chart-subtitle').innerText = `คำนวณรวมทุกแคมเปญในช่วงเวลาที่เลือก`;
       document.getElementById('matrix-main-title').innerHTML = `<i class="fas fa-microscope me-2 text-danger"></i> ตารางวิเคราะห์ผลงานรายแคมเปญ (Diagnostic Matrix)`;
@@ -1330,7 +1348,7 @@
         document.getElementById('kpi-top-sub').innerText = '-';
         document.getElementById('kpi-low-channel').innerText = '-';
         document.getElementById('kpi-low-sub').innerText = '-';
-        document.getElementById('ai-summary-text').innerHTML = `<span class="text-muted">ไม่พบข้อมูลแคมเปญในเงื่อนไขที่เลือก</span>`;
+        document.getElementById('ai-summary-text').innerHTML = `<span class="text-muted">ขณะนี้ไม่มีแคมเปญในหมวดหมู่ที่เลือก (สามารถสลับช่องที่ 1 เพื่อดูสรุปผลย้อนหลังรายเดือน หรือดูทุกแคมเปญทั้งหมดได้ครับ)</span>`;
         document.getElementById('analytics-matrix-body').innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">ไม่พบข้อมูลแคมเปญที่ตรงกับตัวกรองที่เลือก</td></tr>`;
         return;
       }
@@ -1436,9 +1454,11 @@
         });
       });
 
-      const statusBreakdownText = ongoingCampaignCount > 0
+      const statusBreakdownText = (ongoingCampaignCount > 0 && endedCampaignCount > 0)
         ? `${rawTrendDataList.length} แคมเปญ (จบแล้ว ${endedCampaignCount} / กำลังดำเนินการ ${ongoingCampaignCount})`
-        : `${rawTrendDataList.length} แคมเปญ (สิ้นสุดแล้วทั้งหมด)`;
+        : (ongoingCampaignCount > 0
+            ? `${rawTrendDataList.length} แคมเปญ (กำลังดำเนินการทั้งหมด)`
+            : `${rawTrendDataList.length} แคมเปญ (สิ้นสุดแล้วทั้งหมด)`);
       document.getElementById('matrix-subtitle').innerHTML = `เงื่อนไข: ${monthText} • ${channelText} • รวม <b>${statusBreakdownText}</b>`;
 
       let focusSeries = rawTrendDataList.map(d => d.focusPercent);
@@ -1447,9 +1467,11 @@
       let diffFromAvg = latestVal - periodAvg;
 
       document.getElementById('kpi-period-avg').innerText = `${periodAvg}%`;
-      document.getElementById('kpi-period-sub').innerHTML = ongoingCampaignCount > 0
+      document.getElementById('kpi-period-sub').innerHTML = (ongoingCampaignCount > 0 && endedCampaignCount > 0)
         ? `เฉลี่ยจาก <b>${rawTrendDataList.length}</b> แคมเปญ <span class="text-secondary">(จบ ${endedCampaignCount} / ดำเนินการ ${ongoingCampaignCount})</span>`
-        : `เฉลี่ยจาก <b>${rawTrendDataList.length}</b> แคมเปญที่สิ้นสุดแล้ว`;
+        : (ongoingCampaignCount > 0
+            ? `เฉลี่ยจาก <b>${rawTrendDataList.length}</b> แคมเปญที่กำลังดำเนินการ`
+            : `เฉลี่ยจาก <b>${rawTrendDataList.length}</b> แคมเปญที่สิ้นสุดแล้ว`);
 
       document.getElementById('trend-last-percent').innerText = `${latestVal}%`;
       let diffHtml = diffFromAvg > 0 
@@ -1496,12 +1518,11 @@
       const worstCampaign = sortedByPerf[0];
       const bestCampaign = sortedByPerf[sortedByPerf.length - 1];
 
-      // คัดกรองเฉพาะแคมเปญที่ "กำลังดำเนินการ" เพื่อนำไปแจ้งเตือนติดตามงานปัจจุบัน
       const ongoingList = rawTrendDataList.filter(d => d.status === "กำลังดำเนินการ");
       const sortedOngoing = [...ongoingList].sort((a, b) => a.focusPercent - b.focusPercent || b.focusUnread - a.focusUnread);
       const urgentOngoing = sortedOngoing.length > 0 ? sortedOngoing[0] : null;
 
-      const cleanMonthLabel = monthText.replace(/^[^\s]+\s/, '');
+      const cleanMonthLabel = monthText.replace(/^[^\s]+\s/, '').replace(/\s*\(\d+\s*แคมเปญ\)/, '');
       const cleanChannelLabel = channelText.replace(/^[^\s]+\s/, '');
       const gapToStandard80 = periodAvg < 80
         ? `เพื่อยกระดับค่าเฉลี่ยจาก <b>${periodAvg}%</b> ให้ผ่านเกณฑ์มาตรฐาน <b>80%</b> (ต้องกระตุ้นการอ่านเพิ่มขึ้นอีกประมาณ <b>+${80 - periodAvg}%</b> ในรอบถัดไป)`
@@ -1550,97 +1571,151 @@
         `;
       }
 
+      // 🎯 หากมีแคมเปญเพียง 1-2 เรื่อง (เช่น ในโหมดกำลังดำเนินการ) ให้แสดงเป็นกราฟแท่งเปรียบเทียบแทนจุดลอยเดี่ยวๆ
+      const useBarForFewItems = rawTrendDataList.length <= 2;
+      const mainChartType = useBarForFewItems ? 'bar' : 'line';
+
       let datasets = [];
       if (isSingleChannel) {
         datasets.push({
+          type: mainChartType,
           label: `% ${selectedSingleChannelName}`,
           data: specificChData,
           borderColor: '#ff0000',
-          backgroundColor: '#ff0000',
-          borderWidth: 3.5,
+          backgroundColor: useBarForFewItems ? 'rgba(255, 0, 0, 0.85)' : '#ff0000',
+          borderRadius: useBarForFewItems ? 8 : 0,
+          maxBarThickness: 55,
+          borderWidth: useBarForFewItems ? 0 : 3.5,
           tension: 0.3,
           pointRadius: 5,
           pointHoverRadius: 8,
           datalabels: { 
-            align: (ctx) => {
+            align: useBarForFewItems ? 'center' : (ctx) => {
               const idx = ctx.dataIndex;
               return specificChData[idx] >= allAvgData[idx] ? 'top' : 'bottom';
             },
-            color: '#cc0000', 
-            font: { weight: 'bold', size: 11, family: 'Sarabun' }, 
+            anchor: 'center',
+            color: useBarForFewItems ? '#ffffff' : '#cc0000', 
+            backgroundColor: useBarForFewItems ? 'transparent' : 'rgba(255, 255, 255, 0.85)',
+            font: { weight: 'bold', size: useBarForFewItems ? 13 : 11, family: 'Sarabun' }, 
             formatter: v => v + '%' 
           }
         });
         datasets.push({
+          type: mainChartType,
           label: benchmarkLabel,
           data: allAvgData,
           borderColor: '#64748b',
-          backgroundColor: '#64748b',
-          borderWidth: 2,
+          backgroundColor: useBarForFewItems ? 'rgba(100, 116, 139, 0.75)' : '#64748b',
+          borderRadius: useBarForFewItems ? 8 : 0,
+          maxBarThickness: 55,
+          borderWidth: useBarForFewItems ? 0 : 2,
           borderDash: [6, 6],
           tension: 0.3,
           pointRadius: 4,
           pointHoverRadius: 6,
           datalabels: { 
             display: true,
-            align: (ctx) => {
+            align: useBarForFewItems ? 'center' : (ctx) => {
               const idx = ctx.dataIndex;
               return allAvgData[idx] > specificChData[idx] ? 'top' : 'bottom';
             },
-            color: '#64748b',
-            font: { weight: 'bold', size: 10, family: 'Sarabun' },
+            anchor: 'center',
+            color: useBarForFewItems ? '#ffffff' : '#64748b',
+            backgroundColor: useBarForFewItems ? 'transparent' : 'rgba(255, 255, 255, 0.85)',
+            font: { weight: 'bold', size: useBarForFewItems ? 12 : 10, family: 'Sarabun' },
             formatter: v => v + '%'
           }
         });
       } else if (channelFilter === 'GROUP_SHOP') {
         datasets.push({
+          type: mainChartType,
           label: '% กลุ่ม All Branded ( Retail Shop )',
           data: shopData,
           borderColor: '#002d72',
-          backgroundColor: '#002d72',
-          borderWidth: 3.5,
+          backgroundColor: useBarForFewItems ? 'rgba(0, 45, 114, 0.88)' : '#002d72',
+          borderRadius: useBarForFewItems ? 8 : 0,
+          maxBarThickness: 55,
+          borderWidth: useBarForFewItems ? 0 : 3.5,
           tension: 0.3,
           pointRadius: 5,
           pointHoverRadius: 8,
-          datalabels: { align: 'top', color: '#002d72', font: { weight: 'bold', size: 11, family: 'Sarabun' }, formatter: v => v + '%' }
+          datalabels: {
+            align: useBarForFewItems ? 'center' : 'top',
+            anchor: 'center',
+            color: useBarForFewItems ? '#ffffff' : '#002d72',
+            backgroundColor: useBarForFewItems ? 'transparent' : 'rgba(255, 255, 255, 0.85)',
+            font: { weight: 'bold', size: useBarForFewItems ? 13 : 11, family: 'Sarabun' },
+            formatter: v => v + '%'
+          }
         });
       } else if (channelFilter === 'GROUP_GEO') {
         datasets.push({
+          type: mainChartType,
           label: '% กลุ่ม Geo-Based ( Non Shop )',
           data: geoData,
           borderColor: '#ff0000',
-          backgroundColor: '#ff0000',
-          borderWidth: 3.5,
+          backgroundColor: useBarForFewItems ? 'rgba(255, 0, 0, 0.85)' : '#ff0000',
+          borderRadius: useBarForFewItems ? 8 : 0,
+          maxBarThickness: 55,
+          borderWidth: useBarForFewItems ? 0 : 3.5,
           tension: 0.3,
           pointRadius: 5,
           pointHoverRadius: 8,
-          datalabels: { align: 'top', color: '#ff0000', font: { weight: 'bold', size: 11, family: 'Sarabun' }, formatter: v => v + '%' }
+          datalabels: {
+            align: useBarForFewItems ? 'center' : 'top',
+            anchor: 'center',
+            color: useBarForFewItems ? '#ffffff' : '#ff0000',
+            backgroundColor: useBarForFewItems ? 'transparent' : 'rgba(255, 255, 255, 0.85)',
+            font: { weight: 'bold', size: useBarForFewItems ? 13 : 11, family: 'Sarabun' },
+            formatter: v => v + '%'
+          }
         });
       } else {
         if (filterCat !== 'Geo-Based') {
           datasets.push({
+            type: mainChartType,
             label: '% All Branded (Shop)',
             data: shopData,
             borderColor: '#002d72',
-            backgroundColor: '#002d72',
-            borderWidth: 3,
+            backgroundColor: useBarForFewItems ? 'rgba(0, 45, 114, 0.88)' : '#002d72',
+            borderRadius: useBarForFewItems ? 8 : 0,
+            maxBarThickness: 55,
+            borderWidth: useBarForFewItems ? 0 : 3,
             tension: 0.3,
             pointRadius: 5,
             pointHoverRadius: 8,
-            datalabels: { align: 'top', color: '#002d72', font: { weight: 'bold', size: 11, family: 'Sarabun' }, formatter: v => v + '%' }
+            datalabels: {
+              align: useBarForFewItems ? 'center' : 'top',
+              anchor: 'center',
+              color: useBarForFewItems ? '#ffffff' : '#002d72',
+              backgroundColor: useBarForFewItems ? 'transparent' : 'rgba(255, 255, 255, 0.85)',
+              font: { weight: 'bold', size: useBarForFewItems ? 13 : 11, family: 'Sarabun' },
+              formatter: v => v + '%'
+            }
           });
         }
         if (filterCat !== 'Morning-Brief' && filterCat !== 'Shop') {
           datasets.push({
+            type: mainChartType,
             label: '% Geo-Based (Non Shop)',
             data: geoData,
             borderColor: '#ff0000',
-            backgroundColor: '#ff0000',
-            borderWidth: 3,
+            backgroundColor: useBarForFewItems ? 'rgba(255, 0, 0, 0.85)' : '#ff0000',
+            borderRadius: useBarForFewItems ? 8 : 0,
+            maxBarThickness: 55,
+            borderWidth: useBarForFewItems ? 0 : 3,
             tension: 0.3,
             pointRadius: 5,
             pointHoverRadius: 8,
-            datalabels: { align: 'bottom', color: '#ff0000', font: { weight: 'bold', size: 11, family: 'Sarabun' }, formatter: v => v + '%' }
+            datalabels: {
+              align: useBarForFewItems ? 'center' : 'bottom',
+              anchor: 'center',
+              color: useBarForFewItems ? '#ffffff' : '#ff0000',
+              backgroundColor: useBarForFewItems ? 'transparent' : 'rgba(255, 255, 255, 0.85)',
+              font: { weight: 'bold', size: useBarForFewItems ? 13 : 11, family: 'Sarabun' },
+              formatter: v => v + '%'
+            }
           });
         }
       }
@@ -1648,14 +1723,14 @@
       const ctxLine = document.getElementById('dualTrendChart').getContext('2d');
       if (dualTrendChartInstance) dualTrendChartInstance.destroy();
       dualTrendChartInstance = new Chart(ctxLine, {
-        type: 'line',
+        type: mainChartType,
         data: { labels: labels, datasets: datasets },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
             legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 12, weight: 'bold' } } },
-            datalabels: { display: true, backgroundColor: 'rgba(255, 255, 255, 0.85)', borderRadius: 4, padding: 2 }
+            datalabels: { display: true, borderRadius: 4, padding: 2 }
           },
           scales: {
             y: { beginAtZero: true, max: 115, ticks: { callback: v => v <= 100 ? v + "%" : "" } },
