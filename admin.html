@@ -459,13 +459,22 @@
       }
     }
 
+    // 🎯 ฟังก์ชันกลางตรวจสอบว่าแคมเปญตรงกับช่วงเวลา/เดือนที่เลือกหรือไม่
+    // เมื่อเลือกเป็นรายเดือน (เช่น 2026-10) จะนับเฉพาะแคมเปญที่ "สิ้นสุดแล้ว" และมี "วันสิ้นสุด (rawDate)" ในเดือนนั้นๆ เท่านั้น (ทำให้ได้ 7 แคมเปญตรงกับแท็บสิ้นสุดแล้ว 100%)
+    function isTopicInSelectedMonthPeriod(t, monthFilter) {
+      if (monthFilter === 'LAST_15' || monthFilter === 'ALL_TIME') return true;
+      let endMonthStr = t.rawDate || t.rawStartDate || "";
+      return t.status === 'สิ้นสุดแล้ว' && endMonthStr.startsWith(monthFilter);
+    }
+
     function populateAnalyticsFilters() {
       const monthSelect = document.getElementById('trend-month-filter');
       const currentMonthVal = monthSelect.value || "LAST_15";
       let monthSet = new Set();
       globalTopics.forEach(t => {
-        let dStr = t.rawStartDate || t.rawDate;
-        if (dStr && dStr.length >= 7) {
+        // ดึงรายการเดือนจากแคมเปญที่สิ้นสุดแล้ว โดยยึดตามวันสิ้นสุด (rawDate) เพื่อให้ตรงกับแท็บสิ้นสุดแล้ว 100%
+        let dStr = t.rawDate || t.rawStartDate;
+        if (t.status === 'สิ้นสุดแล้ว' && dStr && dStr.length >= 7) {
           monthSet.add(dStr.substring(0, 7));
         }
       });
@@ -476,7 +485,7 @@
         <option value="ALL_TIME">📅 ทุกแคมเปญทั้งหมด (${globalTopics.length})</option>
       `;
       if (sortedMonths.length > 0) {
-        monthHtml += `<optgroup label="--- เลือกตามเดือน (วันเริ่มแคมเปญ) ---">`;
+        monthHtml += `<optgroup label="--- เลือกตามเดือน (แคมเปญที่สิ้นสุดในเดือนนั้น) ---">`;
         sortedMonths.forEach(m => {
           const parts = m.split('-');
           const mName = THAI_MONTHS[parseInt(parts[1], 10) - 1] || parts[1];
@@ -532,7 +541,7 @@
     }
 
     // =========================================================================
-    // 🚀 All-in-One Smart Cascading Filter (ปรับข้อความช่องที่ 3 ให้ระบุชัดเจน)
+    // 🚀 All-in-One Smart Cascading Filter (นับจำนวนแคมเปญที่สิ้นสุดในเดือนนั้นๆ แม่นยำ 100%)
     // =========================================================================
     function getChannelScopeMode() {
       const channelFilter = document.getElementById('trend-channel-filter') ? document.getElementById('trend-channel-filter').value : 'COMPARE_ALL';
@@ -558,10 +567,7 @@
 
       let sortedByDate = [...globalTopics].sort((a, b) => new Date(a.rawStartDate) - new Date(b.rawStartDate));
       let periodPool = sortedByDate.filter(t => {
-        if (monthFilter !== 'LAST_15' && monthFilter !== 'ALL_TIME') {
-          let dStr = t.rawStartDate || t.rawDate || "";
-          if (!dStr.startsWith(monthFilter)) return false;
-        }
+        if (!isTopicInSelectedMonthPeriod(t, monthFilter)) return false;
         if (isSingleChannel && !isChannelTargetedByTopic(targetCh, t)) {
           return false;
         }
@@ -591,14 +597,13 @@
       let defaultSelected = 'All';
 
       if (scopeMode === 'SHOP') {
-        // 🎯 ปรับข้อความในช่องที่ 3 ให้ระบุชัดเจนว่า "รวมข่าวที่ต้องอ่าน (Shop + All)" แยกจาก "เฉพาะประเภท Shop"
         allowedOptions = [
-          { value: 'All', label: `📌 รวมข่าวที่ต้องอ่าน (Shop + All) (${countForOption('All')} แคมเปญ)` },
           { value: 'Shop', label: `🏪 เฉพาะประเภท Shop (${countForOption('Shop')} แคมเปญ)` },
+          { value: 'All', label: `📌 รวมข่าวที่ต้องอ่าน (Shop + All) (${countForOption('All')} แคมเปญ)` },
           { value: 'Morning-Brief', label: `☕ เฉพาะข่าว Morning Brief (${countForOption('Morning-Brief')} แคมเปญ)` },
           { value: 'Category-All', label: `🌐 เฉพาะประเภท All ทุกคน (${countForOption('Category-All')} แคมเปญ)` }
         ];
-        defaultSelected = 'All';
+        defaultSelected = countForOption('Shop') > 0 ? 'Shop' : 'All';
       } else if (scopeMode === 'GEO') {
         allowedOptions = [
           { value: 'Geo-Based', label: `📍 เฉพาะประเภท Geo-Based (${countForOption('Geo-Based')} แคมเปญ)` },
@@ -716,10 +721,7 @@
           if (filterCat !== 'Geo-Based' && (cat === 'Geo-Based' || cat === 'Non Shop')) return false;
         }
 
-        if (monthFilter !== 'LAST_15' && monthFilter !== 'ALL_TIME') {
-          let dStr = t.rawStartDate || t.rawDate || "";
-          if (!dStr.startsWith(monthFilter)) return false;
-        }
+        if (!isTopicInSelectedMonthPeriod(t, monthFilter)) return false;
         return true;
       });
 
@@ -731,7 +733,7 @@
         opt.value = t.name;
         let subInfo = (t.category === 'Geo-Based' && t.subTarget && t.subTarget.trim() !== '') ? ` [${t.subTarget}]` : '';
         let stTag = t.status === 'กำลังดำเนินการ' ? '🟢 กำลังดำเนินการ' : 'สิ้นสุดแล้ว';
-        opt.textContent = `🎯 [${t.startDate} • ${stTag}] ${t.name}${subInfo} (รวม ${t.percentage})`;
+        opt.textContent = `🎯 [${t.startDate} - ${t.endDate} • ${stTag}] ${t.name}${subInfo} (รวม ${t.percentage})`;
         focusSelect.appendChild(opt);
       });
 
@@ -781,11 +783,11 @@
       document.getElementById('doughnut-section').classList.remove('d-none');
       document.getElementById('trend-view').classList.add('d-none');
 
-      // 🎯 แก้ไขเงื่อนไขที่ 1: ปรับแท็บ "สิ้นสุดแล้ว" ให้กรองเดือนจาก "วันเริ่มแคมเปญ (rawStartDate)" เพื่อให้ตรงกับหน้า Analytics 100%
+      // 🎯 แท็บ "สิ้นสุดแล้ว" กรองจากวันสิ้นสุดแคมเปญ (rawDate) ตรงกับหน้า Analytics 100%
       if (statusFilter === 'สิ้นสุดแล้ว' && !selectedMonth) {
         let monthSet = new Set();
         globalTopics.forEach(t => {
-          let refMonthStr = t.rawStartDate || t.rawDate;
+          let refMonthStr = t.rawDate || t.rawStartDate;
           if (t.status === 'สิ้นสุดแล้ว' && refMonthStr) {
             monthSet.add(refMonthStr.substring(0, 7));
           }
@@ -801,7 +803,7 @@
 
         const { value: monthPicked, isConfirmed } = await Swal.fire({
           title: 'เลือกเดือนที่ต้องการดูข้อมูล',
-          html: `<div class="text-start mb-2 fw-bold text-muted" style="font-size: 14px;">ระบุเดือนที่เริ่มแคมเปญ (เกณฑ์เดียวกับหน้า Analytics):</div><select id="select-expired-month" class="form-select form-select-lg" style="border-radius: 12px;">${optionsHtml}</select>`,
+          html: `<div class="text-start mb-2 fw-bold text-muted" style="font-size: 14px;">ระบุเดือนที่แคมเปญสิ้นสุด (เกณฑ์เดียวกับหน้า Analytics):</div><select id="select-expired-month" class="form-select form-select-lg" style="border-radius: 12px;">${optionsHtml}</select>`,
           showCancelButton: true, confirmButtonText: 'ตกลง', confirmButtonColor: '#ff0000', cancelButtonText: 'ยกเลิก',
           preConfirm: () => document.getElementById('select-expired-month').value
         });
@@ -818,7 +820,7 @@
       const filteredData = globalTopics.filter(t => {
         if (statusFilter === 'All') return true;
         if (statusFilter === 'สิ้นสุดแล้ว' && selectedMonth) {
-          let refMonthStr = t.rawStartDate || t.rawDate || "";
+          let refMonthStr = t.rawDate || t.rawStartDate || "";
           return t.status === 'สิ้นสุดแล้ว' && refMonthStr.startsWith(selectedMonth);
         }
         return t.status === statusFilter;
@@ -1267,10 +1269,8 @@
           }
         }
 
-        if (monthFilter !== 'LAST_15' && monthFilter !== 'ALL_TIME') {
-          let dStr = t.rawStartDate || t.rawDate || "";
-          if (!dStr.startsWith(monthFilter)) return false;
-        }
+        // 🎯 ใช้ฟังก์ชันตรวจสอบช่วงเวลาเดียวกับช่องที่ 3 (นับเฉพาะแคมเปญที่สิ้นสุดในเดือนนั้นๆ)
+        if (!isTopicInSelectedMonthPeriod(t, monthFilter)) return false;
         return true;
       });
 
@@ -1426,8 +1426,9 @@
         });
       });
 
-      // 🎯 แก้ไขเงื่อนไขที่ 2: แสดงจำนวนแคมเปญแยกสถานะ (จบแล้ว / กำลังดำเนินการ) ในการ์ด KPI, ตาราง และกล่องสรุป AI
-      const statusBreakdownText = `${rawTrendDataList.length} แคมเปญ (จบแล้ว ${endedCampaignCount} / กำลังดำเนินการ ${ongoingCampaignCount})`;
+      const statusBreakdownText = ongoingCampaignCount > 0
+        ? `${rawTrendDataList.length} แคมเปญ (จบแล้ว ${endedCampaignCount} / กำลังดำเนินการ ${ongoingCampaignCount})`
+        : `${rawTrendDataList.length} แคมเปญ (สิ้นสุดแล้วทั้งหมด)`;
       document.getElementById('matrix-subtitle').innerHTML = `เงื่อนไข: ${monthText} • ${channelText} • รวม <b>${statusBreakdownText}</b>`;
 
       let focusSeries = rawTrendDataList.map(d => d.focusPercent);
@@ -1436,7 +1437,9 @@
       let diffFromAvg = latestVal - periodAvg;
 
       document.getElementById('kpi-period-avg').innerText = `${periodAvg}%`;
-      document.getElementById('kpi-period-sub').innerHTML = `เฉลี่ยจาก <b>${rawTrendDataList.length}</b> แคมเปญ <span class="text-secondary">(จบแล้ว ${endedCampaignCount} / ดำเนินการ ${ongoingCampaignCount})</span>`;
+      document.getElementById('kpi-period-sub').innerHTML = ongoingCampaignCount > 0
+        ? `เฉลี่ยจาก <b>${rawTrendDataList.length}</b> แคมเปญ <span class="text-secondary">(จบ ${endedCampaignCount} / ดำเนินการ ${ongoingCampaignCount})</span>`
+        : `เฉลี่ยจาก <b>${rawTrendDataList.length}</b> แคมเปญที่สิ้นสุดแล้ว`;
 
       document.getElementById('trend-last-percent').innerText = `${latestVal}%`;
       let diffHtml = diffFromAvg > 0 
@@ -1492,7 +1495,7 @@
           <b style="color:#002d72;">💡 สรุปผลวิเคราะห์ (${monthText.replace(/^[^\s]+\s/, '')} • ${selectedSingleChannelName}) — รวม ${statusBreakdownText}:</b><br>
           มีอัตราการรับทราบเฉลี่ยอยู่ที่ <b class="text-primary">${periodAvg}%</b> (${rankText} • ${vsBenchHtml}) • 
           แคมเปญที่ทำได้ดีที่สุดคือ <b class="text-success">"${bestCampaign.name}" (${bestCampaign.focusPercent}%)</b> • 
-          สิ่งที่ควรทำต่อ: เร่งติดตามแคมเปญ <b class="text-danger">"${worstCampaign.name}" (${worstCampaign.focusPercent}%)</b> ซึ่งยังมีผู้ค้างอ่าน <b>${worstCampaign.focusUnread.toLocaleString()} คน</b>
+          สิ่งที่ควรทำต่อ: เร่งติดตามแคมเปญ <b class="text-danger">"${worstCampaign.name}" (${worstCampaign.focusPercent}%)</b> ซึ่งมียอดค้างอ่าน <b>${worstCampaign.focusUnread.toLocaleString()} คน</b>
         `;
       } else {
         const lowList = [...rankList].sort((a, b) => a.percent - b.percent || b.unread - a.unread);
@@ -1687,7 +1690,6 @@
         let barColor = item.focusPercent >= 80 ? 'bg-success' : (item.focusPercent >= 50 ? 'bg-warning' : 'bg-danger');
         let subBadge = (item.category === 'Geo-Based' && item.subTarget) ? ` <span class="badge bg-info text-dark border ms-1" style="font-size:10px;">${item.subTarget}</span>` : '';
         
-        // 🎯 ติดป้ายบอกสถานะในตาราง Matrix ด้านล่าง
         let statusPill = item.status === "กำลังดำเนินการ"
           ? `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill ms-2" style="font-size: 11px;"><i class="fas fa-circle-dot me-1"></i>กำลังดำเนินการ</span>`
           : `<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill ms-2" style="font-size: 11px;"><i class="fas fa-check-circle me-1"></i>สิ้นสุดแล้ว</span>`;
