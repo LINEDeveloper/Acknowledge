@@ -29,6 +29,13 @@
     .topic-item.selected .topic-item-title { color: #cc0000; font-weight: 700; }
     .topic-check-icon { font-size: 20px; color: #ddd; transition: 0.2s; }
     .topic-item.selected .topic-check-icon { color: #ff0000; text-shadow: 0 2px 5px rgba(255,0,0,0.2); }
+
+    /* ✅ CSS สำหรับการ์ดแสดงหัวข้อที่รับทราบแล้ว (Read-only โทนสีเขียวสะอาดตา) */
+    .acked-section-wrap { margin-top: 22px; text-align: left; width: 100%; }
+    .acked-list-header { font-size: 13.5px; font-weight: 700; color: #198754; margin-bottom: 10px; padding-left: 5px; display: flex; align-items: center; gap: 6px; }
+    .acked-topic-card { background: linear-gradient(135deg, #f8fdf9 0%, #ffffff 100%); border: 1.5px solid #d1e7dd; border-radius: 16px; padding: 14px 18px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; text-align: left; box-shadow: 0 4px 12px rgba(25, 135, 84, 0.04); }
+    .acked-topic-title { font-size: 14.5px; font-weight: 600; color: #2b3035; padding-right: 12px; line-height: 1.4; }
+    .acked-badge-pill { background-color: #d1e7dd; color: #0f5132; font-size: 11.5px; font-weight: 700; padding: 5px 12px; border-radius: 50px; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; }
     /* ---------------------------------------------------- */
 
     .hidden { display: none !important; }
@@ -117,15 +124,18 @@
         </div>
       </div>
 
-      <!-- โซน Interactive List -->
-      <div id="topic-list-container" class="w-100 mb-4">
+      <!-- โซนที่ 1: รายการหัวข้อที่ยังไม่ได้กดรับทราบ (หรือกล่องสีเขียว เยี่ยมมาก!) -->
+      <div id="topic-list-container" class="w-100 mb-3">
         <!-- รายการหัวข้อข่าวจะถูกสร้างด้วย Javascript ตรงนี้ -->
       </div>
       
-      <div class="consent-box text-start shadow-sm" onclick="handleSubmit()" style="background: #fffbdf; border-color: #ffeba1;">
+      <div class="consent-box text-start shadow-sm mb-3" onclick="handleSubmit()" style="background: #fffbdf; border-color: #ffeba1;">
         <input type="checkbox" id="consentCheck" style="width:22px; height:22px; accent-color:#ff0000;" onclick="event.stopPropagation(); handleSubmit();">
         <label class="m-0 fw-bold text-warning-emphasis ms-2" style="font-size: 13px;">รับทราบ และ ปฏิบัติตามอย่างเคร่งครัด</label>
       </div>
+
+      <!-- โซนที่ 2: รายการหัวข้อที่กดรับทราบแล้ว (เฉพาะแคมเปญที่ยังไม่สิ้นสุด) -->
+      <div id="acked-topic-list-container" class="w-100"></div>
     </div>
 
     <div id="view-success" class="p-4 text-center hidden full-center">
@@ -151,7 +161,7 @@
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycby-pLn-ACbareuCdomxdkX2Oe1H9gVNseUDb2k-CENm3DX3YrQvbtoFYErSZvHQppU/exec"; 
     
-    let lineId, userObj, topicList = [];
+    let lineId, userObj, topicList = [], ackedTopicList = [];
     let typingTimer;
     let failCount = 0; 
     let currentSelectedTopic = "";
@@ -163,7 +173,6 @@
       buttonsStyling: false
     });
 
-    // จัดเก็บรายการหัวข้อที่กดรับทราบแล้วไว้ในเครื่องควบคู่ไปด้วย เพื่อซ่อนทันทีหากเปิดเข้ามาใหม่ในเสี้ยววินาทีเดียวกัน
     function getLocalAckedSet(fullName) {
       try {
         const raw = localStorage.getItem('true_acked_topics_' + (fullName || '').trim());
@@ -191,13 +200,15 @@
       } catch (e) {}
     }
 
-    // ฟังก์ชันวาดรายการหัวข้อข่าว (แยกออกมาเพื่อให้อัปเดตซ่อนข่าวที่อ่านแล้วได้ทันที)
+    // ฟังก์ชันวาดรายการหัวข้อข่าว (ทั้งส่วนที่ยังไม่ได้กด และส่วนที่กดรับทราบแล้วเฉพาะแคมเปญที่ยังไม่สิ้นสุด)
     function renderTopicListUI() {
       const container = document.getElementById('topic-list-container');
+      const ackedContainer = document.getElementById('acked-topic-list-container');
       const consentBox = document.querySelector('.consent-box');
       currentSelectedTopic = "";
       document.getElementById('consentCheck').checked = false;
 
+      // 1. วาดโซนหัวข้อที่ยังไม่ได้กดรับทราบ (หากครบแล้ว แสดงกล่องสีเขียว "เยี่ยมมาก!" ตามภาพต้นฉบับ)
       if (!topicList || topicList.length === 0) {
         container.innerHTML = `
           <div class="p-4 text-center rounded-4 shadow-sm" style="background: linear-gradient(135deg, #f0fdf4 0%, #e8f5e9 100%); border: 1px solid #c8e6c9;">
@@ -219,22 +230,74 @@
         container.innerHTML = listHtml;
         if (consentBox) consentBox.classList.remove('hidden');
       }
+
+      // 2. วาดโซนหัวข้อที่รับทราบแล้ว (เฉพาะแคมเปญที่ยังไม่สิ้นสุด) แสดงด้านล่าง
+      if (ackedContainer) {
+        if (ackedTopicList && ackedTopicList.length > 0) {
+          let ackedHtml = `
+            <div class="acked-section-wrap">
+              <div class="acked-list-header">
+                <i class="fas fa-circle-check"></i> หัวข้อที่รับทราบแล้ว (${ackedTopicList.length} หัวข้อ)
+              </div>
+          `;
+          ackedTopicList.forEach(item => {
+            ackedHtml += `
+              <div class="acked-topic-card">
+                <div class="acked-topic-title">${item.name}</div>
+                <span class="acked-badge-pill"><i class="fas fa-check"></i> รับทราบแล้ว</span>
+              </div>
+            `;
+          });
+          ackedHtml += `</div>`;
+          ackedContainer.innerHTML = ackedHtml;
+        } else {
+          ackedContainer.innerHTML = '';
+        }
+      }
     }
 
+    // ⚡ อัปเกรดความเร็วตอนเปิดเว็บ: ดึง lineId จาก DecodedIDToken ทันที (ไม่ต้องรอ liff.getProfile() ก่อนค่อยยิง API)
     async function init() {
       try {
         await liff.init({ liffId: "1656846002-Wl9ZZgv7" });
         if (!liff.isLoggedIn()) { liff.login(); return; }
         
-        const p = await liff.getProfile(); 
-        lineId = p.userId;
-        
         const defaultAvatar = document.getElementById('loading-pfp').src;
-        if (p.pictureUrl) {
-          document.getElementById('loading-pfp').src = p.pictureUrl;
+        let pfpUrl = "";
+
+        // 1. ดึง lineId และรูปภาพจาก ID Token ทันทีใน 0.001 วินาที (ถ้ามี)
+        const decodedToken = liff.getDecodedIDToken();
+        if (decodedToken && decodedToken.sub) {
+          lineId = decodedToken.sub;
+          if (decodedToken.picture) {
+            pfpUrl = decodedToken.picture;
+            document.getElementById('loading-pfp').src = pfpUrl;
+          }
+        }
+
+        // 2. หากใน Token ไม่มี lineId ค่อยเรียก getProfile() หรือดึงควบคู่แบบขนาน (Parallel)
+        const profilePromise = (!lineId || !pfpUrl) ? liff.getProfile().catch(() => null) : Promise.resolve(null);
+
+        if (!lineId) {
+          const p = await profilePromise;
+          if (p) {
+            lineId = p.userId;
+            pfpUrl = p.pictureUrl || "";
+            if (pfpUrl) document.getElementById('loading-pfp').src = pfpUrl;
+          }
+        } else {
+          // อัปเดตรูปภาพในพื้นหลังโดยไม่บล็อกการดึงฐานข้อมูล
+          profilePromise.then(p => {
+            if (p && p.pictureUrl && !pfpUrl) {
+              pfpUrl = p.pictureUrl;
+              document.getElementById('loading-pfp').src = pfpUrl;
+              const userPfpEl = document.getElementById('user-pfp');
+              if (userPfpEl) userPfpEl.src = pfpUrl;
+            }
+          });
         }
         
-        // เพิ่ม timestamp และ no-store ป้องกันมือถือจำ Cache รายการข่าวเก่าที่เคยกดไปแล้ว
+        // 3. ยิงคำสั่งตรวจสอบข้อมูลไปยัง Google Apps Script ทันที
         const response = await fetch(`${GAS_URL}?action=getInitialData&lineId=${encodeURIComponent(lineId)}&_t=${Date.now()}`, {
           cache: 'no-store'
         });
@@ -242,16 +305,24 @@
         
         const res = await response.json();
         topicList = res.topics || [];
+        ackedTopicList = res.ackedTopics || [];
 
         if (res.isRegistered) {
           userObj = res.user;
-          // กรองหัวข้อที่เพิ่งกดรับทราบในเครื่องออกไปทันที (กรณีเปิดกลับเข้ามาใหม่ทันทีขณะที่คิวหลังบ้านกำลังบันทึก)
+          
+          // ซิงค์รายการที่เพิ่งกดรับทราบในเครื่อง (เผื่อกรณีเปิดแอปซ้ำทันทีในเสี้ยววินาทีเดียวกัน)
           const localAcked = getLocalAckedSet(userObj.fullName);
           if (localAcked.size > 0) {
+            const newlyAckedItems = topicList.filter(t => localAcked.has((t.name || '').trim()));
             topicList = topicList.filter(t => !localAcked.has((t.name || '').trim()));
+            newlyAckedItems.forEach(item => {
+              if (!ackedTopicList.some(a => a.name === item.name)) {
+                ackedTopicList.push(item);
+              }
+            });
           }
 
-          document.getElementById('user-pfp').src = p.pictureUrl || defaultAvatar;
+          document.getElementById('user-pfp').src = pfpUrl || defaultAvatar;
           document.getElementById('user-name').innerText = "คุณ" + userObj.fullName;
           document.getElementById('user-meta').innerHTML = "ID : " + userObj.empId + "<br>" + userObj.channel;
           
@@ -361,8 +432,7 @@
       }
     }
 
-    // ⚡ อัปเกรด: แสดงหน้าจอ "กำลังตรวจสอบ..." (ภาพที่ 2) เพียง 0.35 วินาที แล้วสลับเข้าหน้า "บันทึกสำเร็จ" (ภาพที่ 1) ทันที
-    // พร้อมส่งข้อมูลไปบันทึกเบื้องหลังด้วย keepalive + Auto-Retry จนสำเร็จ 100%
+    // ⚡ อัปเกรด: แสดงหน้าจอหมุนรอเพียง 0.35 วินาที แล้วสลับเข้าหน้า "บันทึกสำเร็จ" ทันที พร้อมส่งข้อมูลเบื้องหลัง
     async function handleSubmit() {
       if (isSubmitting) return;
 
@@ -374,6 +444,7 @@
       isSubmitting = true;
       document.getElementById('consentCheck').checked = true;
       const t = currentSelectedTopic;
+      const matchedTopicObj = topicList.find(x => x.name === t) || { name: t, category: "-" };
 
       const payload = { 
         topic: t, 
@@ -382,7 +453,7 @@
         channel: userObj.channel, 
         branch: userObj.branch, 
         zone: userObj.zone,     
-        category: (topicList.find(x => x.name === t) || {}).category, 
+        category: matchedTopicObj.category, 
         device: "LINE (" + liff.getOS() + ")" 
       };
       
@@ -390,31 +461,38 @@
       const overlay = document.getElementById('save-overlay');
       overlay.classList.remove('hidden');
 
-      // 2. ยิงคำสั่งบันทึกข้อมูลไปที่หลังบ้านทันที (ไม่ต้องรอให้หลังบ้านตอบกลับก่อนค่อยเปลี่ยนหน้า)
+      // 2. ยิงคำสั่งบันทึกข้อมูลไปที่หลังบ้านทันที
       markLocalAcked(userObj.fullName, t);
       activeSavePromise = sendAcknowledgeInBackground(payload);
 
-      // 3. หน่วงเวลาแสดงหน้าจอหมุนรอเพียง 0.35 วินาที (350ms) แล้วสลับเข้าหน้า "บันทึกสำเร็จ" (ภาพที่ 1) ทันที
+      // 3. หน่วงเวลาแสดงหน้าจอหมุนรอเพียง 0.35 วินาที แล้วสลับเข้าหน้า "บันทึกสำเร็จ" (ภาพที่ 1) ทันที
       await new Promise(r => setTimeout(r, 350));
       overlay.classList.add('hidden');
 
+      // ย้ายหัวข้อนี้จากรายการค้างอ่าน ไปอยู่ในรายการที่รับทราบแล้วทันที
       topicList = topicList.filter(x => x.name !== t);
+      if (!ackedTopicList.some(a => a.name === t)) {
+        ackedTopicList.push(matchedTopicObj);
+      }
+
       document.getElementById('success-topic-name').innerText = t;
       showView('success');
       isSubmitting = false;
 
-      // 4. ตรวจสอบผลลัพธ์เบื้องหลัง (กรณีพิเศษหากเน็ตหลุดจริงๆ หลังลองครบ 3 ครั้ง ค่อยเด้งให้กดยืนยันใหม่)
+      // 4. ตรวจสอบผลลัพธ์เบื้องหลัง (หากเน็ตหลุดจริงๆ หลังลองครบ 3 ครั้ง ค่อยดึงกลับมาให้กดใหม่)
       const bgRes = await activeSavePromise;
       activeSavePromise = null;
       if (bgRes !== "Success" && bgRes !== "Duplicate") {
         unmarkLocalAcked(userObj.fullName, t);
+        ackedTopicList = ackedTopicList.filter(x => x.name !== t);
+        topicList.push(matchedTopicObj);
+        renderTopicListUI();
         showView('acknowledge');
         document.getElementById('consentCheck').checked = false;
         TrueSwal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: 'สัญญาณอินเทอร์เน็ตขัดข้อง โปรดแตะยืนยันอีกครั้งครับ' });
       }
     }
 
-    // ฟังก์ชันส่งข้อมูลเบื้องหลังพร้อม keepalive และ Auto-Retry 3 รอบ
     async function sendAcknowledgeInBackground(payload) {
       const maxAttempts = 3;
       let lastResult = null;
@@ -449,7 +527,6 @@
       return lastResult;
     }
 
-    // ป้องกันกรณีพนักงานกดปุ่ม "ปิดหน้าต่าง" ทันทีในเสี้ยววินาทีแรก ให้รอคำสั่งส่งข้อมูลออกตัวเสร็จก่อน (ไม่เกิน 0.5 วินาที)
     async function safeCloseWindow() {
       const btn = document.getElementById('btn-close-window');
       if (activeSavePromise) {
@@ -465,7 +542,6 @@
       liff.closeWindow();
     }
 
-    // สำหรับการลงทะเบียน (register) ยังคงใช้ callApi แบบเดิมทุกประการ
     async function callApi(action, payload) {
       if (action === 'acknowledge') {
         document.getElementById('save-overlay').classList.remove('hidden'); 
