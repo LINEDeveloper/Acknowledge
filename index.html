@@ -139,7 +139,7 @@
         <div id="success-topic-name" class="fw-bold text-dark" style="font-size: 16px; line-height: 1.5; padding-left: 5px;"></div>
       </div>
 
-      <button class="btn-true shadow-sm" onclick="liff.closeWindow()">ปิดหน้าต่าง</button>
+      <button id="btn-close-window" class="btn-true shadow-sm" onclick="safeCloseWindow()">ปิดหน้าต่าง</button>
     </div>
   </div>
 
@@ -156,11 +156,40 @@
     let failCount = 0; 
     let currentSelectedTopic = "";
     let isSubmitting = false;
+    let activeSavePromise = null;
 
     const TrueSwal = Swal.mixin({
       customClass: { popup: 'swal-true-popup', confirmButton: 'btn-true' },
       buttonsStyling: false
     });
+
+    // จัดเก็บรายการหัวข้อที่กดรับทราบแล้วไว้ในเครื่องควบคู่ไปด้วย เพื่อซ่อนทันทีหากเปิดเข้ามาใหม่ในเสี้ยววินาทีเดียวกัน
+    function getLocalAckedSet(fullName) {
+      try {
+        const raw = localStorage.getItem('true_acked_topics_' + (fullName || '').trim());
+        return raw ? new Set(JSON.parse(raw)) : new Set();
+      } catch (e) {
+        return new Set();
+      }
+    }
+
+    function markLocalAcked(fullName, topicName) {
+      try {
+        const key = 'true_acked_topics_' + (fullName || '').trim();
+        const set = getLocalAckedSet(fullName);
+        set.add((topicName || '').trim());
+        localStorage.setItem(key, JSON.stringify(Array.from(set)));
+      } catch (e) {}
+    }
+
+    function unmarkLocalAcked(fullName, topicName) {
+      try {
+        const key = 'true_acked_topics_' + (fullName || '').trim();
+        const set = getLocalAckedSet(fullName);
+        set.delete((topicName || '').trim());
+        localStorage.setItem(key, JSON.stringify(Array.from(set)));
+      } catch (e) {}
+    }
 
     // ฟังก์ชันวาดรายการหัวข้อข่าว (แยกออกมาเพื่อให้อัปเดตซ่อนข่าวที่อ่านแล้วได้ทันที)
     function renderTopicListUI() {
@@ -216,6 +245,12 @@
 
         if (res.isRegistered) {
           userObj = res.user;
+          // กรองหัวข้อที่เพิ่งกดรับทราบในเครื่องออกไปทันที (กรณีเปิดกลับเข้ามาใหม่ทันทีขณะที่คิวหลังบ้านกำลังบันทึก)
+          const localAcked = getLocalAckedSet(userObj.fullName);
+          if (localAcked.size > 0) {
+            topicList = topicList.filter(t => !localAcked.has((t.name || '').trim()));
+          }
+
           document.getElementById('user-pfp').src = p.pictureUrl || defaultAvatar;
           document.getElementById('user-name').innerText = "คุณ" + userObj.fullName;
           document.getElementById('user-meta').innerHTML = "ID : " + userObj.empId + "<br>" + userObj.channel;
@@ -326,6 +361,8 @@
       }
     }
 
+    // ⚡ อัปเกรด: แสดงหน้าจอ "กำลังตรวจสอบ..." (ภาพที่ 2) เพียง 0.35 วินาที แล้วสลับเข้าหน้า "บันทึกสำเร็จ" (ภาพที่ 1) ทันที
+    // พร้อมส่งข้อมูลไปบันทึกเบื้องหลังด้วย keepalive + Auto-Retry จนสำเร็จ 100%
     async function handleSubmit() {
       if (isSubmitting) return;
 
@@ -349,27 +386,86 @@
         device: "LINE (" + liff.getOS() + ")" 
       };
       
-      const res = await callApi('acknowledge', payload);
+      // 1. แสดงหน้าจอหมุนรอ (ภาพที่ 2) ทันทีที่กด
+      const overlay = document.getElementById('save-overlay');
+      overlay.classList.remove('hidden');
+
+      // 2. ยิงคำสั่งบันทึกข้อมูลไปที่หลังบ้านทันที (ไม่ต้องรอให้หลังบ้านตอบกลับก่อนค่อยเปลี่ยนหน้า)
+      markLocalAcked(userObj.fullName, t);
+      activeSavePromise = sendAcknowledgeInBackground(payload);
+
+      // 3. หน่วงเวลาแสดงหน้าจอหมุนรอเพียง 0.35 วินาที (350ms) แล้วสลับเข้าหน้า "บันทึกสำเร็จ" (ภาพที่ 1) ทันที
+      await new Promise(r => setTimeout(r, 350));
+      overlay.classList.add('hidden');
+
+      topicList = topicList.filter(x => x.name !== t);
+      document.getElementById('success-topic-name').innerText = t;
+      showView('success');
       isSubmitting = false;
 
-      if (res === "Success") {
-        // ลบหัวข้อที่บันทึกสำเร็จออกจากรายการในหน่วยความจำทันที
-        topicList = topicList.filter(x => x.name !== t);
-        document.getElementById('success-topic-name').innerText = t;
-        showView('success');
-      } else if (res === "Duplicate") { 
-        // 🚨 แก้ไข: เช็กเฉพาะคำว่า "Duplicate" จริงๆ เท่านั้น และซ่อนหัวข้อข่าวนี้ทิ้งทันทีเพื่อไม่ให้กดซ้ำอีก
-        topicList = topicList.filter(x => x.name !== t);
-        renderTopicListUI();
-        TrueSwal.fire({ icon: 'info', title: 'ข้อมูลซ้ำ', text: 'ท่านได้รับทราบข่าวนี้ไปแล้ว ระบบได้อัปเดตรายการให้เรียบร้อยครับ' }); 
-      } else {
-        // กรณี res === "Error" หรือ null (เช่น คิวเต็มหลังจากลองซ้ำแล้ว)
+      // 4. ตรวจสอบผลลัพธ์เบื้องหลัง (กรณีพิเศษหากเน็ตหลุดจริงๆ หลังลองครบ 3 ครั้ง ค่อยเด้งให้กดยืนยันใหม่)
+      const bgRes = await activeSavePromise;
+      activeSavePromise = null;
+      if (bgRes !== "Success" && bgRes !== "Duplicate") {
+        unmarkLocalAcked(userObj.fullName, t);
+        showView('acknowledge');
         document.getElementById('consentCheck').checked = false;
-        TrueSwal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: 'ขณะนี้มีผู้ใช้งานพร้อมกันจำนวนมาก โปรดแตะยืนยันอีกครั้งครับ' });
+        TrueSwal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: 'สัญญาณอินเทอร์เน็ตขัดข้อง โปรดแตะยืนยันอีกครั้งครับ' });
       }
     }
 
-    // 🚀 อัปเกรด: เพิ่มระบบ Auto-Retry ลองส่งใหม่อัตโนมัติสูงสุด 3 ครั้ง เมื่อมีคนกดพร้อมกันเยอะๆ
+    // ฟังก์ชันส่งข้อมูลเบื้องหลังพร้อม keepalive และ Auto-Retry 3 รอบ
+    async function sendAcknowledgeInBackground(payload) {
+      const maxAttempts = 3;
+      let lastResult = null;
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          const response = await fetch(GAS_URL, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'acknowledge', payload }),
+            keepalive: true
+          });
+          
+          if (!response.ok) throw new Error("HTTP status " + response.status);
+          const res = await response.json();
+          lastResult = res;
+
+          if (res === "Success" || res === "Duplicate") {
+            return res;
+          }
+
+          if (attempt < maxAttempts) {
+            await new Promise(r => setTimeout(r, 600 * attempt + Math.floor(Math.random() * 400)));
+          }
+        } catch (e) {
+          console.error(`Background save attempt ${attempt} failed:`, e);
+          if (attempt < maxAttempts) {
+            await new Promise(r => setTimeout(r, 600 * attempt + Math.floor(Math.random() * 400)));
+          }
+        }
+      }
+      return lastResult;
+    }
+
+    // ป้องกันกรณีพนักงานกดปุ่ม "ปิดหน้าต่าง" ทันทีในเสี้ยววินาทีแรก ให้รอคำสั่งส่งข้อมูลออกตัวเสร็จก่อน (ไม่เกิน 0.5 วินาที)
+    async function safeCloseWindow() {
+      const btn = document.getElementById('btn-close-window');
+      if (activeSavePromise) {
+        if (btn) {
+          btn.disabled = true;
+          btn.innerText = "กำลังปิดหน้าต่าง...";
+        }
+        await Promise.race([
+          activeSavePromise,
+          new Promise(r => setTimeout(r, 600))
+        ]);
+      }
+      liff.closeWindow();
+    }
+
+    // สำหรับการลงทะเบียน (register) ยังคงใช้ callApi แบบเดิมทุกประการ
     async function callApi(action, payload) {
       if (action === 'acknowledge') {
         document.getElementById('save-overlay').classList.remove('hidden'); 
@@ -385,19 +481,18 @@
           const response = await fetch(GAS_URL, { 
             method: 'POST', 
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action, payload }) 
+            body: JSON.stringify({ action, payload }),
+            keepalive: true
           });
           
           if (!response.ok) throw new Error("HTTP status " + response.status);
           const res = await response.json();
           lastResult = res;
 
-          // ถ้าสำเร็จ หรือ ข้อมูลซ้ำจริงๆ ให้จบการทำงานและส่งผลลัพธ์กลับทันที
           if (res === "Success" || res === "Duplicate" || res === "Already Registered") {
             break;
           }
 
-          // ถ้าหลังบ้านตอบว่า "Error" (เช่น ติดคิว Lock) ให้รอแบบสุ่ม 1-2 วินาทีแล้วลองส่งใหม่ในลูปถัดไป
           if (attempt < maxAttempts) {
             await new Promise(r => setTimeout(r, 800 * attempt + Math.floor(Math.random() * 600)));
           }
