@@ -6,11 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { font-family: 'Sarabun', sans-serif; background-color: #ffffff; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; min-height: 100vh; margin: 0; padding: 0; }
+    body { font-family: 'Sarabun', sans-serif; background-color: #ffffff; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; min-height: 100vh; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     .main-card { background: white; width: 100%; max-width: 100%; border-radius: 0; box-shadow: none; overflow: hidden; border: none; margin: 0; padding: 20px; min-height: 100vh; }
     
     .btn-true { background: linear-gradient(45deg, #ff0000, #ff4d4d); color: white; border: none; border-radius: 50px; padding: 12px 24px; font-weight: 700; width: 100%; box-shadow: 0 4px 15px rgba(255,0,0,0.25); transition: 0.3s; cursor: pointer; }
@@ -18,8 +18,56 @@
     .consent-box { background-color: #fff3cd; border: 1px solid #ffecb5; border-radius: 22px; padding: 18px 22px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; }
     .consent-box:active { transform: scale(0.98); }
     
-    .profile-card { padding: 22px 18px; background: #ffffff; border-radius: 24px; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 16px; margin-bottom: 25px; border: 1px solid #f0f0f0; box-shadow: 0 12px 35px rgba(0,0,0,0.04); position: relative; overflow: hidden; width: 100%; }
+    /* =====================================================================
+       🌟 ส่วนหัวแบบที่ 1 (Modern Horizontal Brand Bar) + การ์ดโปรไฟล์แบบระบบสอบ
+          ใช้เหมือนกันทั้งตอนยังมีข่าวค้างอ่าน และตอนกดรับทราบครบแล้ว
+       ===================================================================== */
+    .header-style-1 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 2px 14px 2px;
+      margin-bottom: 14px;
+      border-bottom: 1.5px solid #f1f5f9;
+      text-align: left;
+      width: 100%;
+    }
+    .h1-left { display: flex; align-items: center; gap: 12px; }
+    .h1-logo { height: 26px; width: auto; object-fit: contain; }
+    .h1-divider { width: 1.5px; height: 28px; background-color: #e2e8f0; }
+    .h1-title { font-size: 17px; font-weight: 800; color: #0f172a; line-height: 1.1; letter-spacing: -0.2px; }
+    .h1-sub { font-size: 11.5px; font-weight: 500; color: #64748b; margin-top: 2px; }
     
+    .h1-badge { font-size: 10.5px; font-weight: 800; padding: 4px 10px; border-radius: 50px; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; transition: 0.2s; }
+    .h1-badge.pending { background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
+    .h1-badge.verified { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+
+    .exam-style-profile {
+      background-color: #f8fafc;
+      border: 1px solid #f1f5f9;
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-align: left;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      width: 100%;
+    }
+    .esp-left { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
+    .esp-avatar-box { position: relative; flex-shrink: 0; }
+    .esp-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: #ffffff; display: block; }
+    .esp-online-dot { position: absolute; bottom: 0; right: 0; width: 14px; height: 14px; background-color: #22c55e; border-radius: 50%; border: 2px solid #ffffff; }
+    .esp-info { min-width: 0; flex: 1; }
+    .esp-label { display: block; font-size: 10.5px; font-weight: 700; color: #94a3b8; letter-spacing: 0.2px; line-height: 1.2; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .esp-name { font-size: 16px; font-weight: 800; color: #1e293b; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.25; }
+    .esp-right { text-align: right; flex-shrink: 0; padding-left: 12px; margin-left: 8px; border-left: 1px solid rgba(226, 232, 240, 0.85); }
+    .esp-right-label { display: block; font-size: 10.5px; font-weight: 600; color: #94a3b8; line-height: 1.1; margin-bottom: 3px; }
+    .esp-right-val { font-size: 13.5px; font-weight: 800; line-height: 1.2; transition: 0.2s; }
+    .esp-right-val.status-pending { color: #ea580c; }
+    .esp-right-val.status-done { color: #16a34a; }
+
     /* CSS สำหรับ Interactive List (กล่องเลือกหัวข้อแบบจิ้ม) */
     .topic-list-header { font-size: 14px; font-weight: 700; color: #333; margin-bottom: 12px; text-align: left; width: 100%; padding-left: 5px; }
     .topic-item { background: #f8f9fa; border: 1.5px solid #f0f0f0; border-radius: 16px; padding: 16px 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; text-align: left; }
@@ -31,11 +79,175 @@
     .topic-item.selected .topic-check-icon { color: #ff0000; text-shadow: 0 2px 5px rgba(255,0,0,0.2); }
 
     /* ✅ CSS สำหรับการ์ดแสดงหัวข้อที่รับทราบแล้ว (Read-only โทนสีเขียวสะอาดตา) */
-    .acked-section-wrap { margin-top: 22px; text-align: left; width: 100%; }
+    .acked-section-wrap { margin-top: 18px; text-align: left; width: 100%; }
     .acked-list-header { font-size: 13.5px; font-weight: 700; color: #198754; margin-bottom: 10px; padding-left: 5px; display: flex; align-items: center; gap: 6px; }
-    .acked-topic-card { background: linear-gradient(135deg, #f8fdf9 0%, #ffffff 100%); border: 1.5px solid #d1e7dd; border-radius: 16px; padding: 14px 18px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; text-align: left; box-shadow: 0 4px 12px rgba(25, 135, 84, 0.04); }
-    .acked-topic-title { font-size: 14.5px; font-weight: 600; color: #2b3035; padding-right: 12px; line-height: 1.4; }
-    .acked-badge-pill { background-color: #d1e7dd; color: #0f5132; font-size: 11.5px; font-weight: 700; padding: 5px 12px; border-radius: 50px; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; }
+    .acked-topic-card { background: linear-gradient(135deg, #f8fdf9 0%, #ffffff 100%); border: 1.5px solid #d1e7dd; border-radius: 16px; padding: 13px 16px; margin-bottom: 9px; display: flex; justify-content: space-between; align-items: center; text-align: left; box-shadow: 0 4px 12px rgba(25, 135, 84, 0.04); }
+    .acked-topic-title { font-size: 14px; font-weight: 600; color: #2b3035; padding-right: 12px; line-height: 1.4; }
+    .acked-badge-pill { background-color: #d1e7dd; color: #0f5132; font-size: 11px; font-weight: 700; padding: 4px 11px; border-radius: 50px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+
+    /* =====================================================================
+       ✨ แอนิเมชันการ์ดประเมินความพึงพอใจ (Facial Rigging แท้จากระบบสอบ 100%)
+       ===================================================================== */
+    .fb-section-divider {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1.5px dashed #e2e8f0;
+      width: 100%;
+    }
+    .fb-badge-top {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background-color: #fffbeb;
+      border: 1px solid rgba(253, 230, 138, 0.85);
+      color: #b45309;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 10px;
+      border-radius: 999px;
+      margin-bottom: 4px;
+      letter-spacing: 0.4px;
+    }
+    .fb-heading { font-size: 14.5px; font-weight: 800; color: #1e293b; margin-bottom: 2px; }
+    .fb-sub { font-size: 11px; color: #94a3b8; margin-bottom: 12px; }
+    .fb-grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 0 2px; }
+    .rate-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 4px;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      cursor: pointer;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rate-card:hover { border-color: #cbd5e1; transform: translateY(-2px); }
+    .rate-card:active { transform: scale(0.94); }
+    .rate-card.active {
+      border-color: #dc2626 !important;
+      background: linear-gradient(180deg, #fff5f5 0%, #ffffff 100%) !important;
+      transform: translateY(-5px) scale(1.05);
+      box-shadow: 0 12px 24px -6px rgba(220, 38, 38, 0.22), 0 0 0 3px rgba(254, 202, 202, 0.6);
+      z-index: 10;
+    }
+    .rate-card.dimmed {
+      opacity: 0.3;
+      filter: grayscale(60%);
+      transform: scale(0.94);
+      pointer-events: none;
+    }
+    @keyframes ring-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+    }
+    .rate-card.active::after {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 1rem;
+      animation: ring-pulse 0.8s ease-out;
+      pointer-events: none;
+    }
+    .face-svg { width: 36px; height: 36px; margin-bottom: 6px; transition: transform 0.3s ease; overflow: visible; }
+    .eye, .mouth, .brow, .cheek, .sparkle { transform-box: fill-box; transform-origin: center; }
+
+    @keyframes head-shake {
+      0%, 100% { transform: translateX(0) rotate(0); }
+      20%, 60% { transform: translateX(-2.5px) rotate(-4deg); }
+      40%, 80% { transform: translateX(2.5px) rotate(4deg); }
+    }
+    @keyframes brow-angry {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(2px) scale(1.08); }
+    }
+    .rate-card.active[data-rate="1"] .face-svg { animation: head-shake 0.55s ease-in-out; }
+    .rate-card.active[data-rate="1"] .brow { animation: brow-angry 0.55s ease-in-out; }
+
+    @keyframes sigh-motion {
+      0%, 100% { transform: translateY(0) scale(1); }
+      45% { transform: translateY(2.5px) scale(0.96); }
+    }
+    @keyframes eye-blink {
+      0%, 100% { transform: scaleY(1); }
+      25%, 75% { transform: scaleY(0.1); }
+      50% { transform: scaleY(1); }
+    }
+    .rate-card.active[data-rate="2"] .face-svg { animation: sigh-motion 0.7s ease-in-out; }
+    .rate-card.active[data-rate="2"] .eye { animation: eye-blink 0.7s ease-in-out; }
+    .rate-card.active[data-rate="3"] .eye { animation: eye-blink 0.65s ease-in-out; }
+
+    @keyframes happy-nod {
+      0%, 100% { transform: translateY(0) scale(1); }
+      40% { transform: translateY(-3px) scale(1.06); }
+      70% { transform: translateY(1px) scale(1.02); }
+    }
+    @keyframes smile-grow {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scaleX(1.2) scaleY(1.15) translateY(-1px); }
+    }
+    @keyframes cheek-glow {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.45); opacity: 1; }
+    }
+    .rate-card.active[data-rate="4"] .face-svg { animation: happy-nod 0.65s ease-out; }
+    .rate-card.active[data-rate="4"] .mouth { animation: smile-grow 0.65s ease-out; }
+    .rate-card.active[data-rate="4"] .cheek { animation: cheek-glow 0.65s ease-out; }
+
+    @keyframes joyful-bounce {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      30% { transform: scale(1.12) rotate(-4deg) translateY(-3px); }
+      60% { transform: scale(1.1) rotate(4deg) translateY(-2px); }
+    }
+    @keyframes laugh-mouth {
+      0%, 100% { transform: scale(1); }
+      30% { transform: scaleY(1.3) scaleX(1.1); }
+      60% { transform: scaleY(0.9) scaleX(1.05); }
+      80% { transform: scaleY(1.2) scaleX(1.08); }
+    }
+    @keyframes star-twinkle {
+      0% { opacity: 0; transform: scale(0) rotate(0deg); }
+      50% { opacity: 1; transform: scale(1.25) rotate(90deg); }
+      100% { opacity: 0; transform: scale(0.5) rotate(180deg); }
+    }
+    .rate-card.active[data-rate="5"] .face-svg { animation: joyful-bounce 0.75s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .rate-card.active[data-rate="5"] .mouth { animation: laugh-mouth 0.75s ease-in-out; }
+    .rate-card.active[data-rate="5"] .cheek { animation: cheek-glow 0.75s ease-in-out; }
+    .rate-card.active[data-rate="5"] .sparkle { animation: star-twinkle 0.8s ease-out forwards; }
+
+    @keyframes slide-up-fade {
+      0% { opacity: 0; transform: translateY(8px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .thank-you-banner {
+      animation: slide-up-fade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      padding: 12px 16px;
+      background-color: rgba(236, 253, 245, 0.95);
+      border: 1px solid #a7f3d0;
+      border-radius: 16px;
+      color: #065f46;
+      font-size: 12.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.08);
+    }
+    .thank-check-circle {
+      display: flex;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background-color: #10b981;
+      color: #ffffff;
+      font-size: 11px;
+    }
     /* ---------------------------------------------------- */
 
     .hidden { display: none !important; }
@@ -43,7 +255,7 @@
     .swal-true-popup .swal2-title { font-size: 20px !important; font-weight: 700 !important; color: #333 !important; }
     .swal-true-popup .swal2-html-container { font-size: 14px !important; color: #666 !important; }
     
-    .footer { text-align: center; font-size: 11px; color: #888; position: fixed; bottom: 15px; left: 0; width: 100%; line-height: 1.6; z-index: 10; }
+    .footer { text-align: center; font-size: 11px; color: #888; position: fixed; bottom: 15px; left: 0; width: 100%; line-height: 1.6; z-index: 10; background: rgba(255,255,255,0.9); backdrop-filter: blur(4px); padding-top: 4px; }
     .footer a { color: #cc0000; text-decoration: none; font-weight: bold; transition: 0.2s; }
     .footer a:hover { text-decoration: underline; color: #ff0000; }
     
@@ -98,36 +310,44 @@
       </div>
     </div>
 
-    <div id="view-acknowledge" class="p-4 hidden text-center" style="padding-bottom: 70px !important;">
-      <img src="https://img1.pic.in.th/images/True--C.png" style="width:75px; margin-bottom: 10px;">
+    <div id="view-acknowledge" class="p-4 hidden text-center" style="padding-bottom: 85px !important;">
       
-      <h5 class="fw-bold m-0" style="color: #000; letter-spacing: 0.5px;">Acknowledge</h5>
-      <p class="text-muted small mb-3">ยืนยันรับทราบข้อมูลข่าวสาร</p>
-      
-      <!-- กล่อง Profile -->
-      <div class="profile-card">
-        <div style="position: absolute; top: -40px; right: -40px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(255,0,0,0.03) 0%, rgba(255,255,255,0) 70%); border-radius: 50%;"></div>
-        
-        <div style="position: relative; flex-shrink: 0;">
-          <div style="padding: 3px; border-radius: 50%; background: #f0f2f5; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-            <img id="user-pfp" style="width: 75px; height: 75px; border-radius: 50%; border: 3px solid #ffffff; object-fit: cover; display: block;" src="">
+      <!-- 🌟 ส่วนหัวแบบที่ 1 (Modern Horizontal Brand Bar) + การ์ดโปรไฟล์แบบระบบสอบ (แสดงเหมือนกันทั้งตอนยังมีข่าวค้างอ่านและตอนกดครบแล้ว) -->
+      <div id="unified-header-group">
+        <div class="header-style-1">
+          <div class="h1-left">
+            <img src="https://img1.pic.in.th/images/True--C.png" class="h1-logo" alt="True">
+            <div class="h1-divider"></div>
+            <div>
+              <div class="h1-title">Acknowledge</div>
+              <div class="h1-sub">ยืนยันรับทราบข้อมูลข่าวสาร</div>
+            </div>
           </div>
-          <!-- เครื่องหมายติ๊กถูกแบบ 3D -->
-          <div style="position: absolute; bottom: 8px; right: 0px; background: linear-gradient(135deg, #34d058 0%, #28a745 100%); width: 24px; height: 24px; border-radius: 50%; border: 2px solid #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(0,0,0,0.2), inset 0 -2px 4px rgba(0,0,0,0.1); z-index: 3;">
-            <i class="fas fa-check" style="color: #ffffff; font-size: 11px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);"></i>
+          <div id="top-status-badge" class="h1-badge verified">
+            <i class="fas fa-check-circle"></i> VERIFIED
           </div>
         </div>
-        
-        <div style="display: flex; flex-direction: column; align-items: flex-start; text-align: left; overflow: hidden; width: 100%;">
-          <div id="user-name" class="fw-bold" style="font-size: 18px; color: #1a1a1a; letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; margin-bottom: 6px;"></div>
-          <div id="user-meta" class="shadow-sm" style="display: inline-block; background: #f8f9fa; border: 1px solid #e9ecef; color: #555; font-size: 13px; font-weight: 400; padding: 6px 12px; border-radius: 10px; letter-spacing: 0.2px; line-height: 1.4; word-wrap: break-word; max-width: 100%;"></div>
+
+        <div class="exam-style-profile">
+          <div class="esp-left">
+            <div class="esp-avatar-box">
+              <img id="user-pfp" class="esp-avatar" src="">
+              <div class="esp-online-dot"></div>
+            </div>
+            <div class="esp-info">
+              <span id="user-meta" class="esp-label">ข้อมูลส่วนตัว</span>
+              <h3 id="user-name" class="esp-name">...</h3>
+            </div>
+          </div>
+          <div class="esp-right">
+            <span class="esp-right-label">สถานะรับทราบ</span>
+            <span id="comp-status-val" class="esp-right-val status-done">0/0 หัวข้อ</span>
+          </div>
         </div>
       </div>
 
       <!-- โซนที่ 1: รายการหัวข้อที่ยังไม่ได้กดรับทราบ (หรือกล่องสีเขียว เยี่ยมมาก!) -->
-      <div id="topic-list-container" class="w-100 mb-3">
-        <!-- รายการหัวข้อข่าวจะถูกสร้างด้วย Javascript ตรงนี้ -->
-      </div>
+      <div id="topic-list-container" class="w-100 mb-3"></div>
       
       <div class="consent-box text-start shadow-sm mb-3" onclick="handleSubmit()" style="background: #fffbdf; border-color: #ffeba1;">
         <input type="checkbox" id="consentCheck" style="width:22px; height:22px; accent-color:#ff0000;" onclick="event.stopPropagation(); handleSubmit();">
@@ -136,6 +356,92 @@
 
       <!-- โซนที่ 2: รายการหัวข้อที่กดรับทราบแล้ว (เฉพาะแคมเปญที่ยังไม่สิ้นสุด) -->
       <div id="acked-topic-list-container" class="w-100"></div>
+
+      <!-- โซนที่ 3: กล่องประเมินความพึงพอใจการใช้งานเว็บ (แสดงเฉพาะเมื่อกดรับทราบครบทุกหัวข้อแล้วเท่านั้น) -->
+      <div id="feedbackSection" class="fb-section-divider hidden">
+        <div id="fbFormArea">
+          <div class="fb-badge-top">
+            <span>✨</span> USER FEEDBACK
+          </div>
+          <h4 class="fb-heading">ประเมินความพึงพอใจการใช้งานเว็บ</h4>
+          <p class="fb-sub">แตะเลือกไอคอนเพื่อให้คะแนน (บันทึกอัตโนมัติ)</p>
+
+          <div class="fb-grid-5">
+            <!-- ระดับ 1: ควรปรับปรุง -->
+            <button type="button" onclick="selectAndSaveFeedback(1, 'ควรปรับปรุง')" data-rate="1" class="rate-card">
+              <svg class="face-svg" viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="20" fill="#FEE2E2" stroke="#EF4444" stroke-width="2.5"/>
+                <path class="brow" d="M15 18L20 21M33 18L28 21" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round"/>
+                <circle class="eye" cx="18" cy="23" r="2" fill="#EF4444"/>
+                <circle class="eye" cx="30" cy="23" r="2" fill="#EF4444"/>
+                <path class="mouth" d="M17 33C19 29.5 29 29.5 31 33" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+              <span style="font-size:12px; font-weight:800; color:#1e293b; line-height:1;">1</span>
+              <span style="font-size:9.5px; color:#64748b; margin-top:3px; white-space:nowrap;">ควรปรับปรุง</span>
+            </button>
+
+            <!-- ระดับ 2: พอใช้ -->
+            <button type="button" onclick="selectAndSaveFeedback(2, 'พอใช้')" data-rate="2" class="rate-card">
+              <svg class="face-svg" viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="20" fill="#FFEDD5" stroke="#F97316" stroke-width="2.5"/>
+                <circle class="eye" cx="18" cy="21" r="2" fill="#EA580C"/>
+                <circle class="eye" cx="30" cy="21" r="2" fill="#EA580C"/>
+                <path class="mouth" d="M18 32C20 29.5 28 29.5 30 32" stroke="#EA580C" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+              <span style="font-size:12px; font-weight:800; color:#1e293b; line-height:1;">2</span>
+              <span style="font-size:9.5px; color:#64748b; margin-top:3px;">พอใช้</span>
+            </button>
+
+            <!-- ระดับ 3: ปานกลาง -->
+            <button type="button" onclick="selectAndSaveFeedback(3, 'ปานกลาง')" data-rate="3" class="rate-card">
+              <svg class="face-svg" viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="20" fill="#FEF9C3" stroke="#EAB308" stroke-width="2.5"/>
+                <circle class="cheek" cx="14" cy="26" r="2.5" fill="#FDE047"/>
+                <circle class="cheek" cx="34" cy="26" r="2.5" fill="#FDE047"/>
+                <circle class="eye" cx="18" cy="21" r="2" fill="#CA8A04"/>
+                <circle class="eye" cx="30" cy="21" r="2" fill="#CA8A04"/>
+                <line class="mouth" x1="18" y1="30" x2="30" y2="30" stroke="#CA8A04" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+              <span style="font-size:12px; font-weight:800; color:#1e293b; line-height:1;">3</span>
+              <span style="font-size:9.5px; color:#64748b; margin-top:3px;">ปานกลาง</span>
+            </button>
+
+            <!-- ระดับ 4: ดีมาก -->
+            <button type="button" onclick="selectAndSaveFeedback(4, 'ดีมาก')" data-rate="4" class="rate-card">
+              <svg class="face-svg" viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="20" fill="#DCFCE7" stroke="#22C55E" stroke-width="2.5"/>
+                <circle class="cheek" cx="14" cy="26" r="2.5" fill="#F9A8D4" opacity="0.7"/>
+                <circle class="cheek" cx="34" cy="26" r="2.5" fill="#F9A8D4" opacity="0.7"/>
+                <path class="eye" d="M15 21C16 19 19 19 20 21M28 21C29 19 32 19 33 21" stroke="#15803D" stroke-width="2.5" stroke-linecap="round"/>
+                <path class="mouth" d="M18 28C20 32 28 32 30 28" stroke="#15803D" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+              <span style="font-size:12px; font-weight:800; color:#1e293b; line-height:1;">4</span>
+              <span style="font-size:9.5px; color:#64748b; margin-top:3px;">ดีมาก</span>
+            </button>
+
+            <!-- ระดับ 5: ยอดเยี่ยม -->
+            <button type="button" onclick="selectAndSaveFeedback(5, 'ยอดเยี่ยม')" data-rate="5" class="rate-card">
+              <svg class="face-svg" viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="20" fill="#FEF08A" stroke="#CA8A04" stroke-width="2.5"/>
+                <circle class="cheek" cx="13" cy="25" r="3" fill="#F87171" opacity="0.55"/>
+                <circle class="cheek" cx="35" cy="25" r="3" fill="#F87171" opacity="0.55"/>
+                <path class="eye" d="M15 20C16.5 17.5 19.5 17.5 21 20M27 20C28.5 17.5 31.5 17.5 33 20" stroke="#854D0E" stroke-width="2.5" stroke-linecap="round"/>
+                <path class="mouth" d="M16 27C16 33 32 33 32 27H16Z" fill="#EF4444" stroke="#854D0E" stroke-width="2" stroke-linejoin="round"/>
+                <path class="sparkle" style="opacity:0;" d="M42 4L43.5 8.5L48 10L43.5 11.5L42 16L40.5 11.5L36 10L40.5 8.5L42 4Z" fill="#F59E0B"/>
+              </svg>
+              <span style="font-size:12px; font-weight:800; color:#1e293b; line-height:1;">5</span>
+              <span style="font-size:9.5px; color:#64748b; margin-top:3px;">ยอดเยี่ยม</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- แถบยืนยันการบันทึกผลประเมิน (เหมือนระบบสอบเป๊ะ) -->
+        <div id="fbThankArea" class="hidden thank-you-banner">
+          <span class="thank-check-circle">✓</span>
+          <span>ขอบคุณสำหรับคะแนนประเมิน <strong id="rateResultTxt" style="color:#022c22;"></strong> ครับ!</span>
+        </div>
+      </div>
+
     </div>
 
     <div id="view-success" class="p-4 text-center hidden full-center">
@@ -167,6 +473,8 @@
     let currentSelectedTopic = "";
     let isSubmitting = false;
     let activeSavePromise = null;
+    let feedbackLocked = false;
+    let feedbackGiven = null;
 
     const TrueSwal = Swal.mixin({
       customClass: { popup: 'swal-true-popup', confirmButton: 'btn-true' },
@@ -200,16 +508,62 @@
       } catch (e) {}
     }
 
-    // ฟังก์ชันวาดรายการหัวข้อข่าว (ทั้งส่วนที่ยังไม่ได้กด และส่วนที่กดรับทราบแล้วเฉพาะแคมเปญที่ยังไม่สิ้นสุด)
+    function getLocalFeedback(fullName) {
+      try {
+        const raw = localStorage.getItem('true_user_fb_' + (fullName || '').trim());
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function setLocalFeedback(fullName, fbObj) {
+      try {
+        localStorage.setItem('true_user_fb_' + (fullName || '').trim(), JSON.stringify(fbObj));
+      } catch (e) {}
+    }
+
+    // ฟังก์ชันวาดหน้าจอ (ใช้ Header และกล่องโปรไฟล์แบบเดียวกันเสมอ + แสดงจำนวนที่กดจริงเทียบจำนวนทั้งหมด)
     function renderTopicListUI() {
       const container = document.getElementById('topic-list-container');
       const ackedContainer = document.getElementById('acked-topic-list-container');
       const consentBox = document.querySelector('.consent-box');
+      const fbSection = document.getElementById('feedbackSection');
+      const statusValEl = document.getElementById('comp-status-val');
+      const topBadgeEl = document.getElementById('top-status-badge');
+
       currentSelectedTopic = "";
       document.getElementById('consentCheck').checked = false;
 
-      // 1. วาดโซนหัวข้อที่ยังไม่ได้กดรับทราบ (หากครบแล้ว แสดงกล่องสีเขียว "เยี่ยมมาก!" ตามภาพต้นฉบับ)
-      if (!topicList || topicList.length === 0) {
+      const unackedCount = topicList ? topicList.length : 0;
+      const ackedCount = ackedTopicList ? ackedTopicList.length : 0;
+      const totalCount = unackedCount + ackedCount;
+      const isAllCompleted = (unackedCount === 0);
+
+      // 1. อัปเดตตัวเลขจำนวนที่กดจริง / จำนวนทั้งหมด ในการ์ดโปรไฟล์ด้านบน
+      if (statusValEl) {
+        if (isAllCompleted) {
+          statusValEl.className = "esp-right-val status-done";
+          statusValEl.innerText = totalCount > 0 ? `ครบ ${ackedCount}/${totalCount} หัวข้อ` : `ครบทุกหัวข้อ`;
+        } else {
+          statusValEl.className = "esp-right-val status-pending";
+          statusValEl.innerText = `${ackedCount}/${totalCount} หัวข้อ`;
+        }
+      }
+
+      // อัปเดตป้ายมุมขวาบนสุดของ Header
+      if (topBadgeEl) {
+        if (isAllCompleted) {
+          topBadgeEl.className = "h1-badge verified";
+          topBadgeEl.innerHTML = `<i class="fas fa-check-circle"></i> VERIFIED`;
+        } else {
+          topBadgeEl.className = "h1-badge pending";
+          topBadgeEl.innerHTML = `<i class="fas fa-clock"></i> รอรับทราบ ${unackedCount}`;
+        }
+      }
+
+      // 2. วาดโซนรายการข่าว หรือ กล่องสีเขียว "เยี่ยมมาก!"
+      if (isAllCompleted) {
         container.innerHTML = `
           <div class="p-4 text-center rounded-4 shadow-sm" style="background: linear-gradient(135deg, #f0fdf4 0%, #e8f5e9 100%); border: 1px solid #c8e6c9;">
             <i class="fas fa-check-circle mb-2 text-success" style="font-size: 32px;"></i>
@@ -217,8 +571,26 @@
             <p class="small text-muted m-0 mt-1">คุณได้รับทราบข้อมูลครบทุกหัวข้อแล้ว</p>
           </div>`;
         if (consentBox) consentBox.classList.add('hidden');
+
+        // แสดงส่วนประเมินความพึงพอใจ เฉพาะเมื่อกดรับทราบครบทุกหัวข้อแล้วเท่านั้น
+        if (fbSection) {
+          fbSection.classList.remove('hidden');
+          if (feedbackGiven && feedbackGiven.rating) {
+            document.getElementById('rateResultTxt').innerText = `ระดับ ${feedbackGiven.rating} (${feedbackGiven.ratingText})`;
+            document.getElementById('fbFormArea').classList.add('hidden');
+            document.getElementById('fbThankArea').classList.remove('hidden');
+          } else {
+            feedbackLocked = false;
+            document.querySelectorAll('#fbFormArea [data-rate]').forEach(b => b.classList.remove('active', 'dimmed'));
+            document.getElementById('fbThankArea').classList.add('hidden');
+            document.getElementById('fbFormArea').classList.remove('hidden');
+          }
+        }
       } else {
-        let listHtml = `<div class="topic-list-header"><i class="fas fa-clipboard-list me-2 text-danger"></i> รายการ : ยังไม่ได้กดรับทราบ (${topicList.length} หัวข้อ)</div>`;
+        // กรณีที่มีข่าวค้างอ่าน: ซ่อนแบบประเมินความพึงพอใจ
+        if (fbSection) fbSection.classList.add('hidden');
+
+        let listHtml = `<div class="topic-list-header"><i class="fas fa-clipboard-list me-2 text-danger"></i> รายการ : ยังไม่ได้กดรับทราบ (${unackedCount} หัวข้อ)</div>`;
         topicList.forEach((t, index) => {
           listHtml += `
             <div class="topic-item" onclick="selectTopic(${index}, this)">
@@ -231,7 +603,7 @@
         if (consentBox) consentBox.classList.remove('hidden');
       }
 
-      // 2. วาดโซนหัวข้อที่รับทราบแล้ว (เฉพาะแคมเปญที่ยังไม่สิ้นสุด) แสดงด้านล่าง
+      // 3. วาดโซนหัวข้อที่รับทราบแล้ว (เฉพาะแคมเปญที่ยังไม่สิ้นสุด)
       if (ackedContainer) {
         if (ackedTopicList && ackedTopicList.length > 0) {
           let ackedHtml = `
@@ -256,7 +628,46 @@
       }
     }
 
-    // ⚡ อัปเกรดความเร็วตอนเปิดเว็บ: ดึง lineId จาก DecodedIDToken ทันที (ไม่ต้องรอ liff.getProfile() ก่อนค่อยยิง API)
+    // 📌 ฟังก์ชันเมื่อแตะเลือกไอคอนประเมินความพึงพอใจ (เล่นแอนิเมชันระบบสอบ + บันทึกลงชีท Feedback อัตโนมัติ)
+    function selectAndSaveFeedback(val, label) {
+      if (feedbackLocked) return;
+      feedbackLocked = true;
+
+      document.querySelectorAll('#fbFormArea [data-rate]').forEach(btn => {
+        if (Number(btn.dataset.rate) === val) btn.classList.add('active');
+        else btn.classList.add('dimmed');
+      });
+
+      const fbObj = { rating: val, ratingText: label };
+      feedbackGiven = fbObj;
+      if (userObj && userObj.fullName) {
+        setLocalFeedback(userObj.fullName, fbObj);
+      }
+
+      if (userObj) {
+        const fbPayload = {
+          empId: userObj.empId,
+          fullName: userObj.fullName,
+          channel: userObj.channel || "-",
+          branch: userObj.branch || "-",
+          rating: val,
+          ratingText: label
+        };
+        fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'saveUserFeedback', payload: fbPayload }),
+          keepalive: true
+        }).catch(err => console.warn("Feedback Save Error:", err));
+      }
+
+      setTimeout(() => {
+        document.getElementById('rateResultTxt').innerText = `ระดับ ${val} (${label})`;
+        document.getElementById('fbFormArea').classList.add('hidden');
+        document.getElementById('fbThankArea').classList.remove('hidden');
+      }, 1050);
+    }
+
     async function init() {
       try {
         await liff.init({ liffId: "1656846002-Wl9ZZgv7" });
@@ -265,7 +676,6 @@
         const defaultAvatar = document.getElementById('loading-pfp').src;
         let pfpUrl = "";
 
-        // 1. ดึง lineId และรูปภาพจาก ID Token ทันทีใน 0.001 วินาที (ถ้ามี)
         const decodedToken = liff.getDecodedIDToken();
         if (decodedToken && decodedToken.sub) {
           lineId = decodedToken.sub;
@@ -275,7 +685,6 @@
           }
         }
 
-        // 2. หากใน Token ไม่มี lineId ค่อยเรียก getProfile() หรือดึงควบคู่แบบขนาน (Parallel)
         const profilePromise = (!lineId || !pfpUrl) ? liff.getProfile().catch(() => null) : Promise.resolve(null);
 
         if (!lineId) {
@@ -286,7 +695,6 @@
             if (pfpUrl) document.getElementById('loading-pfp').src = pfpUrl;
           }
         } else {
-          // อัปเดตรูปภาพในพื้นหลังโดยไม่บล็อกการดึงฐานข้อมูล
           profilePromise.then(p => {
             if (p && p.pictureUrl && !pfpUrl) {
               pfpUrl = p.pictureUrl;
@@ -297,7 +705,6 @@
           });
         }
         
-        // 3. ยิงคำสั่งตรวจสอบข้อมูลไปยัง Google Apps Script ทันที
         const response = await fetch(`${GAS_URL}?action=getInitialData&lineId=${encodeURIComponent(lineId)}&_t=${Date.now()}`, {
           cache: 'no-store'
         });
@@ -306,11 +713,17 @@
         const res = await response.json();
         topicList = res.topics || [];
         ackedTopicList = res.ackedTopics || [];
+        feedbackGiven = res.feedbackGiven || null;
 
         if (res.isRegistered) {
           userObj = res.user;
           
-          // ซิงค์รายการที่เพิ่งกดรับทราบในเครื่อง (เผื่อกรณีเปิดแอปซ้ำทันทีในเสี้ยววินาทีเดียวกัน)
+          if (!feedbackGiven) {
+            feedbackGiven = getLocalFeedback(userObj.fullName);
+          } else {
+            setLocalFeedback(userObj.fullName, feedbackGiven);
+          }
+
           const localAcked = getLocalAckedSet(userObj.fullName);
           if (localAcked.size > 0) {
             const newlyAckedItems = topicList.filter(t => localAcked.has((t.name || '').trim()));
@@ -322,9 +735,10 @@
             });
           }
 
-          document.getElementById('user-pfp').src = pfpUrl || defaultAvatar;
-          document.getElementById('user-name').innerText = "คุณ" + userObj.fullName;
-          document.getElementById('user-meta').innerHTML = "ID : " + userObj.empId + "<br>" + userObj.channel;
+          const finalAvatar = pfpUrl || defaultAvatar;
+          document.getElementById('user-pfp').src = finalAvatar;
+          document.getElementById('user-name').innerText = userObj.fullName;
+          document.getElementById('user-meta').innerText = `ข้อมูลส่วนตัว • ID: ${userObj.empId} (${userObj.channel})`;
           
           renderTopicListUI();
           showView('acknowledge');
@@ -432,7 +846,6 @@
       }
     }
 
-    // ⚡ อัปเกรด: แสดงหน้าจอหมุนรอเพียง 0.35 วินาที แล้วสลับเข้าหน้า "บันทึกสำเร็จ" ทันที พร้อมส่งข้อมูลเบื้องหลัง
     async function handleSubmit() {
       if (isSubmitting) return;
 
@@ -457,19 +870,15 @@
         device: "LINE (" + liff.getOS() + ")" 
       };
       
-      // 1. แสดงหน้าจอหมุนรอ (ภาพที่ 2) ทันทีที่กด
       const overlay = document.getElementById('save-overlay');
       overlay.classList.remove('hidden');
 
-      // 2. ยิงคำสั่งบันทึกข้อมูลไปที่หลังบ้านทันที
       markLocalAcked(userObj.fullName, t);
       activeSavePromise = sendAcknowledgeInBackground(payload);
 
-      // 3. หน่วงเวลาแสดงหน้าจอหมุนรอเพียง 0.35 วินาที แล้วสลับเข้าหน้า "บันทึกสำเร็จ" (ภาพที่ 1) ทันที
       await new Promise(r => setTimeout(r, 350));
       overlay.classList.add('hidden');
 
-      // ย้ายหัวข้อนี้จากรายการค้างอ่าน ไปอยู่ในรายการที่รับทราบแล้วทันที
       topicList = topicList.filter(x => x.name !== t);
       if (!ackedTopicList.some(a => a.name === t)) {
         ackedTopicList.push(matchedTopicObj);
@@ -479,7 +888,6 @@
       showView('success');
       isSubmitting = false;
 
-      // 4. ตรวจสอบผลลัพธ์เบื้องหลัง (หากเน็ตหลุดจริงๆ หลังลองครบ 3 ครั้ง ค่อยดึงกลับมาให้กดใหม่)
       const bgRes = await activeSavePromise;
       activeSavePromise = null;
       if (bgRes !== "Success" && bgRes !== "Duplicate") {
