@@ -11,19 +11,38 @@
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     body { font-family: 'Sarabun', sans-serif; background-color: #ffffff; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; min-height: 100vh; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    .main-card { background: white; width: 100%; max-width: 100%; border-radius: 0; box-shadow: none; overflow: hidden; border: none; margin: 0; padding: 20px; min-height: 100vh; }
+    .main-card { background: white; width: 100%; max-width: 100%; border-radius: 0; box-shadow: none; overflow: hidden; border: none; margin: 0; padding: 20px; min-height: 100vh; display: flex; flex-direction: column; }
     
     .btn-true { background: linear-gradient(45deg, #ff0000, #ff4d4d); color: white; border: none; border-radius: 50px; padding: 12px 24px; font-weight: 700; width: 100%; box-shadow: 0 4px 15px rgba(255,0,0,0.25); transition: 0.3s; cursor: pointer; }
     .btn-true:active { transform: scale(0.96); box-shadow: 0 2px 8px rgba(255,0,0,0.2); }
     .consent-box { background-color: #fff3cd; border: 1px solid #ffecb5; border-radius: 22px; padding: 18px 22px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; }
     .consent-box:active { transform: scale(0.98); }
+
+    /* =====================================================================
+       🌟 การจัดวางสมดุลอัตโนมัติ (Auto-Balanced Layout) เฉพาะหน้า Acknowledge
+          - ถ้าหัวข้อรับทราบน้อย: จัดวางกึ่งกลางสายตาอัตโนมัติ ไม่โล่งด้านล่าง
+          - ถ้าหัวข้อเยอะ: ขยายและเลื่อนหน้าจอได้ตามปกติ
+       ===================================================================== */
+    #view-acknowledge {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+    .ack-auto-balance-wrap {
+      width: 100%;
+      margin-top: auto;
+      margin-bottom: auto;
+      padding-top: 4px;
+      padding-bottom: 16px;
+    }
     
     .header-style-1 {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 4px 2px 14px 2px;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
       border-bottom: 1.5px solid #f1f5f9;
       text-align: left;
       width: 100%;
@@ -38,27 +57,28 @@
     .h1-badge.pending { background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
     .h1-badge.verified { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
 
+    /* การ์ดโปรไฟล์ปรับให้โปร่งสบายตา ตัดรหัสพนักงานและตำแหน่งออก + ลดขนาดชื่อให้พอดี */
     .exam-style-profile {
       background-color: #f8fafc;
       border: 1px solid #f1f5f9;
-      border-radius: 16px;
-      padding: 14px;
-      margin-bottom: 18px;
+      border-radius: 18px;
+      padding: 13px 16px;
+      margin-bottom: 22px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       text-align: left;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.025);
       width: 100%;
     }
     .esp-left { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
     .esp-avatar-box { position: relative; flex-shrink: 0; }
-    .esp-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: #ffffff; display: block; }
-    .esp-online-dot { position: absolute; bottom: 0; right: 0; width: 14px; height: 14px; background-color: #22c55e; border-radius: 50%; border: 2px solid #ffffff; }
+    .esp-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: #ffffff; display: block; }
+    .esp-online-dot { position: absolute; bottom: 0; right: 0; width: 13px; height: 13px; background-color: #22c55e; border-radius: 50%; border: 2px solid #ffffff; }
     .esp-info { min-width: 0; flex: 1; }
-    .esp-label { display: block; font-size: 10.5px; font-weight: 700; color: #94a3b8; letter-spacing: 0.2px; line-height: 1.2; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .esp-name { font-size: 16px; font-weight: 800; color: #1e293b; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.25; }
-    .esp-right { text-align: right; flex-shrink: 0; padding-left: 12px; margin-left: 8px; border-left: 1px solid rgba(226, 232, 240, 0.85); }
+    .esp-label { display: block; font-size: 10.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.1px; line-height: 1.2; margin-bottom: 2px; }
+    .esp-name { font-size: 14.5px; font-weight: 700; color: #1e293b; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+    .esp-right { text-align: right; flex-shrink: 0; padding-left: 14px; margin-left: 10px; border-left: 1px solid rgba(226, 232, 240, 0.9); }
     .esp-right-label { display: block; font-size: 10.5px; font-weight: 600; color: #94a3b8; line-height: 1.1; margin-bottom: 3px; }
     .esp-right-val { font-size: 13.5px; font-weight: 800; line-height: 1.2; transition: 0.2s; }
     .esp-right-val.status-pending { color: #ea580c; }
@@ -68,9 +88,9 @@
     .topic-item { background: #f8f9fa; border: 1.5px solid #f0f0f0; border-radius: 16px; padding: 16px 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; text-align: left; }
     .topic-item:active { transform: scale(0.98); }
     .topic-item.selected { background: linear-gradient(135deg, #fffcfc 0%, #ffffff 100%); border: 1.5px solid #ff0000; box-shadow: 0 6px 20px rgba(255,0,0,0.08); }
-    .topic-item-title { font-size: 15px; font-weight: 600; color: #555; transition: 0.2s; padding-right: 15px; }
+    .topic-item-title { font-size: 15px; font-weight: 600; color: #555; transition: 0.2s; padding-right: 15px; line-height: 1.45; }
     .topic-item.selected .topic-item-title { color: #cc0000; font-weight: 700; }
-    .topic-check-icon { font-size: 20px; color: #ddd; transition: 0.2s; }
+    .topic-check-icon { font-size: 20px; color: #ddd; transition: 0.2s; flex-shrink: 0; }
     .topic-item.selected .topic-check-icon { color: #ff0000; text-shadow: 0 2px 5px rgba(255,0,0,0.2); }
 
     .acked-section-wrap { margin-top: 18px; text-align: left; width: 100%; }
@@ -300,132 +320,134 @@
       </div>
     </div>
 
-    <div id="view-acknowledge" class="p-4 hidden text-center" style="padding-bottom: 85px !important;">
-      
-      <div id="unified-header-group">
-        <div class="header-style-1">
-          <div class="h1-left">
-            <img src="https://img1.pic.in.th/images/True--C.png" class="h1-logo" alt="True">
-            <div class="h1-divider"></div>
-            <div>
-              <div class="h1-title">Acknowledge</div>
-              <div class="h1-sub">ยืนยันรับทราบข้อมูลข่าวสาร</div>
+    <div id="view-acknowledge" class="p-3 hidden text-center" style="padding-bottom: 80px !important;">
+      <div class="ack-auto-balance-wrap">
+        
+        <div id="unified-header-group">
+          <div class="header-style-1">
+            <div class="h1-left">
+              <img src="https://img1.pic.in.th/images/True--C.png" class="h1-logo" alt="True">
+              <div class="h1-divider"></div>
+              <div>
+                <div class="h1-title">Acknowledge</div>
+                <div class="h1-sub">ยืนยันรับทราบข้อมูลข่าวสาร</div>
+              </div>
+            </div>
+            <div id="top-status-badge" class="h1-badge verified">
+              <i class="fas fa-check-circle"></i> VERIFIED
             </div>
           </div>
-          <div id="top-status-badge" class="h1-badge verified">
-            <i class="fas fa-check-circle"></i> VERIFIED
-          </div>
-        </div>
 
-        <div class="exam-style-profile">
-          <div class="esp-left">
-            <div class="esp-avatar-box">
-              <img id="user-pfp" class="esp-avatar" src="">
-              <div class="esp-online-dot"></div>
+          <div class="exam-style-profile">
+            <div class="esp-left">
+              <div class="esp-avatar-box">
+                <img id="user-pfp" class="esp-avatar" src="">
+                <div class="esp-online-dot"></div>
+              </div>
+              <div class="esp-info">
+                <span id="user-meta" class="esp-label">ข้อมูลส่วนตัว</span>
+                <h3 id="user-name" class="esp-name">...</h3>
+              </div>
             </div>
-            <div class="esp-info">
-              <span id="user-meta" class="esp-label">ข้อมูลส่วนตัว</span>
-              <h3 id="user-name" class="esp-name">...</h3>
+            <div class="esp-right">
+              <span class="esp-right-label">สถานะรับทราบ</span>
+              <span id="comp-status-val" class="esp-right-val status-done">0/0 หัวข้อ</span>
             </div>
           </div>
-          <div class="esp-right">
-            <span class="esp-right-label">สถานะรับทราบ</span>
-            <span id="comp-status-val" class="esp-right-val status-done">0/0 หัวข้อ</span>
+        </div>
+
+        <div id="topic-list-container" class="w-100 mb-3"></div>
+        
+        <div class="consent-box text-start shadow-sm mb-2" onclick="handleSubmit()" style="background: #fffbdf; border-color: #ffeba1;">
+          <input type="checkbox" id="consentCheck" style="width:22px; height:22px; accent-color:#ff0000;" onclick="event.stopPropagation(); handleSubmit();">
+          <label class="m-0 fw-bold text-warning-emphasis ms-2" style="font-size: 13.5px;">รับทราบ และ ปฏิบัติตามอย่างเคร่งครัด</label>
+        </div>
+
+        <div id="acked-topic-list-container" class="w-100"></div>
+
+        <div id="feedbackSection" class="fb-section-divider hidden">
+          <div id="fbFormArea">
+            <div class="fb-badge-top">
+              <span>✨</span> USER FEEDBACK
+            </div>
+            <h4 class="fb-heading">ประเมินความพึงพอใจการใช้งานเว็บ</h4>
+            <p class="fb-sub">แตะเลือกไอคอนเพื่อให้คะแนน (บันทึกอัตโนมัติ)</p>
+
+            <div class="fb-grid-5">
+              <button type="button" onclick="selectAndSaveFeedback(1, 'ควรปรับปรุง')" data-rate="1" class="rate-card">
+                <svg class="face-svg" viewBox="0 0 48 48" fill="none">
+                  <circle cx="24" cy="24" r="20" fill="#FEE2E2" stroke="#EF4444" stroke-width="2.5"/>
+                  <path class="brow" d="M15 18L20 21M33 18L28 21" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round"/>
+                  <circle class="eye" cx="18" cy="23" r="2" fill="#EF4444"/>
+                  <circle class="eye" cx="30" cy="23" r="2" fill="#EF4444"/>
+                  <path class="mouth" d="M17 33C19 29.5 29 29.5 31 33" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+                <span style="font-size:12px; font-weight:800; color:#1e293b; line-height:1;">1</span>
+                <span style="font-size:9.5px; color:#64748b; margin-top:3px; white-space:nowrap;">ควรปรับปรุง</span>
+              </button>
+
+              <button type="button" onclick="selectAndSaveFeedback(2, 'พอใช้')" data-rate="2" class="rate-card">
+                <svg class="face-svg" viewBox="0 0 48 48" fill="none">
+                  <circle cx="24" cy="24" r="20" fill="#FFEDD5" stroke="#F97316" stroke-width="2.5"/>
+                  <circle class="eye" cx="18" cy="21" r="2" fill="#EA580C"/>
+                  <circle class="eye" cx="30" cy="21" r="2" fill="#EA580C"/>
+                  <path class="mouth" d="M18 32C20 29.5 28 29.5 30 32" stroke="#EA580C" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+                <span style="font-size:12px; font-weight:800; color:#1e293b; line-height:1;">2</span>
+                <span style="font-size:9.5px; color:#64748b; margin-top:3px;">พอใช้</span>
+              </button>
+
+              <button type="button" onclick="selectAndSaveFeedback(3, 'ปานกลาง')" data-rate="3" class="rate-card">
+                <svg class="face-svg" viewBox="0 0 48 48" fill="none">
+                  <circle cx="24" cy="24" r="20" fill="#FEF9C3" stroke="#EAB308" stroke-width="2.5"/>
+                  <circle class="cheek" cx="14" cy="26" r="2.5" fill="#FDE047"/>
+                  <circle class="cheek" cx="34" cy="26" r="2.5" fill="#FDE047"/>
+                  <circle class="eye" cx="18" cy="21" r="2" fill="#CA8A04"/>
+                  <circle class="eye" cx="30" cy="21" r="2" fill="#CA8A04"/>
+                  <line class="mouth" x1="18" y1="30" x2="30" y2="30" stroke="#CA8A04" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+                <span style="font-size:12px; font-weight:800; color:#1e293b; line-height:1;">3</span>
+                <span style="font-size:9.5px; color:#64748b; margin-top:3px;">ปานกลาง</span>
+              </button>
+
+              <button type="button" onclick="selectAndSaveFeedback(4, 'ดีมาก')" data-rate="4" class="rate-card">
+                <svg class="face-svg" viewBox="0 0 48 48" fill="none">
+                  <circle cx="24" cy="24" r="20" fill="#DCFCE7" stroke="#22C55E" stroke-width="2.5"/>
+                  <circle class="cheek" cx="14" cy="26" r="2.5" fill="#F9A8D4" opacity="0.7"/>
+                  <circle class="cheek" cx="34" cy="26" r="2.5" fill="#F9A8D4" opacity="0.7"/>
+                  <path class="eye" d="M15 21C16 19 19 19 20 21M28 21C29 19 32 19 33 21" stroke="#15803D" stroke-width="2.5" stroke-linecap="round"/>
+                  <path class="mouth" d="M18 28C20 32 28 32 30 28" stroke="#15803D" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+                <span style="font-size:12px; font-weight:800; color:#1e293b; line-height:1;">4</span>
+                <span style="font-size:9.5px; color:#64748b; margin-top:3px;">ดีมาก</span>
+              </button>
+
+              <button type="button" onclick="selectAndSaveFeedback(5, 'ยอดเยี่ยม')" data-rate="5" class="rate-card">
+                <svg class="face-svg" viewBox="0 0 48 48" fill="none">
+                  <circle cx="24" cy="24" r="20" fill="#FEF08A" stroke="#CA8A04" stroke-width="2.5"/>
+                  <circle class="cheek" cx="13" cy="25" r="3" fill="#F87171" opacity="0.55"/>
+                  <circle class="cheek" cx="35" cy="25" r="3" fill="#F87171" opacity="0.55"/>
+                  <path class="eye" d="M15 20C16.5 17.5 19.5 17.5 21 20M27 20C28.5 17.5 31.5 17.5 33 20" stroke="#854D0E" stroke-width="2.5" stroke-linecap="round"/>
+                  <path class="mouth" d="M16 27C16 33 32 33 32 27H16Z" fill="#EF4444" stroke="#854D0E" stroke-width="2" stroke-linejoin="round"/>
+                  <path class="sparkle" style="opacity:0;" d="M42 4L43.5 8.5L48 10L43.5 11.5L42 16L40.5 11.5L36 10L40.5 8.5L42 4Z" fill="#F59E0B"/>
+                </svg>
+                <span style="font-size:12px; font-weight:800; color:#1e293b; line-height:1;">5</span>
+                <span style="font-size:9.5px; color:#64748b; margin-top:3px;">ยอดเยี่ยม</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="fbThankArea" class="hidden thank-you-banner">
+            <span class="thank-check-circle">✓</span>
+            <span>ขอบคุณสำหรับคะแนนประเมิน <strong id="rateResultTxt" style="color:#022c22;"></strong> ครับ!</span>
+          </div>
+
+          <div class="mt-3 pt-1">
+            <button type="button" class="btn-true shadow-sm" onclick="safeCloseWindow()">ปิดหน้าต่าง</button>
           </div>
         </div>
+
       </div>
-
-      <div id="topic-list-container" class="w-100 mb-3"></div>
-      
-      <div class="consent-box text-start shadow-sm mb-3" onclick="handleSubmit()" style="background: #fffbdf; border-color: #ffeba1;">
-        <input type="checkbox" id="consentCheck" style="width:22px; height:22px; accent-color:#ff0000;" onclick="event.stopPropagation(); handleSubmit();">
-        <label class="m-0 fw-bold text-warning-emphasis ms-2" style="font-size: 13px;">รับทราบ และ ปฏิบัติตามอย่างเคร่งครัด</label>
-      </div>
-
-      <div id="acked-topic-list-container" class="w-100"></div>
-
-      <div id="feedbackSection" class="fb-section-divider hidden">
-        <div id="fbFormArea">
-          <div class="fb-badge-top">
-            <span>✨</span> USER FEEDBACK
-          </div>
-          <h4 class="fb-heading">ประเมินความพึงพอใจการใช้งานเว็บ</h4>
-          <p class="fb-sub">แตะเลือกไอคอนเพื่อให้คะแนน (บันทึกอัตโนมัติ)</p>
-
-          <div class="fb-grid-5">
-            <button type="button" onclick="selectAndSaveFeedback(1, 'ควรปรับปรุง')" data-rate="1" class="rate-card">
-              <svg class="face-svg" viewBox="0 0 48 48" fill="none">
-                <circle cx="24" cy="24" r="20" fill="#FEE2E2" stroke="#EF4444" stroke-width="2.5"/>
-                <path class="brow" d="M15 18L20 21M33 18L28 21" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round"/>
-                <circle class="eye" cx="18" cy="23" r="2" fill="#EF4444"/>
-                <circle class="eye" cx="30" cy="23" r="2" fill="#EF4444"/>
-                <path class="mouth" d="M17 33C19 29.5 29 29.5 31 33" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round"/>
-              </svg>
-              <span style="font-size:12px; font-weight:800; color:#1e293b; line-height:1;">1</span>
-              <span style="font-size:9.5px; color:#64748b; margin-top:3px; white-space:nowrap;">ควรปรับปรุง</span>
-            </button>
-
-            <button type="button" onclick="selectAndSaveFeedback(2, 'พอใช้')" data-rate="2" class="rate-card">
-              <svg class="face-svg" viewBox="0 0 48 48" fill="none">
-                <circle cx="24" cy="24" r="20" fill="#FFEDD5" stroke="#F97316" stroke-width="2.5"/>
-                <circle class="eye" cx="18" cy="21" r="2" fill="#EA580C"/>
-                <circle class="eye" cx="30" cy="21" r="2" fill="#EA580C"/>
-                <path class="mouth" d="M18 32C20 29.5 28 29.5 30 32" stroke="#EA580C" stroke-width="2.5" stroke-linecap="round"/>
-              </svg>
-              <span style="font-size:12px; font-weight:800; color:#1e293b; line-height:1;">2</span>
-              <span style="font-size:9.5px; color:#64748b; margin-top:3px;">พอใช้</span>
-            </button>
-
-            <button type="button" onclick="selectAndSaveFeedback(3, 'ปานกลาง')" data-rate="3" class="rate-card">
-              <svg class="face-svg" viewBox="0 0 48 48" fill="none">
-                <circle cx="24" cy="24" r="20" fill="#FEF9C3" stroke="#EAB308" stroke-width="2.5"/>
-                <circle class="cheek" cx="14" cy="26" r="2.5" fill="#FDE047"/>
-                <circle class="cheek" cx="34" cy="26" r="2.5" fill="#FDE047"/>
-                <circle class="eye" cx="18" cy="21" r="2" fill="#CA8A04"/>
-                <circle class="eye" cx="30" cy="21" r="2" fill="#CA8A04"/>
-                <line class="mouth" x1="18" y1="30" x2="30" y2="30" stroke="#CA8A04" stroke-width="2.5" stroke-linecap="round"/>
-              </svg>
-              <span style="font-size:12px; font-weight:800; color:#1e293b; line-height:1;">3</span>
-              <span style="font-size:9.5px; color:#64748b; margin-top:3px;">ปานกลาง</span>
-            </button>
-
-            <button type="button" onclick="selectAndSaveFeedback(4, 'ดีมาก')" data-rate="4" class="rate-card">
-              <svg class="face-svg" viewBox="0 0 48 48" fill="none">
-                <circle cx="24" cy="24" r="20" fill="#DCFCE7" stroke="#22C55E" stroke-width="2.5"/>
-                <circle class="cheek" cx="14" cy="26" r="2.5" fill="#F9A8D4" opacity="0.7"/>
-                <circle class="cheek" cx="34" cy="26" r="2.5" fill="#F9A8D4" opacity="0.7"/>
-                <path class="eye" d="M15 21C16 19 19 19 20 21M28 21C29 19 32 19 33 21" stroke="#15803D" stroke-width="2.5" stroke-linecap="round"/>
-                <path class="mouth" d="M18 28C20 32 28 32 30 28" stroke="#15803D" stroke-width="2.5" stroke-linecap="round"/>
-              </svg>
-              <span style="font-size:12px; font-weight:800; color:#1e293b; line-height:1;">4</span>
-              <span style="font-size:9.5px; color:#64748b; margin-top:3px;">ดีมาก</span>
-            </button>
-
-            <button type="button" onclick="selectAndSaveFeedback(5, 'ยอดเยี่ยม')" data-rate="5" class="rate-card">
-              <svg class="face-svg" viewBox="0 0 48 48" fill="none">
-                <circle cx="24" cy="24" r="20" fill="#FEF08A" stroke="#CA8A04" stroke-width="2.5"/>
-                <circle class="cheek" cx="13" cy="25" r="3" fill="#F87171" opacity="0.55"/>
-                <circle class="cheek" cx="35" cy="25" r="3" fill="#F87171" opacity="0.55"/>
-                <path class="eye" d="M15 20C16.5 17.5 19.5 17.5 21 20M27 20C28.5 17.5 31.5 17.5 33 20" stroke="#854D0E" stroke-width="2.5" stroke-linecap="round"/>
-                <path class="mouth" d="M16 27C16 33 32 33 32 27H16Z" fill="#EF4444" stroke="#854D0E" stroke-width="2" stroke-linejoin="round"/>
-                <path class="sparkle" style="opacity:0;" d="M42 4L43.5 8.5L48 10L43.5 11.5L42 16L40.5 11.5L36 10L40.5 8.5L42 4Z" fill="#F59E0B"/>
-              </svg>
-              <span style="font-size:12px; font-weight:800; color:#1e293b; line-height:1;">5</span>
-              <span style="font-size:9.5px; color:#64748b; margin-top:3px;">ยอดเยี่ยม</span>
-            </button>
-          </div>
-        </div>
-
-        <div id="fbThankArea" class="hidden thank-you-banner">
-          <span class="thank-check-circle">✓</span>
-          <span>ขอบคุณสำหรับคะแนนประเมิน <strong id="rateResultTxt" style="color:#022c22;"></strong> ครับ!</span>
-        </div>
-
-        <div class="mt-3 pt-1">
-          <button type="button" class="btn-true shadow-sm" onclick="safeCloseWindow()">ปิดหน้าต่าง</button>
-        </div>
-      </div>
-
     </div>
 
     <div id="view-success" class="p-4 text-center hidden full-center">
@@ -637,7 +659,6 @@
           });
         }
         
-        // ดึงข้อมูลสดจาก Google Sheets 100% (ทั้ง Data, Settings และ Feedback)
         const response = await fetch(`${GAS_URL}?action=getInitialData&lineId=${encodeURIComponent(lineId)}&_t=${Date.now()}`, {
           cache: 'no-store'
         });
@@ -654,7 +675,8 @@
           const finalAvatar = pfpUrl || defaultAvatar;
           document.getElementById('user-pfp').src = finalAvatar;
           document.getElementById('user-name').innerText = userObj.fullName;
-          document.getElementById('user-meta').innerText = `ข้อมูลส่วนตัว • ID: ${userObj.empId} (${userObj.channel})`;
+          // แสดงเฉพาะคำว่า "ข้อมูลส่วนตัว" ตัดรหัสพนักงานและตำแหน่งออกเพื่อไม่ให้อึดอัด
+          document.getElementById('user-meta').innerText = `ข้อมูลส่วนตัว`;
           
           renderTopicListUI();
           showView('acknowledge');
