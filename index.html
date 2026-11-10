@@ -78,7 +78,7 @@
     .topic-check-icon { font-size: 20px; color: #ddd; transition: 0.2s; }
     .topic-item.selected .topic-check-icon { color: #ff0000; text-shadow: 0 2px 5px rgba(255,0,0,0.2); }
 
-    /* ✅ CSS สำหรับการ์ดแสดงหัวข้อที่รับทราบแล้ว (แสดงเฉพาะเมื่อกดครบทุกหัวข้อแล้วเท่านั้น) */
+    /* ✅ CSS สำหรับการ์ดแสดงหัวข้อที่รับทราบแล้ว (Read-only โทนสีเขียวสะอาดตา) */
     .acked-section-wrap { margin-top: 18px; text-align: left; width: 100%; }
     .acked-list-header { font-size: 13.5px; font-weight: 700; color: #198754; margin-bottom: 10px; padding-left: 5px; display: flex; align-items: center; gap: 6px; }
     .acked-topic-card { background: linear-gradient(135deg, #f8fdf9 0%, #ffffff 100%); border: 1.5px solid #d1e7dd; border-radius: 16px; padding: 13px 16px; margin-bottom: 9px; display: flex; justify-content: space-between; align-items: center; text-align: left; box-shadow: 0 4px 12px rgba(25, 135, 84, 0.04); }
@@ -354,7 +354,7 @@
         <label class="m-0 fw-bold text-warning-emphasis ms-2" style="font-size: 13px;">รับทราบ และ ปฏิบัติตามอย่างเคร่งครัด</label>
       </div>
 
-      <!-- โซนที่ 2: รายการหัวข้อที่กดรับทราบแล้ว (แสดงเฉพาะเมื่อกดรับทราบครบทุกหัวข้อแล้วเท่านั้น) -->
+      <!-- โซนที่ 2: รายการหัวข้อที่กดรับทราบแล้ว (เฉพาะแคมเปญที่ยังไม่สิ้นสุด) -->
       <div id="acked-topic-list-container" class="w-100"></div>
 
       <!-- โซนที่ 3: กล่องประเมินความพึงพอใจการใช้งานเว็บ (แสดงเฉพาะเมื่อกดรับทราบครบทุกหัวข้อแล้วเท่านั้น) -->
@@ -440,11 +440,6 @@
           <span class="thank-check-circle">✓</span>
           <span>ขอบคุณสำหรับคะแนนประเมิน <strong id="rateResultTxt" style="color:#022c22;"></strong> ครับ!</span>
         </div>
-
-        <!-- ปุ่มปิดหน้าต่างเมื่อกดครบทุกหัวข้อแล้ว -->
-        <div class="mt-3 pt-1">
-          <button type="button" class="btn-true shadow-sm" onclick="safeCloseWindow()">ปิดหน้าต่าง</button>
-        </div>
       </div>
 
     </div>
@@ -486,6 +481,33 @@
       buttonsStyling: false
     });
 
+    function getLocalAckedSet(fullName) {
+      try {
+        const raw = localStorage.getItem('true_acked_topics_' + (fullName || '').trim());
+        return raw ? new Set(JSON.parse(raw)) : new Set();
+      } catch (e) {
+        return new Set();
+      }
+    }
+
+    function markLocalAcked(fullName, topicName) {
+      try {
+        const key = 'true_acked_topics_' + (fullName || '').trim();
+        const set = getLocalAckedSet(fullName);
+        set.add((topicName || '').trim());
+        localStorage.setItem(key, JSON.stringify(Array.from(set)));
+      } catch (e) {}
+    }
+
+    function unmarkLocalAcked(fullName, topicName) {
+      try {
+        const key = 'true_acked_topics_' + (fullName || '').trim();
+        const set = getLocalAckedSet(fullName);
+        set.delete((topicName || '').trim());
+        localStorage.setItem(key, JSON.stringify(Array.from(set)));
+      } catch (e) {}
+    }
+
     function getLocalFeedback(fullName) {
       try {
         const raw = localStorage.getItem('true_user_fb_' + (fullName || '').trim());
@@ -501,7 +523,7 @@
       } catch (e) {}
     }
 
-    // ฟังก์ชันวาดหน้าจอ (แสดงหัวข้อที่รับทราบแล้ว + แบบประเมิน เฉพาะเมื่อทำครบทุกหัวข้อแล้วเท่านั้น)
+    // ฟังก์ชันวาดหน้าจอ (ใช้ Header และกล่องโปรไฟล์แบบเดียวกันเสมอ + แสดงจำนวนที่กดจริงเทียบจำนวนทั้งหมด)
     function renderTopicListUI() {
       const container = document.getElementById('topic-list-container');
       const ackedContainer = document.getElementById('acked-topic-list-container');
@@ -540,7 +562,7 @@
         }
       }
 
-      // 2. แยกการแสดงผลระหว่าง "กดครบทุกหัวข้อแล้ว" vs "ยังมีหัวข้อรอรับทราบ"
+      // 2. วาดโซนรายการข่าว หรือ กล่องสีเขียว "เยี่ยมมาก!"
       if (isAllCompleted) {
         container.innerHTML = `
           <div class="p-4 text-center rounded-4 shadow-sm" style="background: linear-gradient(135deg, #f0fdf4 0%, #e8f5e9 100%); border: 1px solid #c8e6c9;">
@@ -550,31 +572,7 @@
           </div>`;
         if (consentBox) consentBox.classList.add('hidden');
 
-        // ✅ แสดง "หัวข้อที่รับทราบแล้ว" เฉพาะเมื่อพนักงานทำครบทุกหัวข้อแล้วเท่านั้น
-        if (ackedContainer) {
-          if (ackedTopicList && ackedTopicList.length > 0) {
-            let ackedHtml = `
-              <div class="acked-section-wrap">
-                <div class="acked-list-header">
-                  <i class="fas fa-circle-check"></i> หัวข้อที่รับทราบแล้ว (${ackedTopicList.length} หัวข้อ)
-                </div>
-            `;
-            ackedTopicList.forEach(item => {
-              ackedHtml += `
-                <div class="acked-topic-card">
-                  <div class="acked-topic-title">${item.name}</div>
-                  <span class="acked-badge-pill"><i class="fas fa-check"></i> รับทราบแล้ว</span>
-                </div>
-              `;
-            });
-            ackedHtml += `</div>`;
-            ackedContainer.innerHTML = ackedHtml;
-          } else {
-            ackedContainer.innerHTML = '';
-          }
-        }
-
-        // ✅ แสดงส่วนประเมินความพึงพอใจ เฉพาะเมื่อกดรับทราบครบทุกหัวข้อแล้วเท่านั้น
+        // แสดงส่วนประเมินความพึงพอใจ เฉพาะเมื่อกดรับทราบครบทุกหัวข้อแล้วเท่านั้น
         if (fbSection) {
           fbSection.classList.remove('hidden');
           if (feedbackGiven && feedbackGiven.rating) {
@@ -589,8 +587,7 @@
           }
         }
       } else {
-        // 📌 กรณีที่ยังมีหัวข้อรอรับทราบ: ซ่อนทั้ง "หัวข้อที่รับทราบแล้ว" และ "แบบประเมินความพึงพอใจ"
-        if (ackedContainer) ackedContainer.innerHTML = '';
+        // กรณีที่มีข่าวค้างอ่าน: ซ่อนแบบประเมินความพึงพอใจ
         if (fbSection) fbSection.classList.add('hidden');
 
         let listHtml = `<div class="topic-list-header"><i class="fas fa-clipboard-list me-2 text-danger"></i> รายการ : ยังไม่ได้กดรับทราบ (${unackedCount} หัวข้อ)</div>`;
@@ -605,9 +602,33 @@
         container.innerHTML = listHtml;
         if (consentBox) consentBox.classList.remove('hidden');
       }
+
+      // 3. วาดโซนหัวข้อที่รับทราบแล้ว (เฉพาะแคมเปญที่ยังไม่สิ้นสุด)
+      if (ackedContainer) {
+        if (ackedTopicList && ackedTopicList.length > 0) {
+          let ackedHtml = `
+            <div class="acked-section-wrap">
+              <div class="acked-list-header">
+                <i class="fas fa-circle-check"></i> หัวข้อที่รับทราบแล้ว (${ackedTopicList.length} หัวข้อ)
+              </div>
+          `;
+          ackedTopicList.forEach(item => {
+            ackedHtml += `
+              <div class="acked-topic-card">
+                <div class="acked-topic-title">${item.name}</div>
+                <span class="acked-badge-pill"><i class="fas fa-check"></i> รับทราบแล้ว</span>
+              </div>
+            `;
+          });
+          ackedHtml += `</div>`;
+          ackedContainer.innerHTML = ackedHtml;
+        } else {
+          ackedContainer.innerHTML = '';
+        }
+      }
     }
 
-    // 📌 ฟังก์ชันเมื่อแตะเลือกไอคอนประเมินความพึงพอใจ
+    // 📌 ฟังก์ชันเมื่อแตะเลือกไอคอนประเมินความพึงพอใจ (เล่นแอนิเมชันระบบสอบ + บันทึกลงชีท Feedback อัตโนมัติ)
     function selectAndSaveFeedback(val, label) {
       if (feedbackLocked) return;
       feedbackLocked = true;
@@ -684,7 +705,6 @@
           });
         }
         
-        // ดึงข้อมูลสดจาก Google Sheets ทุกครั้งเพื่อให้ซิงค์กับชีทแบบ Real-time 100%
         const response = await fetch(`${GAS_URL}?action=getInitialData&lineId=${encodeURIComponent(lineId)}&_t=${Date.now()}`, {
           cache: 'no-store'
         });
@@ -702,6 +722,17 @@
             feedbackGiven = getLocalFeedback(userObj.fullName);
           } else {
             setLocalFeedback(userObj.fullName, feedbackGiven);
+          }
+
+          const localAcked = getLocalAckedSet(userObj.fullName);
+          if (localAcked.size > 0) {
+            const newlyAckedItems = topicList.filter(t => localAcked.has((t.name || '').trim()));
+            topicList = topicList.filter(t => !localAcked.has((t.name || '').trim()));
+            newlyAckedItems.forEach(item => {
+              if (!ackedTopicList.some(a => a.name === item.name)) {
+                ackedTopicList.push(item);
+              }
+            });
           }
 
           const finalAvatar = pfpUrl || defaultAvatar;
@@ -815,7 +846,6 @@
       }
     }
 
-    // 🛡️ ฟังก์ชันส่งข้อมูลรับทราบ (รอให้ลงชีทจริง 100% + ถ้าเป็นข้อสุดท้ายจะพาไปหน้าสรุปครบทุกหัวข้อพร้อมแบบประเมินทันที!)
     async function handleSubmit() {
       if (isSubmitting) return;
 
@@ -840,6 +870,7 @@
         device: "LINE (" + liff.getOS() + ")" 
       };
       
+      // 1. แสดงหน้าโหลดค้างไว้จนกว่า Google Sheets จะยืนยันว่าลงชีทสำเร็จจริง 100%
       const overlay = document.getElementById('save-overlay');
       overlay.classList.remove('hidden');
 
@@ -850,24 +881,18 @@
       overlay.classList.add('hidden');
       isSubmitting = false;
 
+      // 2. ถ้าบันทึกเข้า Google Sheets สำเร็จจริง (หรือเคยมีในชีทแล้ว) จึงค่อยจำลงเครื่องและโชว์หน้า "บันทึกสำเร็จ"
       if (saveResult === "Success" || saveResult === "Duplicate") {
+        markLocalAcked(userObj.fullName, t);
         topicList = topicList.filter(x => x.name !== t);
         if (!ackedTopicList.some(a => a.name === t)) {
           ackedTopicList.push(matchedTopicObj);
         }
-
-        // 🌟 เช็กว่ากดครบทุกหัวข้อแล้วหรือยัง?
-        if (topicList.length === 0) {
-          // กรณีเป็นข้อสุดท้าย (ครบทุกหัวข้อแล้ว): พาไปหน้าสรุปหัวข้อทั้งหมด + กล่องประเมินความพึงพอใจทันที!
-          renderTopicListUI();
-          showView('acknowledge');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        } else {
-          // กรณีที่ยังเหลือหัวข้ออื่น: พาไปหน้า "บันทึกสำเร็จ" พร้อมปุ่มปิดหน้าต่างตามเดิม
-          document.getElementById('success-topic-name').innerText = t;
-          showView('success');
-        }
+        document.getElementById('success-topic-name').innerText = t;
+        showView('success');
       } else {
+        // 3. ถ้าเน็ตหลุดหรือคิวเต็มเกินกำหนด จะไม่หลอกว่าสำเร็จ แต่ให้กดยืนยันใหม่อีกครั้ง
+        unmarkLocalAcked(userObj.fullName, t);
         document.getElementById('consentCheck').checked = false;
         TrueSwal.fire({ 
           icon: 'error', 
@@ -878,7 +903,7 @@
     }
 
     async function sendAcknowledgeInBackground(payload) {
-      const maxAttempts = 5;
+      const maxAttempts = 5; // เพิ่มการลองซ้ำอัตโนมัติเป็น 5 ครั้งกรณีคนกดพร้อมกันเยอะ
       let lastResult = null;
 
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -903,6 +928,7 @@
             return res;
           }
 
+          // ถ้าคิวเต็ม (Busy) หรือ Error ให้รอจังหวะแบบสุ่มแล้วส่งซ้ำใหม่อัตโนมัติ
           if (attempt < maxAttempts) {
             await new Promise(r => setTimeout(r, 800 * attempt + Math.floor(Math.random() * 600)));
           }
@@ -918,53 +944,6 @@
 
     async function safeCloseWindow() {
       liff.closeWindow();
-    }
-
-    async function callApi(action, payload) {
-      if (action === 'acknowledge') {
-        document.getElementById('save-overlay').classList.remove('hidden'); 
-      } else {
-        TrueSwal.fire({ title: 'กำลังตรวจสอบ โปรดรอสักครู่...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
-      }
-      
-      const maxAttempts = 3;
-      let lastResult = null;
-
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        try {
-          const response = await fetch(GAS_URL, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action, payload }),
-            keepalive: true
-          });
-          
-          if (!response.ok) throw new Error("HTTP status " + response.status);
-          const res = await response.json();
-          lastResult = res;
-
-          if (res === "Success" || res === "Duplicate" || res === "Already Registered") {
-            break;
-          }
-
-          if (attempt < maxAttempts) {
-            await new Promise(r => setTimeout(r, 800 * attempt + Math.floor(Math.random() * 600)));
-          }
-        } catch (e) {
-          console.error(`Attempt ${attempt} failed:`, e);
-          if (attempt < maxAttempts) {
-            await new Promise(r => setTimeout(r, 800 * attempt + Math.floor(Math.random() * 600)));
-          }
-        }
-      }
-
-      if (action === 'acknowledge') {
-        document.getElementById('save-overlay').classList.add('hidden'); 
-      } else {
-        Swal.close();
-      }
-      
-      return lastResult;
     }
 
     window.onload = init;
