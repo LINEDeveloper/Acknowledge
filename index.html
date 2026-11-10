@@ -870,49 +870,55 @@
         device: "LINE (" + liff.getOS() + ")" 
       };
       
+      // 1. แสดงหน้าโหลดค้างไว้จนกว่า Google Sheets จะยืนยันว่าลงชีทสำเร็จจริง 100%
       const overlay = document.getElementById('save-overlay');
       overlay.classList.remove('hidden');
 
-      markLocalAcked(userObj.fullName, t);
       activeSavePromise = sendAcknowledgeInBackground(payload);
+      const saveResult = await activeSavePromise;
+      activeSavePromise = null;
 
-      await new Promise(r => setTimeout(r, 350));
       overlay.classList.add('hidden');
-
-      topicList = topicList.filter(x => x.name !== t);
-      if (!ackedTopicList.some(a => a.name === t)) {
-        ackedTopicList.push(matchedTopicObj);
-      }
-
-      document.getElementById('success-topic-name').innerText = t;
-      showView('success');
       isSubmitting = false;
 
-      const bgRes = await activeSavePromise;
-      activeSavePromise = null;
-      if (bgRes !== "Success" && bgRes !== "Duplicate") {
+      // 2. ถ้าบันทึกเข้า Google Sheets สำเร็จจริง (หรือเคยมีในชีทแล้ว) จึงค่อยจำลงเครื่องและโชว์หน้า "บันทึกสำเร็จ"
+      if (saveResult === "Success" || saveResult === "Duplicate") {
+        markLocalAcked(userObj.fullName, t);
+        topicList = topicList.filter(x => x.name !== t);
+        if (!ackedTopicList.some(a => a.name === t)) {
+          ackedTopicList.push(matchedTopicObj);
+        }
+        document.getElementById('success-topic-name').innerText = t;
+        showView('success');
+      } else {
+        // 3. ถ้าเน็ตหลุดหรือคิวเต็มเกินกำหนด จะไม่หลอกว่าสำเร็จ แต่ให้กดยืนยันใหม่อีกครั้ง
         unmarkLocalAcked(userObj.fullName, t);
-        ackedTopicList = ackedTopicList.filter(x => x.name !== t);
-        topicList.push(matchedTopicObj);
-        renderTopicListUI();
-        showView('acknowledge');
         document.getElementById('consentCheck').checked = false;
-        TrueSwal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: 'สัญญาณอินเทอร์เน็ตขัดข้อง โปรดแตะยืนยันอีกครั้งครับ' });
+        TrueSwal.fire({ 
+          icon: 'error', 
+          title: 'บันทึกไม่สำเร็จ', 
+          text: 'ขณะนี้มีผู้ใช้งานพร้อมกันจำนวนมาก หรือสัญญาณอินเทอร์เน็ตขัดข้อง โปรดแตะยืนยันอีกครั้งครับ' 
+        });
       }
     }
 
     async function sendAcknowledgeInBackground(payload) {
-      const maxAttempts = 3;
+      const maxAttempts = 5; // เพิ่มการลองซ้ำอัตโนมัติเป็น 5 ครั้งกรณีคนกดพร้อมกันเยอะ
       let lastResult = null;
 
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 28000);
+
           const response = await fetch(GAS_URL, { 
             method: 'POST', 
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ action: 'acknowledge', payload }),
-            keepalive: true
+            keepalive: true,
+            signal: controller.signal
           });
+          clearTimeout(timeoutId);
           
           if (!response.ok) throw new Error("HTTP status " + response.status);
           const res = await response.json();
@@ -922,13 +928,14 @@
             return res;
           }
 
+          // ถ้าคิวเต็ม (Busy) หรือ Error ให้รอจังหวะแบบสุ่มแล้วส่งซ้ำใหม่อัตโนมัติ
           if (attempt < maxAttempts) {
-            await new Promise(r => setTimeout(r, 600 * attempt + Math.floor(Math.random() * 400)));
+            await new Promise(r => setTimeout(r, 800 * attempt + Math.floor(Math.random() * 600)));
           }
         } catch (e) {
-          console.error(`Background save attempt ${attempt} failed:`, e);
+          console.error(`Save attempt ${attempt} failed:`, e);
           if (attempt < maxAttempts) {
-            await new Promise(r => setTimeout(r, 600 * attempt + Math.floor(Math.random() * 400)));
+            await new Promise(r => setTimeout(r, 800 * attempt + Math.floor(Math.random() * 600)));
           }
         }
       }
@@ -936,65 +943,7 @@
     }
 
     async function safeCloseWindow() {
-      const btn = document.getElementById('btn-close-window');
-      if (activeSavePromise) {
-        if (btn) {
-          btn.disabled = true;
-          btn.innerText = "กำลังปิดหน้าต่าง...";
-        }
-        await Promise.race([
-          activeSavePromise,
-          new Promise(r => setTimeout(r, 600))
-        ]);
-      }
       liff.closeWindow();
-    }
-
-    async function callApi(action, payload) {
-      if (action === 'acknowledge') {
-        document.getElementById('save-overlay').classList.remove('hidden'); 
-      } else {
-        TrueSwal.fire({ title: 'กำลังตรวจสอบ โปรดรอสักครู่...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
-      }
-      
-      const maxAttempts = 3;
-      let lastResult = null;
-
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        try {
-          const response = await fetch(GAS_URL, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action, payload }),
-            keepalive: true
-          });
-          
-          if (!response.ok) throw new Error("HTTP status " + response.status);
-          const res = await response.json();
-          lastResult = res;
-
-          if (res === "Success" || res === "Duplicate" || res === "Already Registered") {
-            break;
-          }
-
-          if (attempt < maxAttempts) {
-            await new Promise(r => setTimeout(r, 800 * attempt + Math.floor(Math.random() * 600)));
-          }
-        } catch (e) {
-          console.error(`Attempt ${attempt} failed:`, e);
-          if (attempt < maxAttempts) {
-            await new Promise(r => setTimeout(r, 800 * attempt + Math.floor(Math.random() * 600)));
-          }
-        }
-      }
-
-      if (action === 'acknowledge') {
-        document.getElementById('save-overlay').classList.add('hidden'); 
-      } else {
-        Swal.close();
-      }
-      
-      return lastResult;
     }
 
     window.onload = init;
