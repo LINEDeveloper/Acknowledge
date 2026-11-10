@@ -19,21 +19,26 @@
     .consent-box:active { transform: scale(0.98); }
 
     /* =====================================================================
-       🌟 การจัดวางสมดุลอัตโนมัติ (Auto-Balanced Layout) เฉพาะหน้า Acknowledge
-          - ถ้าหัวข้อรับทราบน้อย: จัดวางกึ่งกลางสายตาอัตโนมัติ ไม่โล่งด้านล่าง
-          - ถ้าหัวข้อเยอะ: ขยายและเลื่อนหน้าจอได้ตามปกติ
+       🌟 โครงสร้างหน้า Acknowledge:
+          1. #unified-header-group (2 กล่องบน) อยู่ชิดด้านบนเสมอ ไม่ขยับตามเนื้อหา
+          2. .ack-body-center-zone (กล่องรายการรับทราบ) จัดกึ่งกลางแนวตั้งอัตโนมัติ
        ===================================================================== */
     #view-acknowledge {
       flex: 1;
       display: flex;
       flex-direction: column;
+      justify-content: flex-start;
       width: 100%;
     }
-    .ack-auto-balance-wrap {
+    #unified-header-group {
+      width: 100%;
+      flex-shrink: 0;
+    }
+    .ack-body-center-zone {
       width: 100%;
       margin-top: auto;
       margin-bottom: auto;
-      padding-top: 4px;
+      padding-top: 8px;
       padding-bottom: 16px;
     }
     
@@ -42,7 +47,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 4px 2px 14px 2px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       border-bottom: 1.5px solid #f1f5f9;
       text-align: left;
       width: 100%;
@@ -63,7 +68,7 @@
       border: 1px solid #f1f5f9;
       border-radius: 18px;
       padding: 13px 16px;
-      margin-bottom: 22px;
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -321,41 +326,43 @@
     </div>
 
     <div id="view-acknowledge" class="p-3 hidden text-center" style="padding-bottom: 80px !important;">
-      <div class="ack-auto-balance-wrap">
-        
-        <div id="unified-header-group">
-          <div class="header-style-1">
-            <div class="h1-left">
-              <img src="https://img1.pic.in.th/images/True--C.png" class="h1-logo" alt="True">
-              <div class="h1-divider"></div>
-              <div>
-                <div class="h1-title">Acknowledge</div>
-                <div class="h1-sub">ยืนยันรับทราบข้อมูลข่าวสาร</div>
-              </div>
-            </div>
-            <div id="top-status-badge" class="h1-badge verified">
-              <i class="fas fa-check-circle"></i> VERIFIED
+      
+      <!-- 📌 1. สองกล่องด้านบน (Header + Profile) อยู่ชิดด้านบนสุดเสมอ ไม่ขยับตามจำนวนหัวข้อ -->
+      <div id="unified-header-group">
+        <div class="header-style-1">
+          <div class="h1-left">
+            <img src="https://img1.pic.in.th/images/True--C.png" class="h1-logo" alt="True">
+            <div class="h1-divider"></div>
+            <div>
+              <div class="h1-title">Acknowledge</div>
+              <div class="h1-sub">ยืนยันรับทราบข้อมูลข่าวสาร</div>
             </div>
           </div>
-
-          <div class="exam-style-profile">
-            <div class="esp-left">
-              <div class="esp-avatar-box">
-                <img id="user-pfp" class="esp-avatar" src="">
-                <div class="esp-online-dot"></div>
-              </div>
-              <div class="esp-info">
-                <span id="user-meta" class="esp-label">ข้อมูลส่วนตัว</span>
-                <h3 id="user-name" class="esp-name">...</h3>
-              </div>
-            </div>
-            <div class="esp-right">
-              <span class="esp-right-label">สถานะรับทราบ</span>
-              <span id="comp-status-val" class="esp-right-val status-done">0/0 หัวข้อ</span>
-            </div>
+          <div id="top-status-badge" class="h1-badge verified">
+            <i class="fas fa-check-circle"></i> VERIFIED
           </div>
         </div>
 
+        <div class="exam-style-profile">
+          <div class="esp-left">
+            <div class="esp-avatar-box">
+              <img id="user-pfp" class="esp-avatar" src="">
+              <div class="esp-online-dot"></div>
+            </div>
+            <div class="esp-info">
+              <span id="user-meta" class="esp-label">ข้อมูลส่วนตัว</span>
+              <h3 id="user-name" class="esp-name">...</h3>
+            </div>
+          </div>
+          <div class="esp-right">
+            <span class="esp-right-label">สถานะรับทราบ</span>
+            <span id="comp-status-val" class="esp-right-val status-done">0/0 หัวข้อ</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 📌 2. โซนรายการหัวข้อด้านล่าง จัดกึ่งกลางพื้นที่ว่างแนวตั้งให้อัตโนมัติ -->
+      <div class="ack-body-center-zone">
         <div id="topic-list-container" class="w-100 mb-3"></div>
         
         <div class="consent-box text-start shadow-sm mb-2" onclick="handleSubmit()" style="background: #fffbdf; border-color: #ffeba1;">
@@ -675,7 +682,6 @@
           const finalAvatar = pfpUrl || defaultAvatar;
           document.getElementById('user-pfp').src = finalAvatar;
           document.getElementById('user-name').innerText = userObj.fullName;
-          // แสดงเฉพาะคำว่า "ข้อมูลส่วนตัว" ตัดรหัสพนักงานและตำแหน่งออกเพื่อไม่ให้อึดอัด
           document.getElementById('user-meta').innerText = `ข้อมูลส่วนตัว`;
           
           renderTopicListUI();
