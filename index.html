@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
   <meta charset="UTF-8">
   <title>True Corporation</title>
@@ -18,10 +18,208 @@
     .consent-box { background-color: #fff3cd; border: 1px solid #ffecb5; border-radius: 22px; padding: 18px 22px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; }
     .consent-box:active { transform: scale(0.98); }
 
+    /* เอฟเฟกต์เฟดเปลี่ยนหน้าอย่างนุ่มนวลหลังอ่านคำทักทายจบ */
+    #view-loading {
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .loading-fade-out {
+      opacity: 0 !important;
+      transform: translateY(-4px);
+    }
+
     /* =====================================================================
-       🌟 โครงสร้างหน้า Acknowledge:
-          1. #unified-header-group (2 กล่องบน) อยู่ชิดด้านบนสุดเสมอ
-          2. .ack-body-center-zone (กล่องรายการรับทราบ) จัดกึ่งกลางแนวตั้งอัตโนมัติ
+       🌅 หน้าโหลดแรกเข้าแอป (#view-loading):
+          วงกลมโปรไฟล์ + ออร่าพาสเทล + ไอคอนสภาพอากาศมุมขวาล่าง
+          + ข้อความทักทายตามเวลางาน (10:00-20:00) & ภาษาถิ่น (ไม่มีโซน = ภาคกลาง)
+       ===================================================================== */
+    .loading-pfp-wrapper {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 22px;
+    }
+    .loading-pfp-img {
+      width: 86px;
+      height: 86px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3.5px solid #ffffff;
+      box-shadow: 0 5px 16px rgba(0,0,0,0.1);
+      position: relative;
+      z-index: 2;
+      background: #f8fafc;
+    }
+    .loading-pfp-spinner {
+      width: 98px;
+      height: 98px;
+      position: absolute;
+      top: -6px;
+      left: -6px;
+      z-index: 1;
+      border-width: 3px;
+    }
+    .time-doodle-badge {
+      position: absolute;
+      bottom: -2px;
+      right: -4px;
+      width: 35px;
+      height: 35px;
+      background: #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 4;
+      border: 1.5px solid #f1f5f9;
+    }
+    @keyframes auraPulse {
+      0%, 100% { transform: scale(1); opacity: 0.55; }
+      50% { transform: scale(1.14); opacity: 0.9; }
+    }
+    .avatar-aura-ring {
+      position: absolute;
+      inset: -12px;
+      border-radius: 50%;
+      z-index: 0;
+      pointer-events: none;
+      animation: auraPulse 2.4s ease-in-out infinite;
+      transition: background 0.4s ease;
+    }
+    .aura-sun { background: radial-gradient(circle, rgba(253,224,71,0.45) 0%, rgba(253,224,71,0) 70%); }
+    .aura-rain { background: radial-gradient(circle, rgba(56,189,248,0.42) 0%, rgba(56,189,248,0) 70%); }
+    .aura-hot { background: radial-gradient(circle, rgba(251,146,60,0.42) 0%, rgba(251,146,60,0) 70%); }
+    .aura-night { background: radial-gradient(circle, rgba(167,139,250,0.42) 0%, rgba(167,139,250,0) 70%); }
+
+    .micro-ambient-icon {
+      position: absolute;
+      top: -6px;
+      left: -8px;
+      z-index: 4;
+      pointer-events: none;
+      animation: floatAmbient 2.2s ease-in-out infinite;
+    }
+    @keyframes floatAmbient {
+      0%, 100% { transform: translateY(0px) scale(0.95); opacity: 0.8; }
+      50% { transform: translateY(-4px) scale(1.1); opacity: 1; }
+    }
+    @keyframes gentle-wiggle {
+      0%, 100% { transform: rotate(-6deg) scale(1); }
+      50% { transform: rotate(6deg) scale(1.08); }
+    }
+    @keyframes rain-drop {
+      0%, 100% { transform: translateY(0); opacity: 1; }
+      50% { transform: translateY(2px); opacity: 0.5; }
+    }
+    .doodle-anim { animation: gentle-wiggle 2.2s ease-in-out infinite; transform-origin: center; }
+    .rain-anim { animation: rain-drop 1s ease-in-out infinite; }
+
+    .unified-greeting-box {
+      width: 100%;
+      max-width: 335px;
+      min-height: 116px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      text-align: center;
+      margin: 0 auto;
+    }
+    .unified-line-1 {
+      width: 100%;
+      font-size: 16.5px;
+      font-weight: 700;
+      color: #475569;
+      margin-bottom: 6px;
+      letter-spacing: -0.1px;
+      line-height: 1.4;
+      text-align: center;
+    }
+    .unified-line-2 {
+      width: 100%;
+      font-size: 14.5px;
+      font-weight: 500;
+      color: #475569;
+      line-height: 1.55;
+      min-height: 44px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .unified-line-3 {
+      width: 100%;
+      min-height: 28px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #94a3b8;
+      margin-top: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      transition: opacity 0.3s ease;
+    }
+    .typing-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 15px;
+      background-color: #ef4444;
+      margin-left: 3px;
+      vertical-align: middle;
+      animation: cursorBlink 0.75s infinite;
+    }
+    @keyframes cursorBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .fade-up-soft {
+      animation: fadeUpSoft 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes fadeUpSoft {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .typing-dots-sm {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3.5px;
+      padding: 5px 11px;
+      background: #f8fafc;
+      border: 1px solid #f1f5f9;
+      border-radius: 20px;
+      margin: 0 auto;
+      animation: fadeUpSoft 0.25s ease-out forwards;
+    }
+    .typing-dots-sm i {
+      width: 4.5px;
+      height: 4.5px;
+      background: #94a3b8;
+      border-radius: 50%;
+      display: inline-block;
+      animation: chatDotBounce 1s infinite ease-in-out;
+    }
+    .typing-dots-sm i:nth-child(2) { animation-delay: 0.16s; }
+    .typing-dots-sm i:nth-child(3) { animation-delay: 0.32s; }
+    @keyframes chatDotBounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-3.5px); opacity: 1; background: #ef4444; }
+    }
+    .wait-dots span {
+      display: inline-block;
+      animation: waitHop 1.2s infinite;
+      color: #ef4444;
+      font-weight: 700;
+    }
+    .wait-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .wait-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes waitHop {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-2.5px); }
+    }
+
+    /* =====================================================================
+       🌟 โครงสร้างหน้า Acknowledge
        ===================================================================== */
     #view-acknowledge {
       flex: 1;
@@ -62,7 +260,6 @@
     .h1-badge.pending { background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
     .h1-badge.verified { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
 
-    /* การ์ดโปรไฟล์ปรับให้โปร่งสบายตา ตัดรหัสพนักงานและตำแหน่งออก + ลดขนาดชื่อให้พอดี */
     .exam-style-profile {
       background-color: #f8fafc;
       border: 1px solid #f1f5f9;
@@ -105,7 +302,7 @@
     .acked-badge-pill { background-color: #d1e7dd; color: #0f5132; font-size: 11px; font-weight: 700; padding: 4px 11px; border-radius: 50px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
 
     /* =====================================================================
-       🐱 หน้าโหลดบันทึกข้อมูลโฉมใหม่: น้องเหมียวผู้ช่วยสุ่ม 3 สไตล์ + คำอวยพรงานบริการ
+       🐱 หน้าโหลดบันทึกข้อมูล (#save-overlay): น้องเหมียวผู้ช่วยสุ่ม 3 สไตล์ + คำอวยพรงานบริการ
        ===================================================================== */
     #save-overlay {
       position: fixed;
@@ -523,12 +720,17 @@
 
   <div class="main-card">
     
-    <div id="view-loading" class="p-5 text-center full-center">
-      <div style="position: relative; display: inline-block; margin-bottom: 10px;">
-        <img id="loading-pfp" src="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23e9ecef'/%3E%3Cpath d='M50 55c-15 0-25 10-25 25v5h50v-5c0-15-10-25-25-25zM50 45a15 15 0 1 0 0-30 15 15 0 0 0 0 30z' fill='%23adb5bd'/%3E%3C/svg%3E" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; z-index: 2;">
-        <div class="spinner-border text-danger" role="status" style="width: 90px; height: 90px; position: absolute; top: -5px; left: -5px; z-index: 1; border-width: 3px;"></div>
+    <!-- 🌅 หน้าโหลดแรกเข้าแอป (#view-loading): ทักทายตามเวลางาน + สภาพอากาศ + ภาษาถิ่น (ไม่มีโซน = ภาคกลาง) -->
+    <div id="view-loading" class="p-4 text-center full-center">
+      <div class="loading-pfp-wrapper">
+        <div id="avatar-aura" class="avatar-aura-ring aura-sun"></div>
+        <div id="micro-ambient" class="micro-ambient-icon"></div>
+        <img id="loading-pfp" class="loading-pfp-img" src="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23e9ecef'/%3E%3Cpath d='M50 55c-15 0-25 10-25 25v5h50v-5c0-15-10-25-25-25zM50 45a15 15 0 1 0 0-30 15 15 0 0 0 0 30z' fill='%23adb5bd'/%3E%3C/svg%3E" alt="Profile">
+        <div class="spinner-border text-danger loading-pfp-spinner" role="status"></div>
+        <div id="time-badge-icon" class="time-doodle-badge"></div>
       </div>
-      <p class="mt-3 text-muted fw-bold">กำลังตรวจสอบข้อมูล<br>โปรดรอสักครู่...</p>
+
+      <div id="unified-greeting" class="unified-greeting-box"></div>
     </div>
 
     <div id="view-register" class="p-4 hidden text-center" style="padding-bottom: 70px !important;">
@@ -608,7 +810,7 @@
 
         <div id="acked-topic-list-container" class="w-100"></div>
 
-        <!-- ✨ โซนประเมินความพึงพอใจ: ตัดปุ่ม "ปิดหน้าต่าง" ด้านล่างออกตามที่ต้องการ -->
+        <!-- ✨ โซนประเมินความพึงพอใจ: ตัดปุ่ม "ปิดหน้าต่าง" ด้านล่างออก -->
         <div id="feedbackSection" class="fb-section-divider hidden">
           <div id="fbFormArea">
             <div class="fb-badge-top">
@@ -680,7 +882,6 @@
               </button>
             </div>
 
-            <!-- กล่องกางออกอัตโนมัติเมื่อแตะเลือกหน้ายิ้ม -->
             <div id="fbExpandBox" class="comment-card-box hidden">
               <div style="font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 7px;">
                 คุณเลือก: <span id="fbSelectedLabel" class="text-danger"></span> • แตะเลือกหัวข้อหรือพิมพ์เสริมได้ครับ
@@ -725,6 +926,10 @@
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycby-pLn-ACbareuCdomxdkX2Oe1H9gVNseUDb2k-CENm3DX3YrQvbtoFYErSZvHQppU/exec"; 
     
+    // ⏱️ กำหนดเวลาแสดงผลขั้นต่ำเพื่อให้พนักงานอ่านคำทักทายและคำอวยพรทันพอดี
+    const MIN_INITIAL_GREETING_MS = 2600; // 2.6 วินาทีสำหรับหน้าทักทายแรกเข้า
+    const MIN_CAT_WISH_OVERLAY_MS = 1800; // 1.8 วินาทีสำหรับหน้าน้องเหมียวอวยพรตอนกดรับทราบ
+
     let lineId, userObj, topicList = [], ackedTopicList = [];
     let typingTimer;
     let failCount = 0; 
@@ -741,10 +946,512 @@
     let lastOverlayMode = 0;
     let lastOverlayQuoteIdx = -1;
 
+    let loadTypeTimer1 = null;
+    let loadTypeTimer2 = null;
+    let loadStepTimer1 = null;
+    let loadStepTimer3 = null;
+
     const TrueSwal = Swal.mixin({
       customClass: { popup: 'swal-true-popup', confirmButton: 'btn-true' },
       buttonsStyling: false
     });
+
+    /* =========================================================================
+       🧭 ฟังก์ชันแปลงค่าโซนของพนักงานให้เป็นภูมิภาค (หากไม่มีโซน ให้ใช้ "ภาคกลาง" เสมอ)
+       ========================================================================= */
+    function resolveRegionFromZone(rawZone) {
+      if (!rawZone) return "ภาคกลาง";
+      const z = String(rawZone).trim().toLowerCase();
+      if (z === "" || z === "-" || z === "null" || z === "undefined" || z === "none") {
+        return "ภาคกลาง";
+      }
+
+      const northKeywords = ["เหนือ", "north", "เชียงใหม่", "เชียงราย", "ลำปาง", "ลำพูน", "พะเยา", "แพร่", "น่าน", "แม่ฮ่องสอน", "พิษณุโลก", "ตาก", "สุโขทัย", "อุตรดิตถ์", "เพชรบูรณ์", "กำแพงเพชร", "พิจิตร", "นครสวรรค์", "อุทัยธานี"];
+      for (let i = 0; i < northKeywords.length; i++) {
+        if (z.includes(northKeywords[i])) return "ภาคเหนือ";
+      }
+
+      const isanKeywords = ["อีสาน", "ตะวันออกเฉียงเหนือ", "northeast", "isan", "ขอนแก่น", "โคราช", "นครราชสีมา", "อุดร", "อุบล", "มหาสารคาม", "ร้อยเอ็ด", "กาฬสินธุ์", "สกลนคร", "นครพนม", "มุกดาหาร", "เลย", "หนองคาย", "หนองบัวลำภู", "บึงกาฬ", "ชัยภูมิ", "บุรีรัมย์", "สุรินทร์", "ศรีสะเกษ", "ยโสธร", "อำนาจเจริญ"];
+      for (let i = 0; i < isanKeywords.length; i++) {
+        if (z.includes(isanKeywords[i])) return "ภาคอีสาน";
+      }
+
+      const southKeywords = ["ใต้", "south", "สงขลา", "หาดใหญ่", "ภูเก็ต", "สุราษฎร์", "นครศรี", "กระบี่", "พังงา", "ตรัง", "พัทลุง", "สตูล", "ปัตตานี", "ยะลา", "นราธิวาส", "ชุมพร", "ระนอง"];
+      for (let i = 0; i < southKeywords.length; i++) {
+        if (z.includes(southKeywords[i])) return "ภาคใต้";
+      }
+
+      return "ภาคกลาง";
+    }
+
+    function getRegionCoords(regionName) {
+      if (regionName === "ภาคเหนือ") return { lat: 18.7883, lon: 98.9853 };
+      if (regionName === "ภาคอีสาน") return { lat: 16.4322, lon: 102.8236 };
+      if (regionName === "ภาคใต้") return { lat: 7.0086, lon: 100.4747 };
+      return { lat: 13.7563, lon: 100.5018 }; // ภาคกลาง (ค่าเริ่มต้น)
+    }
+
+    function extractShortDisplayName(rawName) {
+      if (!rawName) return "";
+      let clean = String(rawName).trim().replace(/^(นาย|นางสาว|นาง|น\.ส\.|ด\.ช\.|ด\.ญ\.|คุณ)\s*/i, "");
+      let firstPart = clean.split(/\s+/)[0] || "";
+      return firstPart;
+    }
+
+    function detectRealShiftSlot() {
+      const h = new Date().getHours();
+      if (h >= 5 && h < 10) return 'prework';
+      if (h >= 10 && h < 12) return 'morning';
+      if (h >= 12 && h < 14) return 'lunch';
+      if (h >= 14 && h < 18) return 'afternoon';
+      if (h >= 18 && h < 20) return 'closing';
+      return 'afterwork';
+    }
+
+    function getAmbientMicroSVG(weather, shift) {
+      if (weather === 'rain') {
+        return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M8 14C8 11.5 11 7 11 7C11 7 14 11.5 14 14C14 15.7 12.7 17 11 17C9.3 17 8 15.7 8 14Z" fill="#BAE6FD" stroke="#0284C7" stroke-width="1.5"/>
+        </svg>`;
+      }
+      if (shift === 'closing' || shift === 'afterwork') {
+        return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M12 3L13.5 8.5L19 10L13.5 11.5L12 17L10.5 11.5L5 10L10.5 8.5L12 3Z" fill="#DDD6FE" stroke="#7C3AED" stroke-width="1.3"/>
+        </svg>`;
+      }
+      return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M12 3L13.8 8.2L19 10L13.8 11.8L12 17L10.2 11.8L5 10L10.2 8.2L12 3Z" fill="#FEF08A" stroke="#F59E0B" stroke-width="1.4"/>
+      </svg>`;
+    }
+
+    function updateLoadingAuraAndBadge(weather, shift) {
+      const auraEl = document.getElementById('avatar-aura');
+      const ambEl = document.getElementById('micro-ambient');
+      const badgeEl = document.getElementById('time-badge-icon');
+      if (ambEl) ambEl.innerHTML = getAmbientMicroSVG(weather, shift);
+      if (badgeEl) badgeEl.innerHTML = getBadgeDoodle(weather, shift);
+
+      if (!auraEl) return;
+      if (weather === 'rain' || weather === 'cool') {
+        auraEl.className = 'avatar-aura-ring aura-rain';
+      } else if (weather === 'hot') {
+        auraEl.className = 'avatar-aura-ring aura-hot';
+      } else if (shift === 'closing' || shift === 'afterwork') {
+        auraEl.className = 'avatar-aura-ring aura-night';
+      } else {
+        auraEl.className = 'avatar-aura-ring aura-sun';
+      }
+    }
+
+    function getBadgeDoodle(weather, shift) {
+      const svgs = {
+        rain: `
+          <svg class="doodle-anim" width="23" height="23" viewBox="0 0 36 36" fill="none">
+            <path d="M10 22H26C28.8 22 31 19.8 31 17C31 14.4 29 12.3 26.5 12C25.7 8.5 22.6 6 18.8 6C14.5 6 11 9.5 11 13.8C8.2 14.2 6 16.6 6 19.5C6 21 7.5 22 9.5 22H10Z" fill="#E0F2FE" stroke="#0284C7" stroke-width="2" stroke-linejoin="round"/>
+            <circle cx="16" cy="15.5" r="1.1" fill="#334155"/><circle cx="21" cy="15.5" r="1.1" fill="#334155"/>
+            <path d="M17.2 17.6C18 18.3 19 18.3 19.8 17.6" stroke="#334155" stroke-width="1.5" stroke-linecap="round"/>
+            <g class="rain-anim" stroke="#0EA5E9" stroke-width="2" stroke-linecap="round">
+              <line x1="13" y1="25" x2="11.5" y2="29"/><line x1="18.5" y1="25" x2="17" y2="29"/><line x1="24" y1="25" x2="22.5" y2="29"/>
+            </g>
+          </svg>`,
+        hot: `
+          <svg class="doodle-anim" width="23" height="23" viewBox="0 0 36 36" fill="none">
+            <g stroke="#EA580C" stroke-width="2.2" stroke-linecap="round">
+              <line x1="18" y1="3" x2="18" y2="6"/><line x1="18" y1="30" x2="18" y2="33"/>
+              <line x1="3" y1="18" x2="6" y2="18"/><line x1="30" y1="18" x2="33" y2="18"/>
+            </g>
+            <circle cx="18" cy="18" r="9.5" fill="#FED7AA" stroke="#EA580C" stroke-width="2"/>
+            <circle cx="14.8" cy="16.5" r="1.3" fill="#334155"/><circle cx="21.2" cy="16.5" r="1.3" fill="#334155"/>
+            <circle cx="12.5" cy="19" r="2" fill="#F43F5E"/><circle cx="23.5" cy="19" r="2" fill="#F43F5E"/>
+            <path d="M15.5 19.5C16.5 21 19.5 21 20.5 19.5" stroke="#334155" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>`,
+        cool: `
+          <svg class="doodle-anim" width="23" height="23" viewBox="0 0 36 36" fill="none">
+            <path d="M10 22H26C28.8 22 31 19.8 31 17C31 14.4 29 12.3 26.5 12C25.7 8.5 22.6 6 18.8 6C14.5 6 11 9.5 11 13.8C8.2 14.2 6 16.6 6 19.5C6 21 7.5 22 9.5 22H10Z" fill="#F0F9FF" stroke="#38BDF8" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M8 26H22C24 26 25 27.5 23.5 29" stroke="#38BDF8" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 30H26" stroke="#7DD3FC" stroke-width="2" stroke-linecap="round"/>
+          </svg>`,
+        sun: `
+          <svg class="doodle-anim" width="23" height="23" viewBox="0 0 36 36" fill="none">
+            <g stroke="#F59E0B" stroke-width="2.2" stroke-linecap="round">
+              <line x1="18" y1="3" x2="18" y2="6"/><line x1="18" y1="30" x2="18" y2="33"/>
+              <line x1="3" y1="18" x2="6" y2="18"/><line x1="30" y1="18" x2="33" y2="18"/>
+            </g>
+            <circle cx="18" cy="18" r="9" fill="#FEF08A" stroke="#D97706" stroke-width="2"/>
+            <circle cx="15" cy="16.5" r="1.2" fill="#334155"/><circle cx="21" cy="16.5" r="1.2" fill="#334155"/>
+            <path d="M15.5 19.5C16.5 21 19.5 21 20.5 19.5" stroke="#334155" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>`,
+        cloudSun: `
+          <svg class="doodle-anim" width="23" height="23" viewBox="0 0 36 36" fill="none">
+            <circle cx="13" cy="14" r="7" fill="#FEF08A" stroke="#F59E0B" stroke-width="2"/>
+            <path d="M13 26H27C29.8 26 32 23.8 32 21C32 18.4 30 16.3 27.5 16C26.7 12.5 23.6 10 19.8 10C15.5 10 12 13.5 12 17.8C9.2 18.2 7 20.6 7 23.5C7 25 8.5 26 10.5 26H13Z" fill="#FFFFFF" stroke="#0284C7" stroke-width="2" stroke-linejoin="round"/>
+            <circle cx="18" cy="19.5" r="1.1" fill="#334155"/><circle cx="23" cy="19.5" r="1.1" fill="#334155"/>
+            <path d="M19.2 21.8C20 22.6 21 22.6 21.8 21.8" stroke="#334155" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>`,
+        moon: `
+          <svg class="doodle-anim" width="23" height="23" viewBox="0 0 36 36" fill="none">
+            <path d="M25.5 23.5C19.5 23.5 14.5 18.5 14.5 12.5C14.5 9.8 15.5 7.3 17.1 5.4C10.8 6.2 6 11.5 6 18C6 25 11.7 30.7 18.7 30.7C23.8 30.7 28.2 27.7 30.2 23.3C28.7 23.4 27.1 23.5 25.5 23.5Z" fill="#FEF08A" stroke="#7C3AED" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M26 7L27 9.5L29.5 10.5L27 11.5L26 14L25 11.5L22.5 10.5L25 9.5L26 7Z" fill="#F43F5E"/>
+          </svg>`
+      };
+
+      if (weather === 'rain') return svgs.rain;
+      if (weather === 'hot') return svgs.hot;
+      if (weather === 'cool') return svgs.cool;
+      if (shift === 'prework' || shift === 'morning') return svgs.sun;
+      if (shift === 'closing' || shift === 'afterwork') return svgs.moon;
+      return svgs.cloudSun;
+    }
+
+    function getShiftDialectGreeting(shift, weather, regionName, empShortName, tempVal) {
+      const tempTxt = tempVal ? ` (${Math.round(tempVal)}°C)` : '';
+      const namePart = empShortName ? ` คุณ${empShortName}` : '';
+
+      const DB = {
+        "ภาคเหนือ": {
+          hello: `สวัสดีเจ้า${namePart}`,
+          prework: {
+            normal: [
+              `เช้านี้อากาศสดใส${tempTxt} เตรียมตั๋วเริ่มงาน 10 โมงอย่างมีความสุขเน้อเจ้า ☀️`,
+              `อรุณสวัสดิ์เจ้า กิ๋นข้าวเช้าอิ่มๆ เตรียมพร้อมเปิดร้าน 10 โมงเน้อเจ้า ✨`
+            ],
+            rain: [`เช้านี้มีฝนตก${tempTxt} เดินทางมาเข้างาน 10 โมงระวังถนนลื่น พกร่มตวยเน้อเจ้า ☔`],
+            hot: [`เช้านี้แดดเริ่มฮ้อนแล้ว${tempTxt} ดื่มน้ำเย็นๆ เตรียมพร้อมเริ่มงาน 10 โมงเน้อเจ้า 🥤`],
+            cool: [`เช้านี้อากาศเย็นสบาย${tempTxt} ดูแลสุขภาพ เตรียมเริ่มงาน 10 โมงอย่างสดใสเน้อเจ้า 🧣`]
+          },
+          morning: {
+            normal: [
+              `เริ่มงาน 10 โมงแล้ว ส่งยิ้มรับลูกค้า ขอหื้อวันนี้หมานๆ ตลอดวันเน้อเจ้า ✨`,
+              `เปิดร้านรับความปัง ส่งแฮงใจ๋หื้อคนเก่งสู้ๆ กับงานวันนี้เน้อเจ้า 💪`
+            ],
+            rain: [`เริ่มงานเช้านี้ข้างนอกฝนตก${tempTxt} ดูแลสุขภาพในร้านอุ่นๆ ขอหื้อหมานๆ เน้อเจ้า ☔`],
+            hot: [`เริ่มงานแล้ว วันนี้ข้างนอกแดดฮ้อน${tempTxt} อย่าลืมจิบน้ำบ่อยๆ เน้อเจ้า 🥤`],
+            cool: [`เริ่มงานเช้านี้ ลมหนาวพัดมา${tempTxt} ฮักษาสุขภาพ ขอหื้อลูกค้าเข้าฮ้านนักๆ เน้อเจ้า 🧣`]
+          },
+          lunch: {
+            normal: [
+              `เที่ยงแล้ว อย่าลืมสลับคิวไปกิ๋นข้าวตอนให้อิ่มท้องตวยเน้อเจ้า 🍱`,
+              `แวะพักกิ๋นข้าวเที่ยงเติมแฮงก่อนเน้อเจ้า จะได้มีแฮงลุยงานบ่ายต่อเจ้า 🌤️`
+            ],
+            rain: [`เที่ยงนี้ข้างนอกฝนตก${tempTxt} ออกไปกิ๋นข้าวตอนพกร่มตวยเน้อเจ้า ☔`],
+            hot: [`เที่ยงนี้แดดฮ้อนแต๊ว่า${tempTxt} กิ๋นข้าวตอนแล้วอย่าลืมดื่มน้ำเย็นๆ เน้อเจ้า 🥤`],
+            cool: [`พักเที่ยงแล้ว หาของอุ่นๆ กิ๋นเติมแฮงตวยเน้อเจ้า 🧣`]
+          },
+          afternoon: {
+            normal: [
+              `ลุยงานยามบ่ายกันต่อ จิบน้ำพักสายตาตวยเน้อ ส่งแฮงใจ๋หื้อเจ้า 🌤️`,
+              `ยามบ่ายแล้ว ขอหื้อเคสผ่านฉลุย ลูกค้าฮักลูกค้าหลงเน้อเจ้า 💖`
+            ],
+            rain: [`บ่ายนี้มีฝนตก${tempTxt} ดูแลสุขภาพตวยเน้อ ส่งกำลังใจ๋หื้อคนเก่งเจ้า ☔`],
+            hot: [`บ่ายนี้อากาศฮ้อนขนาด${tempTxt} ดูแลลูกค้าแล้วอย่าลืมจิบน้ำบ่อยๆ เน้อเจ้า 🥤`],
+            cool: [`บ่ายนี้อากาศเย็นสบาย${tempTxt} ขอหื้อม่วนอกม่วนใจ๋ในการทำงานเน้อเจ้า ❄️`]
+          },
+          closing: {
+            normal: [
+              `โค้งสุดท้ายใกล้เลิกงาน 2 ทุ่มแล้ว สู้ๆ แหมนิดเดียวเน้อคนเก่ง 🌇`,
+              `วันนี้ทุ่มเทมาทั้งวัน เหลือแหมนิดเดียวจะปิดร้านแล้ว ส่งแฮงใจ๋หื้อเน้อเจ้า ✨`
+            ],
+            rain: [`ใกล้เลิกงาน 2 ทุ่มแล้ว ข้างนอกฝนตก${tempTxt} ตอนปิ๊กบ้านเดินทางระวังๆ เน้อเจ้า ☔`],
+            hot: [`ใกล้เลิกงาน 2 ทุ่มแล้ว วันนี้สู้มาทั้งวัน จิบน้ำให้ชื่นใจ๋เน้อเจ้า 🥤`],
+            cool: [`ใกล้เลิกงาน 2 ทุ่มแล้ว ข้างนอกอากาศเริ่มหนาว${tempTxt} ปิ๊กบ้านห่มผ้าอุ่นๆ เน้อเจ้า 🧣`]
+          },
+          afterwork: {
+            normal: [
+              `เลิกงานแล้ว วันนี้เก่งแต๊ๆ เจ้า ปิ๊กบ้านปลอดภัย พักผ่อนนักๆ เน้อ 🌙`,
+              `ขอบคุณตี้ตั้งใจ๋ดูแลลูกค้ามาจนถึง 2 ทุ่มเน้อเจ้า คืนนี้หลับฝันดีเน้อ ❤️`
+            ],
+            rain: [`เลิกงานแล้ว ข้างนอกฝนตก${tempTxt} เดินทางปิ๊กบ้านปลอดภัยเน้อเจ้า เป๋นห่วงเจ้า ☔`],
+            hot: [`เลิกงานแล้ว พักผ่อนเปิดแอร์เย็นๆ หื้อหายเหนื่อยเน้อเจ้า 🌙`],
+            cool: [`เลิกงานแล้ว คืนนี้อากาศหนาว${tempTxt} ปิ๊กบ้านพักผ่อนอุ่นๆ เน้อเจ้า 🧣`]
+          }
+        },
+
+        "ภาคอีสาน": {
+          hello: `ซำบายดีครับ${namePart}`,
+          prework: {
+            normal: [
+              `เซ้านี้อากาศแจ่มใส${tempTxt} เตรียมโตเข้างาน 10 โมงอย่างมีความสุขเด้อครับ ☀️`,
+              `อรุณสวัสดิ์ครับ กินข้าวเซ้าให้อิ่ม เตรียมเปิดร้าน 10 โมงแบบสดใสเด้อ ✨`
+            ],
+            rain: [`เซ้านี้ฝนตก${tempTxt} เดินทางมาเข้างาน 10 โมงระวังถนนลื่น พกร่มนำเด้อครับ ☔`],
+            hot: [`เซ้านี้อากาศเริ่มฮ้อนแล้ว${tempTxt} ดื่มน้ำเย็นๆ เตรียมลุยงาน 10 โมงเด้อครับ 🥤`],
+            cool: [`เซ้านี้อากาศเย็นสบาย${tempTxt} รักษาสุขภาพ เตรียมเข้างาน 10 โมงเด้อครับ 🧣`]
+          },
+          morning: {
+            normal: [
+              `เริ่มงาน 10 โมงแล้ว ส่งยิ้มรับลูกค้า ขอให้มื้อนี้หมานๆ ยอดปังเด้อครับ ✨`,
+              `เปิดร้านรับความหมาน ส่งแฮงใจให้คนเก่งสู้ๆ เบิดมื้อเด้อครับ 💪`
+            ],
+            rain: [`เริ่มงานแล้ว ข้างนอกฝนตก${tempTxt} ดูแลสุขภาพ ขอให้หมานๆ เด้อครับ ☔`],
+            hot: [`ลุยงานเซ้านี้ ข้างนอกแดดฮ้อน${tempTxt} อย่าลืมดื่มน้ำดู๋ๆ เด้อครับ 🥤`],
+            cool: [`เริ่มงานเซ้านี้ อากาศเย็นๆ${tempTxt} ขอให้ลูกค้าเข้าฮ้านคึกคักเด้อครับ 🧣`]
+          },
+          lunch: {
+            normal: [
+              `เที่ยงแล้ว อย่าลืมผลัดกันไปกินข้าวเที่ยงให้อิ่มท้องเด้อครับ 🍱`,
+              `แวะเติมแฮงมื้อเที่ยงก่อนเด้อ สิได้มีแฮงลุยงานบ่ายต่อครับผม 🌤️`
+            ],
+            rain: [`เที่ยงนี้ฝนตก${tempTxt} ออกไปกินข้าวเที่ยงอย่าลืมพกร่มเด้อครับ ☔`],
+            hot: [`เที่ยงนี้อากาศฮ้อนคัก${tempTxt} กินข้าวแล้วดื่มน้ำเย็นๆ ให้ชื่นใจเด้อครับ 🥤`],
+            cool: [`พักเที่ยงแล้ว หาแนวอุ่นๆ กินเติมแฮงนำเด้อครับ 🧣`]
+          },
+          afternoon: {
+            normal: [
+              `ลุยงานยามบ่ายต่อ จิบน้ำเซาเมื่อย พักสายตาแหน่เด้อ เป็นห่วงครับ 🌤️`,
+              `ส่งแฮงใจยามบ่ายครับ ขอให้เคสผ่านฉลุย ลูกค้าฮักแพงเด้อครับ 💖`
+            ],
+            rain: [`บ่ายนี้มีฝนตก${tempTxt} รักษาสุขภาพนำเด้อ ส่งกำลังใจให้รัวๆ ครับ ☔`],
+            hot: [`บ่ายนี้แดดฮ้อนหลาย${tempTxt} ดูแลลูกค้าแล้วอย่าลืมจิบน้ำดู๋ๆ เด้อครับ 🥤`],
+            cool: [`บ่ายนี้อากาศกำลังดี${tempTxt} ขอให้ทำงานอย่างมีความสุขเด้อครับ ❄️`]
+          },
+          closing: {
+            normal: [
+              `โค้งสุดท้ายใกล้เลิกงาน 2 ทุ่มแล้ว สู้ๆ อีกนิดเดียวเด้อคนเก่ง 🌇`,
+              `มื้อนี้ทุ่มเทมาเบิดมื้อ เหลืออีกนิดเดียวกะเลิกงานแล้ว ส่งแฮงใจให้เด้อ ✨`
+            ],
+            rain: [`ใกล้เลิกงาน 2 ทุ่มแล้ว ข้างนอกฝนตก${tempTxt} ยามเมือบ้านเดินทางระวังๆ เด้อครับ ☔`],
+            hot: [`ใกล้เลิกงาน 2 ทุ่มแล้ว สู้มาเบิดมื้อ จิบน้ำเย็นๆ ให้ชื่นใจเด้อครับ 🥤`],
+            cool: [`ใกล้เลิกงาน 2 ทุ่มแล้ว อากาศเริ่มเย็น${tempTxt} เมือบ้านดูแลสุขภาพนำเด้อครับ 🧣`]
+          },
+          afterwork: {
+            normal: [
+              `เลิกงานแล้ว มื้อนี้เก่งหลายครับ เมือบ้านปลอดภัย พักผ่อนหลายๆ เด้อ 🌙`,
+              `ขอบคุณที่สู้มาฮอด 2 ทุ่มเด้อครับ คืนนี้พักผ่อนให้เต็มที่เด้อ ❤️`
+            ],
+            rain: [`เลิกงานแล้ว ข้างนอกฝนตก${tempTxt} เดินทางเมือบ้านปลอดภัยเด้อครับ เป็นห่วงเด้อ ☔`],
+            hot: [`เลิกงานแล้ว เมือพักผ่อนตากแอร์เย็นๆ ให้เซาเมื่อยเด้อครับ 🌙`],
+            cool: [`เลิกงานแล้ว คืนนี้อากาศเย็น${tempTxt} ห่มผ้าอุ่นๆ พักผ่อนหลายๆ เด้อครับ 🧣`]
+          }
+        },
+
+        "ภาคใต้": {
+          hello: `สวัสดีครับ${namePart}`,
+          prework: {
+            normal: [
+              `เช้านี้อากาศดีจังหู${tempTxt} เตรียมตัวเริ่มงาน 10 โมงอย่างสดใสนะตะ ☀️`,
+              `มอนิ่งนะตะ กินข้าวเช้าให้อิ่ม เตรียมพร้อมเปิดร้าน 10 โมงกันตะ ✨`
+            ],
+            rain: [`เช้านี้ทางใต้ฝนตก${tempTxt} เดินทางมาเข้างาน 10 โมงระวังๆ พกร่มด้วยนะตะ ☔`],
+            hot: [`เช้านี้อากาศเริ่มร้อนแล้ว${tempTxt} ดื่มน้ำเย็นๆ เตรียมลุยงาน 10 โมงนะตะ 🥤`],
+            cool: [`เช้านี้อากาศเย็นสบาย${tempTxt} ดูแลสุขภาพ เตรียมเริ่มงาน 10 โมงนะตะ 🧣`]
+          },
+          morning: {
+            normal: [
+              `เริ่มงาน 10 โมงแล้ว ส่งยิ้มรับลูกค้า ขอให้วันนี้ยอดหรอยแรงนะตะ ✨`,
+              `เปิดร้านรับความปัง ส่งแรงใจให้คนเก่งผ่านฉลุยทุกเคสนะตะ 💪`
+            ],
+            rain: [`เริ่มงานเช้านี้ ข้างนอกฝนตก${tempTxt} ดูแลสุขภาพ ขอให้ยอดปังๆ นะตะ ☔`],
+            hot: [`เริ่มงานแล้ว วันนี้อากาศร้อนจังหู${tempTxt} อย่าลืมจิบน้ำบ่อยๆ นะตะ 🥤`],
+            cool: [`เริ่มงานเช้านี้ อากาศเปลี่ยน${tempTxt} ดูแลสุขภาพกันด้วยนะตะ พี่น้องเห้อ 🧣`]
+          },
+          lunch: {
+            normal: [
+              `เที่ยงแล้ว อย่าลืมสลับคิวไปกินข้าวเที่ยงให้อิ่มท้องนะตะ 🍱`,
+              `แวะเติมพลังมื้อเที่ยงกันก่อนนะตะ จะได้มีแรงลุยต่อช่วงบ่ายตะ 🌤️`
+            ],
+            rain: [`เที่ยงนี้ฝนตก${tempTxt} ออกไปกินข้าวอย่าลืมพกร่มกันนะตะ ☔`],
+            hot: [`เที่ยงนี้แดดร้อนแรง${tempTxt} กินข้าวแล้วดื่มน้ำเย็นๆ ให้ชื่นใจนะตะ 🥤`],
+            cool: [`พักเที่ยงแล้ว ทานข้าวให้อิ่ม ดูแลสุขภาพด้วยนะตะ 🧣`]
+          },
+          afternoon: {
+            normal: [
+              `ลุยงานช่วงบ่ายกันต่อ จิบน้ำพักสายตาบ้างนะตะ เป็นห่วงจังหูตะ 🌤️`,
+              `ส่งกำลังใจยามบ่ายนะตะ ขอให้ลูกค้ารักลูกค้าชมทั้งวันเลยตะ 💖`
+            ],
+            rain: [`บ่ายนี้ฝนตกหนัก${tempTxt} ดูแลสุขภาพด้วยนะตะ ส่งแรงใจให้รัวๆ ตะ ☔`],
+            hot: [`บ่ายนี้อากาศร้อนจังหู${tempTxt} อย่าลืมจิบน้ำบ่อยๆ นะตะ เป็นห่วงตะ 🥤`],
+            cool: [`บ่ายนี้อากาศสบายๆ${tempTxt} ขอให้ทำงานอย่างมีความสุขนะตะ ❄️`]
+          },
+          closing: {
+            normal: [
+              `โค้งสุดท้ายใกล้เลิกงาน 2 ทุ่มแล้ว สู้ๆ อีกนิดเดียวนะตะคนเก่ง 🌇`,
+              `วันนี้ทุ่มเทมาทั้งวัน เหลืออีกนิดเดียวจะปิดร้านแล้ว ส่งแรงใจให้นะตะ ✨`
+            ],
+            rain: [`ใกล้เลิกงาน 2 ทุ่มแล้ว ข้างนอกฝนตก${tempTxt} ตอนกลับบ้านเดินทางระวังๆ นะตะ ☔`],
+            hot: [`ใกล้เลิกงาน 2 ทุ่มแล้ว วันนี้สู้มาทั้งวัน จิบน้ำให้ชื่นใจนะตะ 🥤`],
+            cool: [`ใกล้เลิกงาน 2 ทุ่มแล้ว อากาศเปลี่ยน${tempTxt} กลับบ้านดูแลสุขภาพด้วยนะตะ 🧣`]
+          },
+          afterwork: {
+            normal: [
+              `เลิกงานแล้ว วันนี้เก่งจังหูเลยตะ กลับบ้านปลอดภัย พักผ่อนเยอะๆ นะตะ 🌙`,
+              `ขอบคุณที่ตั้งใจทำงานมาถึง 2 ทุ่มนะตะ คืนนี้พักผ่อนให้เต็มที่เลยนะ ❤️`
+            ],
+            rain: [`เลิกงานแล้ว ข้างนอกฝนตก${tempTxt} เดินทางกลับบ้านปลอดภัยนะตะ เป็นห่วงจังหู ☔`],
+            hot: [`เลิกงานแล้ว กลับไปพักผ่อนเปิดแอร์เย็นๆ ให้หายเหนื่อยนะตะ 🌙`],
+            cool: [`เลิกงานแล้ว คืนนี้อากาศเย็น${tempTxt} พักผ่อนให้อบอุ่นนะตะ 🧣`]
+          }
+        },
+
+        // ค่าเริ่มต้น (Fallback): "ภาคกลาง"
+        "ภาคกลาง": {
+          hello: `สวัสดีครับ${namePart}`,
+          prework: {
+            normal: [
+              `เช้านี้อากาศสดใส${tempTxt} เตรียมตัวเริ่มงาน 10 โมงอย่างมีความสุขนะครับ ☀️`,
+              `อรุณสวัสดิ์ครับ ทานมื้อเช้าเติมพลัง เตรียมพร้อมเปิดร้าน 10 โมงนะครับ ✨`
+            ],
+            rain: [`เช้านี้มีฝนตก${tempTxt} เดินทางมาเข้างาน 10 โมงระวังถนนลื่น พกร่มด้วยนะครับ ☔`],
+            hot: [`เช้านี้อากาศเริ่มร้อน${tempTxt} ดื่มน้ำเติมความสดชื่นก่อนเริ่มงาน 10 โมงนะครับ 🥤`],
+            cool: [`เช้านี้อากาศเย็นสบาย${tempTxt} ดูแลสุขภาพ เตรียมเริ่มงาน 10 โมงอย่างสดใสครับ 🧣`]
+          },
+          morning: {
+            normal: [
+              `เริ่มงาน 10 โมงแล้ว ส่งยิ้มรับลูกค้า ขอให้วันนี้ราบรื่น ยอดปังนะครับ ✨`,
+              `เปิดร้านรับความสดใส ส่งกำลังใจให้มีพลังเต็มร้อยตลอดวันนะครับ 💪`
+            ],
+            rain: [`เริ่มงานเช้านี้ ข้างนอกมีฝนตก${tempTxt} ดูแลสุขภาพ ขอให้วันนี้ราบรื่นนะครับ ☔`],
+            hot: [`เริ่มงานแล้ว วันนี้อากาศค่อนข้างร้อน${tempTxt} อย่าลืมจิบน้ำบ่อยๆ นะครับ 🥤`],
+            cool: [`เริ่มงานเช้านี้ อากาศเปลี่ยนแปลง${tempTxt} ดูแลสุขภาพให้อบอุ่นนะครับ 🧣`]
+          },
+          lunch: {
+            normal: [
+              `เที่ยงแล้ว อย่าลืมสลับคิวไปแวะเติมพลังมื้อเที่ยงให้อิ่มท้องนะครับ 🍱`,
+              `พักทานมื้อเที่ยงเติมพลังก่อนนะครับ จะได้สดชื่นพร้อมลุยช่วงบ่ายต่อ 🌤️`
+            ],
+            rain: [`เที่ยงนี้ข้างนอกมีฝนตก${tempTxt} ออกไปทานข้าวอย่าลืมพกร่มนะครับ ☔`],
+            hot: [`เที่ยงนี้อากาศร้อนมาก${tempTxt} ทานข้าวแล้วดื่มน้ำเย็นๆ เติมความสดชื่นนะครับ 🥤`],
+            cool: [`พักเที่ยงแล้ว ทานอาหารอุ่นๆ เติมพลังระหว่างวันด้วยนะครับ 🧣`]
+          },
+          afternoon: {
+            normal: [
+              `ลุยงานช่วงบ่ายกันต่อ จิบน้ำพักสายตาสักนิดนะครับ ส่งพลังใจให้ครับ 🌤️`,
+              `ส่งพลังบวกยามบ่ายครับ ขอให้ครึ่งวันหลังเคสผ่านฉลุย ยอดปังๆ นะครับ 💖`
+            ],
+            rain: [`บ่ายนี้มีฝนตก${tempTxt} ดูแลสุขภาพด้วยนะครับ ส่งกำลังใจให้คนเก่งครับ ☔`],
+            hot: [`บ่ายนี้อากาศร้อนจัด${tempTxt} ดูแลลูกค้าแล้วอย่าลืมจิบน้ำบ่อยๆ นะครับ 🥤`],
+            cool: [`บ่ายนี้อากาศเย็นสบาย${tempTxt} ขอให้ทำงานอย่างมีความสุขนะครับ ❄️`]
+          },
+          closing: {
+            normal: [
+              `โค้งสุดท้ายใกล้เลิกงาน 2 ทุ่มแล้ว สู้ๆ อีกนิดเดียวนะครับคนเก่ง 🌇`,
+              `วันนี้ทุ่มเทมาทั้งวัน เหลืออีกอึดใจเดียวจะปิดร้านแล้ว ส่งกำลังใจให้ครับ ✨`
+            ],
+            rain: [`ใกล้เลิกงาน 2 ทุ่มแล้ว ข้างนอกมีฝนตก${tempTxt} ตอนกลับบ้านเดินทางระวังนะครับ ☔`],
+            hot: [`ใกล้เลิกงาน 2 ทุ่มแล้ว สู้มาทั้งวัน จิบน้ำเติมความสดชื่นนะครับ 🥤`],
+            cool: [`ใกล้เลิกงาน 2 ทุ่มแล้ว อากาศเริ่มเย็นลง${tempTxt} กลับบ้านดูแลสุขภาพนะครับ 🧣`]
+          },
+          afterwork: {
+            normal: [
+              `เลิกงานแล้ว วันนี้เก่งมากเลยครับ เดินทางกลับปลอดภัย พักผ่อนเยอะๆ นะครับ 🌙`,
+              `ขอบคุณที่ทุ่มเทดูแลลูกค้ามาถึง 2 ทุ่มนะครับ คืนนี้พักผ่อนให้สบายใจน้า ❤️`
+            ],
+            rain: [`เลิกงานแล้ว ข้างนอกฝนตกถนนลื่น${tempTxt} เดินทางกลับบ้านปลอดภัยนะครับ ☔`],
+            hot: [`เลิกงานแล้ว กลับไปพักผ่อนให้สบายใจ ชาร์จแบตให้เต็มที่นะครับ 🌙`],
+            cool: [`เลิกงานแล้ว คืนนี้อากาศเย็นลง${tempTxt} พักผ่อนให้อบอุ่นนะครับ 🧣`]
+          }
+        }
+      };
+
+      const pack = DB[regionName] || DB["ภาคกลาง"];
+      const shiftGroup = pack[shift] || pack.morning;
+      const pool = shiftGroup[weather] || shiftGroup.normal;
+      const idx = Math.floor(Math.random() * pool.length);
+
+      return {
+        line1: pack.hello,
+        line2: pool[idx]
+      };
+    }
+
+    function clearLoadingGreetingTimers() {
+      clearInterval(loadTypeTimer1);
+      clearInterval(loadTypeTimer2);
+      clearTimeout(loadStepTimer1);
+      clearTimeout(loadStepTimer3);
+    }
+
+    function startInitialLoadingGreeting(rawName, rawZone, weatherMode = 'normal', tempVal = null) {
+      clearLoadingGreetingTimers();
+
+      const regionName = resolveRegionFromZone(rawZone);
+      const shortName = extractShortDisplayName(rawName);
+      const activeShift = detectRealShiftSlot();
+
+      updateLoadingAuraAndBadge(weatherMode, activeShift);
+
+      const dialectMsg = getShiftDialectGreeting(activeShift, weatherMode, regionName, shortName, tempVal);
+      const line1Text = dialectMsg.line1;
+      const line2Text = dialectMsg.line2;
+      const line3HTML = `กำลังตรวจสอบข้อมูลให้สักครู่น้า<span class="wait-dots"><span>.</span><span>.</span><span>.</span></span>`;
+      const box = document.getElementById('unified-greeting');
+      if (!box) return;
+
+      box.innerHTML = `
+        <div class="unified-line-1"><span id="t-line1"></span><span id="c-line1" class="typing-cursor"></span></div>
+        <div class="unified-line-2"><div><span id="t-line2"></span><span id="c-line2" class="typing-cursor" style="display:none;"></span></div></div>
+        <div id="t-line3" class="unified-line-3" style="opacity:0;"></div>
+      `;
+
+      const l1 = document.getElementById('t-line1');
+      const c1 = document.getElementById('c-line1');
+      const l2 = document.getElementById('t-line2');
+      const c2 = document.getElementById('c-line2');
+      const l3 = document.getElementById('t-line3');
+
+      // ปรับความเร็วการพิมพ์ให้กระชับ ลื่นสายตา (พิมพ์ครบทั้ง 2 บรรทัด + จุดแชท ภายใน ~1.5 วินาที และมีเวลาอ่านต่ออีก ~1.1 วินาที)
+      let i = 0;
+      loadTypeTimer1 = setInterval(() => {
+        if (i < line1Text.length) {
+          l1.textContent += line1Text.charAt(i);
+          i++;
+        } else {
+          clearInterval(loadTypeTimer1);
+          loadStepTimer1 = setTimeout(() => {
+            c1.style.display = 'none';
+            c2.style.display = 'inline-block';
+            let j = 0;
+            loadTypeTimer2 = setInterval(() => {
+              if (j < line2Text.length) {
+                l2.textContent += line2Text.charAt(j);
+                j++;
+              } else {
+                clearInterval(loadTypeTimer2);
+                c2.style.display = 'none';
+                if (l3) {
+                  l3.style.opacity = '1';
+                  l3.innerHTML = `<div class="typing-dots-sm"><i></i><i></i><i></i></div>`;
+                  loadStepTimer3 = setTimeout(() => {
+                    if (l3) l3.innerHTML = `<div class="fade-up-soft">${line3HTML}</div>`;
+                  }, 380);
+                }
+              }
+            }, 16);
+          }, 120);
+        }
+      }, 22);
+    }
+
+    async function checkWeatherAndGreet() {
+      let cachedName = "";
+      let cachedZone = "";
+      try {
+        cachedName = localStorage.getItem('true_ack_emp_name') || "";
+        cachedZone = localStorage.getItem('true_ack_emp_zone') || "";
+      } catch (e) {}
+
+      startInitialLoadingGreeting(cachedName, cachedZone, 'normal', null);
+
+      try {
+        const regionName = resolveRegionFromZone(cachedZone);
+        const coords = getRegionCoords(regionName);
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), 1200);
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&current=temperature_2m,weather_code&timezone=Asia%2FBangkok`, {
+          signal: controller.signal
+        });
+        clearTimeout(tid);
+        if (res.ok) {
+          const data = await res.json();
+          const code = data.current.weather_code;
+          const temp = data.current.temperature_2m;
+          let wMode = 'normal';
+          if (code >= 51 && code <= 99) wMode = 'rain';
+          else if (temp >= 35) wMode = 'hot';
+          else if (temp <= 23) wMode = 'cool';
+          updateLoadingAuraAndBadge(wMode, detectRealShiftSlot());
+        }
+      } catch (e) {}
+    }
 
     function getDoodleSVG(type, size = 22) {
       const svgs = {
@@ -1076,7 +1783,22 @@
       document.getElementById('fbThankArea').classList.remove('hidden');
     }
 
+    async function transitionFromLoadingToView(targetViewName) {
+      const loadingEl = document.getElementById('view-loading');
+      if (loadingEl && !loadingEl.classList.contains('hidden')) {
+        loadingEl.classList.add('loading-fade-out');
+        await new Promise(r => setTimeout(r, 220));
+        loadingEl.classList.remove('loading-fade-out');
+      }
+      clearLoadingGreetingTimers();
+      showView(targetViewName);
+    }
+
     async function init() {
+      // ⏱️ จับเวลาเริ่มต้นแสดงคำทักทาย เพื่อให้พนักงานมีเวลาอ่านพอดี (2.6 วินาที)
+      const greetingStartTime = Date.now();
+      checkWeatherAndGreet();
+
       try {
         await liff.init({ liffId: "1656846002-Wl9ZZgv7" });
         if (!liff.isLoggedIn()) { liff.login(); return; }
@@ -1126,17 +1848,34 @@
         if (res.isRegistered) {
           userObj = res.user;
 
+          // บันทึกชื่อและโซนของพนักงานไว้ในเครื่องสำหรับทักทายในครั้งถัดไป (หากไม่มีโซน บันทึกเป็น ภาคกลาง)
+          try {
+            localStorage.setItem('true_ack_emp_name', userObj.fullName || "");
+            localStorage.setItem('true_ack_emp_zone', resolveRegionFromZone(userObj.zone));
+          } catch (e) {}
+
           const finalAvatar = pfpUrl || defaultAvatar;
           document.getElementById('user-pfp').src = finalAvatar;
           document.getElementById('user-name').innerText = userObj.fullName;
           document.getElementById('user-meta').innerText = `ข้อมูลส่วนตัว`;
           
           renderTopicListUI();
-          showView('acknowledge');
+
+          // ⏱️ รอให้ครบจังหวะเวลาอ่านคำทักทาย (2.6 วินาที) ก่อนเฟดเปลี่ยนหน้าอย่างนุ่มนวล
+          const elapsed = Date.now() - greetingStartTime;
+          if (elapsed < MIN_INITIAL_GREETING_MS) {
+            await new Promise(r => setTimeout(r, MIN_INITIAL_GREETING_MS - elapsed));
+          }
+          await transitionFromLoadingToView('acknowledge');
         } else { 
-          showView('register'); 
+          const elapsed = Date.now() - greetingStartTime;
+          if (elapsed < MIN_INITIAL_GREETING_MS) {
+            await new Promise(r => setTimeout(r, MIN_INITIAL_GREETING_MS - elapsed));
+          }
+          await transitionFromLoadingToView('register'); 
         }
       } catch (error) {
+        clearLoadingGreetingTimers();
         TrueSwal.fire({
           icon: 'error',
           title: 'เชื่อมต่อล้มเหลว',
@@ -1224,6 +1963,11 @@
         branch: document.getElementById('reg-branch').value, 
         zone: document.getElementById('reg-zone').value      
       };
+
+      try {
+        localStorage.setItem('true_ack_emp_name', payload.fullName || "");
+        localStorage.setItem('true_ack_emp_zone', resolveRegionFromZone(payload.zone));
+      } catch (e) {}
       
       const res = await callApi('register', payload);
       isSubmitting = false;
@@ -1261,11 +2005,18 @@
         device: "LINE (" + liff.getOS() + ")" 
       };
       
+      const catStartTime = Date.now();
       startCuteSaveOverlay();
 
       activeSavePromise = sendAcknowledgeInBackground(payload);
       const saveResult = await activeSavePromise;
       activeSavePromise = null;
+
+      // ⏱️ รอให้พนักงานอ่านคำอวยพรน้องเหมียวทันพอดี (อย่างน้อย 1.8 วินาที)
+      const catElapsed = Date.now() - catStartTime;
+      if (catElapsed < MIN_CAT_WISH_OVERLAY_MS) {
+        await new Promise(r => setTimeout(r, MIN_CAT_WISH_OVERLAY_MS - catElapsed));
+      }
 
       stopCuteSaveOverlay();
       isSubmitting = false;
