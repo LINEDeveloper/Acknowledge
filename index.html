@@ -20,7 +20,7 @@
 
     /* =====================================================================
        🌟 โครงสร้างหน้า Acknowledge:
-          1. #unified-header-group (2 กล่องบน) อยู่ชิดด้านบนเสมอ ไม่ขยับตามเนื้อหา
+          1. #unified-header-group (2 กล่องบน) อยู่ชิดด้านบนสุดเสมอ
           2. .ack-body-center-zone (กล่องรายการรับทราบ) จัดกึ่งกลางแนวตั้งอัตโนมัติ
        ===================================================================== */
     #view-acknowledge {
@@ -104,6 +104,140 @@
     .acked-topic-title { font-size: 14px; font-weight: 600; color: #2b3035; padding-right: 12px; line-height: 1.4; }
     .acked-badge-pill { background-color: #d1e7dd; color: #0f5132; font-size: 11px; font-weight: 700; padding: 4px 11px; border-radius: 50px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
 
+    /* =====================================================================
+       🐱 หน้าโหลดบันทึกข้อมูลโฉมใหม่: น้องเหมียวผู้ช่วยสุ่ม 3 สไตล์ + คำอวยพรงานบริการ
+       ===================================================================== */
+    #save-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #ffffff;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 24px 28px;
+      text-align: center;
+    }
+    @keyframes cat-breathe {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+    }
+    @keyframes paw-wave {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(20deg); }
+    }
+    @keyframes heart-float {
+      0% { transform: translateY(8px) scale(0.4); opacity: 0; }
+      45% { transform: translateY(-6px) scale(1.1); opacity: 1; }
+      100% { transform: translateY(-20px) scale(0.85); opacity: 0; }
+    }
+    @keyframes cat-blink {
+      0%, 44%, 52%, 100% { transform: scaleY(1); }
+      48% { transform: scaleY(0.1); }
+    }
+    @keyframes ear-twitch {
+      0%, 85%, 100% { transform: rotate(0deg); }
+      90% { transform: rotate(-5deg); }
+      95% { transform: rotate(3deg); }
+    }
+    .cat-whole { animation: cat-breathe 2.4s ease-in-out infinite; }
+    .anim-paw { animation: paw-wave 0.85s ease-in-out infinite; transform-origin: 82px 74px; }
+    .anim-heart1 { animation: heart-float 1.8s ease-out infinite; transform-origin: center; }
+    .anim-heart2 { animation: heart-float 1.8s ease-out 0.9s infinite; transform-origin: center; }
+    .anim-cat-eye { animation: cat-blink 3.2s infinite; transform-origin: center; }
+    .anim-ear { animation: ear-twitch 4s infinite; transform-origin: 42px 45px; }
+
+    @keyframes doodle-wiggle {
+      0%, 100% { transform: rotate(-6deg) scale(1); }
+      50% { transform: rotate(6deg) scale(1.08); }
+    }
+    @keyframes doodle-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.14); }
+    }
+    @keyframes doodle-float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-2.5px); }
+    }
+    .doodle-anim-wiggle { animation: doodle-wiggle 1.8s ease-in-out infinite; transform-origin: center; }
+    .doodle-anim-pulse { animation: doodle-pulse 1.4s ease-in-out infinite; transform-origin: center; }
+    .doodle-anim-float { animation: doodle-float 2s ease-in-out infinite; transform-origin: center; }
+
+    .cute-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #1e293b;
+      margin-top: 16px;
+      margin-bottom: 8px;
+      letter-spacing: -0.2px;
+    }
+    .wish-quote-box {
+      background: linear-gradient(135deg, #fff9fa 0%, #fff1f2 100%);
+      border: 1.5px solid #ffe4e6;
+      border-radius: 18px;
+      padding: 13px 18px;
+      max-width: 320px;
+      box-shadow: 0 4px 14px rgba(244, 63, 94, 0.05);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .wish-quote-box.clean-plain {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      padding: 2px 8px;
+    }
+    .wish-quote-box.fade-change {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    .cute-sub {
+      font-size: 14px;
+      font-weight: 600;
+      color: #475569;
+      line-height: 1.6;
+      margin: 0;
+    }
+    .inline-doodle {
+      display: inline-flex;
+      vertical-align: middle;
+      margin-left: 3px;
+      transform: translateY(-2px);
+    }
+    .bouncing-dots span {
+      display: inline-block;
+      animation: dot-hop 1.2s infinite;
+      color: #ef4444;
+      font-weight: 800;
+    }
+    .bouncing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .bouncing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dot-hop {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-4px); }
+    }
+    .micro-bar-wrap {
+      width: 145px;
+      height: 4px;
+      background: #f1f5f9;
+      border-radius: 50px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    .micro-bar-fill {
+      height: 100%;
+      width: 15%;
+      background: linear-gradient(90deg, #fda4af, #ef4444);
+      border-radius: 50px;
+      transition: width 0.5s ease-out;
+    }
+
+    /* =====================================================================
+       ✨ แอนิเมชันการ์ดประเมินความพึงพอใจ (Facial Rigging) + กล่อง Smart Quick-Tags
+       ===================================================================== */
     .fb-section-divider {
       margin-top: 18px;
       padding-top: 18px;
@@ -149,10 +283,9 @@
       z-index: 10;
     }
     .rate-card.dimmed {
-      opacity: 0.3;
-      filter: grayscale(60%);
-      transform: scale(0.94);
-      pointer-events: none;
+      opacity: 0.45;
+      filter: grayscale(40%);
+      transform: scale(0.95);
     }
     @keyframes ring-pulse {
       0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
@@ -233,6 +366,75 @@
     .rate-card.active[data-rate="5"] .cheek { animation: cheek-glow 0.75s ease-in-out; }
     .rate-card.active[data-rate="5"] .sparkle { animation: star-twinkle 0.8s ease-out forwards; }
 
+    .comment-card-box {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 13px 14px;
+      margin-top: 14px;
+      text-align: left;
+      animation: slideDownExpand 0.3s ease-out;
+    }
+    @keyframes slideDownExpand {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .quick-tags-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .q-tag {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #475569;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: 0.15s;
+      user-select: none;
+    }
+    .q-tag:active { transform: scale(0.95); }
+    .q-tag.selected {
+      background: #fff1f2;
+      border-color: #f43f5e;
+      color: #e11d48;
+      font-weight: 700;
+    }
+    .fb-textarea {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 9px 12px;
+      font-size: 13px;
+      color: #1e293b;
+      resize: none;
+      outline: none;
+      background: #ffffff;
+      transition: 0.2s;
+    }
+    .fb-textarea:focus {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+    .btn-send-comment {
+      background: #dc2626;
+      color: #ffffff;
+      border: none;
+      border-radius: 50px;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      width: 100%;
+      margin-top: 9px;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+      transition: 0.2s;
+    }
+    .btn-send-comment:active { transform: scale(0.97); }
+
     @keyframes slide-up-fade {
       0% { opacity: 0; transform: translateY(8px); }
       100% { opacity: 1; transform: translateY(0); }
@@ -274,15 +476,49 @@
     .footer a { color: #cc0000; text-decoration: none; font-weight: bold; transition: 0.2s; }
     .footer a:hover { text-decoration: underline; color: #ff0000; }
     
-    .gradient-text { font-weight: 700; font-size: 1.2rem; text-align: center; background: linear-gradient(90deg, #ff0000, #002d72); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .full-center { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 90vh; }
   </style>
 </head>
 <body>
 
-  <div id="save-overlay" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #ffffff; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-    <div class="spinner-border text-danger" style="width: 3.5rem; height: 3.5rem; border-width: 4px; margin-bottom: 20px;" role="status"></div>
-    <div class="gradient-text">กำลังตรวจสอบ เพื่อบันทึกข้อมูล<br>โปรดรอสักครู่น้า...</div>
+  <!-- 🐱 หน้าโหลดบันทึกข้อมูล: น้องเหมียวผู้ช่วยสุ่ม 3 สไตล์ + คำอวยพรงานบริการ 9 ประโยค -->
+  <div id="save-overlay" class="hidden">
+    <div class="cat-whole">
+      <svg width="138" height="138" viewBox="0 0 120 120" fill="none">
+        <circle cx="60" cy="64" r="46" fill="#FFF1F2" opacity="0.75"/>
+        <path class="anim-heart1" d="M89 34C87 31 82 31 80 34C78 31 73 31 71 34C69 37 71 42 80 48C89 42 91 37 89 34Z" fill="#F43F5E"/>
+        <path class="anim-heart2" d="M35 28C33.5 26 30 26 28.5 28C27 26 23.5 26 22 28C20.5 30 22 33.5 28.5 38C35 33.5 36.5 30 35 28Z" fill="#FB7185"/>
+        <g class="anim-paw">
+          <ellipse cx="85" cy="72" rx="8" ry="13" transform="rotate(28 85 72)" fill="#FFFFFF" stroke="#334155" stroke-width="2.8"/>
+          <circle cx="88" cy="66" r="2.5" fill="#FDA4AF"/>
+        </g>
+        <path d="M36 92C36 76 45 68 60 68C75 68 84 76 84 92" fill="#FFFFFF" stroke="#334155" stroke-width="3" stroke-linecap="round"/>
+        <g class="anim-ear">
+          <path d="M38 52L34 32L50 42Z" fill="#FFFFFF" stroke="#334155" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M39 48L37 37L46 43Z" fill="#FDA4AF"/>
+        </g>
+        <path d="M82 52L86 32L70 42Z" fill="#FFFFFF" stroke="#334155" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M81 48L83 37L74 43Z" fill="#FDA4AF"/>
+        <ellipse cx="60" cy="56" rx="24" ry="20" fill="#FFFFFF" stroke="#334155" stroke-width="3"/>
+        <circle class="anim-cat-eye" cx="50" cy="54" r="2.8" fill="#1E293B"/>
+        <circle class="anim-cat-eye" cx="70" cy="54" r="2.8" fill="#1E293B"/>
+        <ellipse cx="43" cy="58" rx="3.8" ry="2.2" fill="#FDA4AF" opacity="0.85"/>
+        <ellipse cx="77" cy="58" rx="3.8" ry="2.2" fill="#FDA4AF" opacity="0.85"/>
+        <path d="M55 59C56.5 61.5 60 61 60 58.5C60 61 63.5 61.5 65 59" stroke="#334155" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M42 71C48 75 72 75 78 71" stroke="#EF4444" stroke-width="6" stroke-linecap="round"/>
+        <path d="M64 73L68 85" stroke="#EF4444" stroke-width="5" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <div class="cute-title">
+      กำลังบันทึกการรับทราบ<span class="bouncing-dots"><span>.</span><span>.</span><span>.</span></span>
+    </div>
+
+    <div id="wish-card" class="wish-quote-box clean-plain">
+      <p id="cat-sub" class="cute-sub"></p>
+    </div>
+
+    <div id="micro-bar-zone"></div>
   </div>
 
   <div class="main-card">
@@ -327,7 +563,7 @@
 
     <div id="view-acknowledge" class="p-3 hidden text-center" style="padding-bottom: 80px !important;">
       
-      <!-- 📌 1. สองกล่องด้านบน (Header + Profile) อยู่ชิดด้านบนสุดเสมอ ไม่ขยับตามจำนวนหัวข้อ -->
+      <!-- 📌 1. สองกล่องด้านบน (Header + Profile) อยู่ชิดด้านบนสุดเสมอ -->
       <div id="unified-header-group">
         <div class="header-style-1">
           <div class="h1-left">
@@ -372,16 +608,17 @@
 
         <div id="acked-topic-list-container" class="w-100"></div>
 
+        <!-- ✨ โซนประเมินความพึงพอใจ: ไอเดียที่ 2 (Smart Quick-Tags + Auto-Expand + เอฟเฟกต์หน้ายิ้มครบ 100%) -->
         <div id="feedbackSection" class="fb-section-divider hidden">
           <div id="fbFormArea">
             <div class="fb-badge-top">
               <span>✨</span> USER FEEDBACK
             </div>
             <h4 class="fb-heading">ประเมินความพึงพอใจการใช้งานเว็บ</h4>
-            <p class="fb-sub">แตะเลือกไอคอนเพื่อให้คะแนน (บันทึกอัตโนมัติ)</p>
+            <p class="fb-sub">แตะเลือกไอคอนเพื่อให้คะแนนและเสนอแนะเพิ่มเติม</p>
 
             <div class="fb-grid-5">
-              <button type="button" onclick="selectAndSaveFeedback(1, 'ควรปรับปรุง')" data-rate="1" class="rate-card">
+              <button type="button" onclick="selectFeedbackRate(1, 'ควรปรับปรุง')" data-rate="1" class="rate-card">
                 <svg class="face-svg" viewBox="0 0 48 48" fill="none">
                   <circle cx="24" cy="24" r="20" fill="#FEE2E2" stroke="#EF4444" stroke-width="2.5"/>
                   <path class="brow" d="M15 18L20 21M33 18L28 21" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round"/>
@@ -393,7 +630,7 @@
                 <span style="font-size:9.5px; color:#64748b; margin-top:3px; white-space:nowrap;">ควรปรับปรุง</span>
               </button>
 
-              <button type="button" onclick="selectAndSaveFeedback(2, 'พอใช้')" data-rate="2" class="rate-card">
+              <button type="button" onclick="selectFeedbackRate(2, 'พอใช้')" data-rate="2" class="rate-card">
                 <svg class="face-svg" viewBox="0 0 48 48" fill="none">
                   <circle cx="24" cy="24" r="20" fill="#FFEDD5" stroke="#F97316" stroke-width="2.5"/>
                   <circle class="eye" cx="18" cy="21" r="2" fill="#EA580C"/>
@@ -404,7 +641,7 @@
                 <span style="font-size:9.5px; color:#64748b; margin-top:3px;">พอใช้</span>
               </button>
 
-              <button type="button" onclick="selectAndSaveFeedback(3, 'ปานกลาง')" data-rate="3" class="rate-card">
+              <button type="button" onclick="selectFeedbackRate(3, 'ปานกลาง')" data-rate="3" class="rate-card">
                 <svg class="face-svg" viewBox="0 0 48 48" fill="none">
                   <circle cx="24" cy="24" r="20" fill="#FEF9C3" stroke="#EAB308" stroke-width="2.5"/>
                   <circle class="cheek" cx="14" cy="26" r="2.5" fill="#FDE047"/>
@@ -417,7 +654,7 @@
                 <span style="font-size:9.5px; color:#64748b; margin-top:3px;">ปานกลาง</span>
               </button>
 
-              <button type="button" onclick="selectAndSaveFeedback(4, 'ดีมาก')" data-rate="4" class="rate-card">
+              <button type="button" onclick="selectFeedbackRate(4, 'ดีมาก')" data-rate="4" class="rate-card">
                 <svg class="face-svg" viewBox="0 0 48 48" fill="none">
                   <circle cx="24" cy="24" r="20" fill="#DCFCE7" stroke="#22C55E" stroke-width="2.5"/>
                   <circle class="cheek" cx="14" cy="26" r="2.5" fill="#F9A8D4" opacity="0.7"/>
@@ -429,7 +666,7 @@
                 <span style="font-size:9.5px; color:#64748b; margin-top:3px;">ดีมาก</span>
               </button>
 
-              <button type="button" onclick="selectAndSaveFeedback(5, 'ยอดเยี่ยม')" data-rate="5" class="rate-card">
+              <button type="button" onclick="selectFeedbackRate(5, 'ยอดเยี่ยม')" data-rate="5" class="rate-card">
                 <svg class="face-svg" viewBox="0 0 48 48" fill="none">
                   <circle cx="24" cy="24" r="20" fill="#FEF08A" stroke="#CA8A04" stroke-width="2.5"/>
                   <circle class="cheek" cx="13" cy="25" r="3" fill="#F87171" opacity="0.55"/>
@@ -440,6 +677,18 @@
                 </svg>
                 <span style="font-size:12px; font-weight:800; color:#1e293b; line-height:1;">5</span>
                 <span style="font-size:9.5px; color:#64748b; margin-top:3px;">ยอดเยี่ยม</span>
+              </button>
+            </div>
+
+            <!-- กล่องกางออกอัตโนมัติเมื่อแตะเลือกหน้ายิ้ม -->
+            <div id="fbExpandBox" class="comment-card-box hidden">
+              <div style="font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 7px;">
+                คุณเลือก: <span id="fbSelectedLabel" class="text-danger"></span> • แตะเลือกหัวข้อหรือพิมพ์เสริมได้ครับ
+              </div>
+              <div id="fbQuickTags" class="quick-tags-wrap"></div>
+              <textarea id="fbCommentInput" class="fb-textarea" rows="2" placeholder="พิมพ์ข้อเสนอแนะเพิ่มเติม (ไม่บังคับ)..."></textarea>
+              <button type="button" id="btnConfirmFeedback" class="btn-send-comment" onclick="submitFinalFeedback()">
+                ✓ ยืนยันการส่งผลประเมิน
               </button>
             </div>
           </div>
@@ -488,11 +737,166 @@
     let activeSavePromise = null;
     let feedbackLocked = false;
     let feedbackGiven = null;
+    let pendingRateVal = 0;
+    let pendingRateLabel = "";
+
+    // ตัวแปรสำหรับสุ่มหน้าโหลดน้องเหมียวผู้ช่วย
+    let overlayTimer1 = null;
+    let overlayBarTimer = null;
+    let lastOverlayMode = 0;
+    let lastOverlayQuoteIdx = -1;
 
     const TrueSwal = Swal.mixin({
       customClass: { popup: 'swal-true-popup', confirmButton: 'btn-true' },
       buttonsStyling: false
     });
+
+    // 🎨 คลังไอคอนภาพวาดขนาดจิ๋วสำหรับวางท้ายประโยคคำอวยพร (แทนอีโมจิ)
+    function getDoodleSVG(type, size = 22) {
+      const svgs = {
+        sunSmile: `
+          <svg class="doodle-anim-wiggle" width="${size}" height="${size}" viewBox="0 0 36 36" fill="none">
+            <g stroke="#F59E0B" stroke-width="2.2" stroke-linecap="round">
+              <line x1="18" y1="3" x2="18" y2="6"/><line x1="18" y1="30" x2="18" y2="33"/>
+              <line x1="3" y1="18" x2="6" y2="18"/><line x1="30" y1="18" x2="33" y2="18"/>
+              <line x1="7.5" y1="7.5" x2="9.8" y2="9.8"/><line x1="26.2" y1="26.2" x2="28.5" y2="28.5"/>
+              <line x1="28.5" y1="7.5" x2="26.2" y2="9.8"/><line x1="9.8" y1="26.2" x2="7.5" y2="28.5"/>
+            </g>
+            <circle cx="18" cy="18" r="9.5" fill="#FEF08A" stroke="#D97706" stroke-width="2"/>
+            <circle cx="14.5" cy="16.5" r="1.3" fill="#334155"/><circle cx="21.5" cy="16.5" r="1.3" fill="#334155"/>
+            <circle cx="12.5" cy="19" r="1.6" fill="#FB7185"/><circle cx="23.5" cy="19" r="1.6" fill="#FB7185"/>
+            <path d="M15.5 19.5C16.5 21 19.5 21 20.5 19.5" stroke="#334155" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>`,
+        wingedHeart: `
+          <svg class="doodle-anim-pulse" width="${size}" height="${size}" viewBox="0 0 36 36" fill="none">
+            <path d="M9 17C5 14 3 17 5 20C3 22 6 24 9 22" fill="#FFFFFF" stroke="#64748B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M27 17C31 14 33 17 31 20C33 22 30 24 27 22" fill="#FFFFFF" stroke="#64748B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M18 28C18 28 9.5 22.5 9.5 15.5C9.5 12.2 12.2 10 15 10C16.8 10 18 11.2 18 12.2C18 11.2 19.2 10 21 10C23.8 10 26.5 12.2 26.5 15.5C26.5 22.5 18 28 18 28Z" fill="#FB7185" stroke="#BE123C" stroke-width="2" stroke-linejoin="round"/>
+          </svg>`,
+        sakuraFlower: `
+          <svg class="doodle-anim-wiggle" width="${size}" height="${size}" viewBox="0 0 36 36" fill="none">
+            <circle cx="18" cy="9" r="5.5" fill="#FECDD3" stroke="#E11D48" stroke-width="1.8"/>
+            <circle cx="26.5" cy="15" r="5.5" fill="#FECDD3" stroke="#E11D48" stroke-width="1.8"/>
+            <circle cx="23.5" cy="25" r="5.5" fill="#FECDD3" stroke="#E11D48" stroke-width="1.8"/>
+            <circle cx="12.5" cy="25" r="5.5" fill="#FECDD3" stroke="#E11D48" stroke-width="1.8"/>
+            <circle cx="9.5" cy="15" r="5.5" fill="#FECDD3" stroke="#E11D48" stroke-width="1.8"/>
+            <circle cx="18" cy="18" r="6" fill="#FEF08A" stroke="#E11D48" stroke-width="1.8"/>
+            <circle cx="16" cy="17.2" r="1" fill="#334155"/><circle cx="20" cy="17.2" r="1" fill="#334155"/>
+            <path d="M16.5 19.5C17.2 20.3 18.8 20.3 19.5 19.5" stroke="#334155" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>`,
+        luckyClover: `
+          <svg class="doodle-anim-wiggle" width="${size}" height="${size}" viewBox="0 0 36 36" fill="none">
+            <path d="M18 18C14 10 8 13 11 18C8 23 14 26 18 18Z" fill="#86EFAC" stroke="#15803D" stroke-width="1.9" stroke-linejoin="round"/>
+            <path d="M18 18C22 10 28 13 25 18C28 23 22 26 18 18Z" fill="#86EFAC" stroke="#15803D" stroke-width="1.9" stroke-linejoin="round"/>
+            <path d="M18 18C10 14 13 8 18 11C23 8 26 14 18 18Z" fill="#4ADE80" stroke="#15803D" stroke-width="1.9" stroke-linejoin="round"/>
+            <path d="M18 18C10 22 13 28 18 25C23 28 26 22 18 18Z" fill="#4ADE80" stroke="#15803D" stroke-width="1.9" stroke-linejoin="round"/>
+            <path d="M18 25C18 28 20 31 22 32" stroke="#15803D" stroke-width="2" stroke-linecap="round"/>
+          </svg>`,
+        shootingStar: `
+          <svg class="doodle-anim-float" width="${size}" height="${size}" viewBox="0 0 36 36" fill="none">
+            <path d="M4 26C9 24 14 20 18 16" stroke="#FB7185" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M6 30C11 28 16 24 20 20" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M22 6L24.8 11.8L31.2 12.7L26.6 17.2L27.7 23.5L22 20.5L16.3 23.5L17.4 17.2L12.8 12.7L19.2 11.8L22 6Z" fill="#FEF08A" stroke="#D97706" stroke-width="1.9" stroke-linejoin="round"/>
+          </svg>`,
+        magicCrown: `
+          <svg class="doodle-anim-pulse" width="${size}" height="${size}" viewBox="0 0 36 36" fill="none">
+            <path d="M7 25L9 13L15 18L18 10L21 18L27 13L29 25H7Z" fill="#FDE047" stroke="#B45309" stroke-width="2" stroke-linejoin="round"/>
+            <circle cx="9" cy="10" r="2" fill="#FB7185"/><circle cx="18" cy="7" r="2.2" fill="#F43F5E"/><circle cx="27" cy="10" r="2" fill="#FB7185"/>
+            <rect x="7" y="25" width="22" height="3.5" rx="1.7" fill="#FEF08A" stroke="#B45309" stroke-width="1.8"/>
+          </svg>`,
+        cutePaw: `
+          <svg class="doodle-anim-wiggle" width="${size}" height="${size}" viewBox="0 0 36 36" fill="none">
+            <circle cx="18" cy="18" r="13" fill="#FFF1F2" stroke="#F43F5E" stroke-width="1.8"/>
+            <ellipse cx="18" cy="21.5" rx="5.2" ry="4.2" fill="#FB7185"/>
+            <circle cx="12" cy="15.5" r="2.3" fill="#FB7185"/>
+            <circle cx="16" cy="13" r="2.3" fill="#FB7185"/>
+            <circle cx="20.5" cy="13" r="2.3" fill="#FB7185"/>
+            <circle cx="24" cy="15.5" r="2.3" fill="#FB7185"/>
+          </svg>`,
+        warmCup: `
+          <svg class="doodle-anim-float" width="${size}" height="${size}" viewBox="0 0 36 36" fill="none">
+            <path d="M26 17H28.5C30.4 17 32 18.6 32 20.5C32 22.4 30.4 24 28.5 24H26" stroke="#334155" stroke-width="2" stroke-linecap="round"/>
+            <path d="M8 15H26V22C26 26.4 22.4 30 18 30H16C11.6 30 8 26.4 8 22V15Z" fill="#FFFFFF" stroke="#334155" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M17 11C17 11 13.5 8.8 13.5 6.5C13.5 5.2 14.6 4.3 15.7 4.3C16.4 4.3 17 4.8 17 5.3C17 4.8 17.6 4.3 18.3 4.3C19.4 4.3 20.5 5.2 20.5 6.5C20.5 8.8 17 11 17 11Z" fill="#F43F5E"/>
+          </svg>`,
+        happyRainbow: `
+          <svg class="doodle-anim-float" width="${size}" height="${size}" viewBox="0 0 36 36" fill="none">
+            <path d="M7 24C7 16.8 11.9 11 18 11C24.1 11 29 16.8 29 24" stroke="#FB7185" stroke-width="2.6" stroke-linecap="round"/>
+            <path d="M10 24C10 18.5 13.6 14 18 14C22.4 14 26 18.5 26 24" stroke="#FBBF24" stroke-width="2.6" stroke-linecap="round"/>
+            <path d="M13 24C13 20.1 15.2 17 18 17C20.8 17 23 20.1 23 24" stroke="#60A5FA" stroke-width="2.6" stroke-linecap="round"/>
+            <ellipse cx="10.5" cy="25" rx="5.5" ry="3.8" fill="#FFFFFF" stroke="#64748B" stroke-width="1.6"/>
+            <ellipse cx="25.5" cy="25" rx="5.5" ry="3.8" fill="#FFFFFF" stroke="#64748B" stroke-width="1.6"/>
+          </svg>`
+      };
+      return svgs[type] || svgs.sunSmile;
+    }
+
+    const QUOTE_ITEMS = [
+      { icon: 'sunSmile', text: 'รอยยิ้มของคุณในวันนี้ คือพลังบวกที่ดีที่สุดของลูกค้าเลยน้า ยิ้มกว้างๆ นะครับ' },
+      { icon: 'wingedHeart', text: 'ส่งพลังใจให้นักบริการคนเก่ง! ขอให้ทุกการดูแลลูกค้าวันนี้ราบรื่นและอบอุ่นใจนะครับ' },
+      { icon: 'sakuraFlower', text: 'พร้อมส่งมอบบริการดีๆ แล้ว! ขอบคุณที่ดูแลลูกค้าด้วยใจเสมอมาเลยนะครับ' },
+      { icon: 'luckyClover', text: 'เพี้ยง! ขอให้วันนี้ได้เจอลูกค้าที่น่ารัก คุยง่าย ปิดงานได้ไว ยอดปังๆ ตลอดวันเลยน้า' },
+      { icon: 'shootingStar', text: 'ขอให้ทุกเคสที่เข้ามาในวันนี้ผ่านฉลุย ลูกค้ารัก ลูกค้าชม ตลอดทั้งวันเลยจ้า' },
+      { icon: 'magicCrown', text: 'อัปเดตข้อมูลแม่นยำแล้ว ออกไปมั่นใจได้เลย! ขอให้วันนี้มีแต่เรื่องดีๆ เข้ามานะครับ' },
+      { icon: 'cutePaw', text: 'เหนื่อยไหมคนเก่ง? สูดหายใจลึกๆ แล้วไปแจกรอยยิ้มสดใสให้ลูกค้ากันน้า ส่งกำลังใจให้รัวๆ ครับ' },
+      { icon: 'warmCup', text: 'ทุกความตั้งใจของคุณมีความหมายมากเลยนะ ขอให้วันนี้ทำงานอย่างมีความสุขและมีพลังเต็มร้อยครับ' },
+      { icon: 'happyRainbow', text: 'ขอบคุณที่เข้ามาอัปเดตข่าวสารนะครับ วันนี้ขอให้เป็นวันที่ดีและได้รอยยิ้มกลับมาเยอะๆ น้า' }
+    ];
+
+    // 🎲 ฟังก์ชันเปิดหน้าโหลดน้องเหมียวพร้อมสุ่มทั้ง 3 สไตล์และสุ่มคำอวยพรงานบริการ
+    function startCuteSaveOverlay() {
+      clearTimeout(overlayTimer1);
+      clearInterval(overlayBarTimer);
+
+      let mode = Math.floor(Math.random() * 3) + 1;
+      if (mode === lastOverlayMode) mode = (mode % 3) + 1;
+      lastOverlayMode = mode;
+
+      let idx = Math.floor(Math.random() * QUOTE_ITEMS.length);
+      if (idx === lastOverlayQuoteIdx) idx = (idx + 1) % QUOTE_ITEMS.length;
+      lastOverlayQuoteIdx = idx;
+
+      const item = QUOTE_ITEMS[idx];
+      const subEl = document.getElementById('cat-sub');
+      const cardEl = document.getElementById('wish-card');
+      const barZone = document.getElementById('micro-bar-zone');
+
+      cardEl.classList.remove('fade-change');
+      subEl.innerHTML = `${item.text} <span class="inline-doodle">${getDoodleSVG(item.icon, 22)}</span>`;
+
+      if (mode === 1) {
+        cardEl.className = "wish-quote-box clean-plain";
+        barZone.innerHTML = '';
+        overlayTimer1 = setTimeout(() => {
+          cardEl.classList.add('fade-change');
+          setTimeout(() => {
+            subEl.innerHTML = `บันทึกข้อมูลเกือบเสร็จแล้ว... ขอให้วันนี้เป็นวันที่สดใสของคุณนะครับ <span class="inline-doodle">${getDoodleSVG('sunSmile', 22)}</span>`;
+            cardEl.classList.remove('fade-change');
+          }, 220);
+        }, 2200);
+      } else if (mode === 2) {
+        cardEl.className = "wish-quote-box clean-plain";
+        barZone.innerHTML = `<div class="micro-bar-wrap"><div id="m-bar" class="micro-bar-fill"></div></div>`;
+        let w = 25;
+        setTimeout(() => { const b = document.getElementById('m-bar'); if(b) b.style.width = '72%'; }, 120);
+        overlayBarTimer = setInterval(() => {
+          w = Math.min(95, w + 12);
+          const b = document.getElementById('m-bar');
+          if (b) b.style.width = w + '%';
+        }, 1000);
+      } else {
+        cardEl.className = "wish-quote-box";
+        barZone.innerHTML = '';
+      }
+
+      document.getElementById('save-overlay').classList.remove('hidden');
+    }
+
+    function stopCuteSaveOverlay() {
+      clearTimeout(overlayTimer1);
+      clearInterval(overlayBarTimer);
+      document.getElementById('save-overlay').classList.add('hidden');
+    }
 
     function renderTopicListUI() {
       const container = document.getElementById('topic-list-container');
@@ -570,7 +974,11 @@
             document.getElementById('fbThankArea').classList.remove('hidden');
           } else {
             feedbackLocked = false;
+            pendingRateVal = 0;
+            pendingRateLabel = "";
             document.querySelectorAll('#fbFormArea [data-rate]').forEach(b => b.classList.remove('active', 'dimmed'));
+            document.getElementById('fbExpandBox').classList.add('hidden');
+            document.getElementById('fbCommentInput').value = "";
             document.getElementById('fbThankArea').classList.add('hidden');
             document.getElementById('fbFormArea').classList.remove('hidden');
           }
@@ -593,16 +1001,63 @@
       }
     }
 
-    function selectAndSaveFeedback(val, label) {
+    function selectFeedbackRate(val, label) {
       if (feedbackLocked) return;
-      feedbackLocked = true;
+
+      const prevRate = pendingRateVal;
+      pendingRateVal = val;
+      pendingRateLabel = label;
 
       document.querySelectorAll('#fbFormArea [data-rate]').forEach(btn => {
-        if (Number(btn.dataset.rate) === val) btn.classList.add('active');
-        else btn.classList.add('dimmed');
+        btn.classList.remove('active', 'dimmed');
+        void btn.offsetWidth;
+        if (Number(btn.dataset.rate) === val) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.add('dimmed');
+        }
       });
 
-      const fbObj = { rating: val, ratingText: label };
+      document.getElementById('fbSelectedLabel').innerText = `ระดับ ${val} (${label})`;
+
+      const tags = val >= 4 
+        ? ["ใช้งานง่ายมาก", "หน้าจอสวยอ่านง่าย", "โหลดเร็วทันใจ", "ข้อมูลชัดเจน"]
+        : ["โหลดช้าบางช่วง", "ตัวหนังสือเล็กไป", "อยากให้ดูย้อนหลังได้", "หาหัวข้อไม่เจอ"];
+
+      const wasHighGroup = prevRate >= 4;
+      const isHighGroup = val >= 4;
+      if (prevRate === 0 || wasHighGroup !== isHighGroup) {
+        const tagsWrap = document.getElementById('fbQuickTags');
+        tagsWrap.innerHTML = tags.map(t => `<span class="q-tag" onclick="toggleFeedbackTag(this)">+ ${t}</span>`).join('');
+        document.getElementById('fbCommentInput').value = "";
+      }
+
+      const expandBox = document.getElementById('fbExpandBox');
+      expandBox.classList.remove('hidden');
+    }
+
+    function toggleFeedbackTag(el) {
+      el.classList.toggle('selected');
+      const tagText = el.innerText.replace('+ ', '').trim();
+      const inputEl = document.getElementById('fbCommentInput');
+      let currentText = inputEl.value.trim();
+
+      if (el.classList.contains('selected')) {
+        if (!currentText.includes(tagText)) {
+          inputEl.value = currentText ? `${currentText}, ${tagText}` : tagText;
+        }
+      } else {
+        const parts = currentText.split(',').map(s => s.trim()).filter(s => s !== "" && s !== tagText);
+        inputEl.value = parts.join(', ');
+      }
+    }
+
+    function submitFinalFeedback() {
+      if (feedbackLocked || !pendingRateVal) return;
+      feedbackLocked = true;
+
+      const commentText = (document.getElementById('fbCommentInput').value || "").trim() || "-";
+      const fbObj = { rating: pendingRateVal, ratingText: pendingRateLabel, comment: commentText };
       feedbackGiven = fbObj;
 
       if (userObj) {
@@ -611,8 +1066,9 @@
           fullName: userObj.fullName,
           channel: userObj.channel || "-",
           branch: userObj.branch || "-",
-          rating: val,
-          ratingText: label
+          rating: pendingRateVal,
+          ratingText: pendingRateLabel,
+          comment: commentText
         };
         fetch(GAS_URL, {
           method: 'POST',
@@ -622,11 +1078,9 @@
         }).catch(err => console.warn("Feedback Save Error:", err));
       }
 
-      setTimeout(() => {
-        document.getElementById('rateResultTxt').innerText = `ระดับ ${val} (${label})`;
-        document.getElementById('fbFormArea').classList.add('hidden');
-        document.getElementById('fbThankArea').classList.remove('hidden');
-      }, 1050);
+      document.getElementById('rateResultTxt').innerText = `ระดับ ${pendingRateVal} (${pendingRateLabel})`;
+      document.getElementById('fbFormArea').classList.add('hidden');
+      document.getElementById('fbThankArea').classList.remove('hidden');
     }
 
     async function init() {
@@ -814,14 +1268,14 @@
         device: "LINE (" + liff.getOS() + ")" 
       };
       
-      const overlay = document.getElementById('save-overlay');
-      overlay.classList.remove('hidden');
+      // แสดงหน้าโหลดน้องเหมียวพร้อมสุ่มสไตล์ + คำอวยพรงานบริการ
+      startCuteSaveOverlay();
 
       activeSavePromise = sendAcknowledgeInBackground(payload);
       const saveResult = await activeSavePromise;
       activeSavePromise = null;
 
-      overlay.classList.add('hidden');
+      stopCuteSaveOverlay();
       isSubmitting = false;
 
       if (saveResult === "Success" || saveResult === "Duplicate") {
@@ -893,7 +1347,7 @@
 
     async function callApi(action, payload) {
       if (action === 'acknowledge') {
-        document.getElementById('save-overlay').classList.remove('hidden'); 
+        startCuteSaveOverlay();
       } else {
         TrueSwal.fire({ title: 'กำลังตรวจสอบ โปรดรอสักครู่...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
       }
@@ -930,7 +1384,7 @@
       }
 
       if (action === 'acknowledge') {
-        document.getElementById('save-overlay').classList.add('hidden'); 
+        stopCuteSaveOverlay();
       } else {
         Swal.close();
       }
